@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "web",
+  "productName": "Docspyre",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.docspyre.app",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -13,8 +13,10 @@
     "windows": [
       {
         "title": "Docspyre",
-        "width": 800,
-        "height": 600,
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
         "resizable": true,
         "fullscreen": false
       }

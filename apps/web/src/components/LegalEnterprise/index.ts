@@ -1,0 +1,10 @@
+export { default } from './legal-enterprise';
+export { default as Legal } from './Legal/legal';
+export { default as Analytics } from './Analytics/analytics';
+export { default as Security } from './Security/security';
+export { default as IndustryAgents } from './IndustryAgents/industry-agents';
+export { default as KnowledgeBase } from './KnowledgeBase/knowledge-base';
+export { default as Collaboration } from './Collaboration/collaboration';
+export { default as Automation } from './Automation/automation';
+export { default as Billing } from './Billing/billing';
+export { default as Meetings } from './Meetings/meetings';

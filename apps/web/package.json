@@ -8,10 +8,23 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
-    "check-types": "next typegen && tsc --noEmit"
+    "check-types": "next typegen && tsc --noEmit",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
+    "@repo/ai": "workspace:*",
+    "@repo/api-client": "workspace:*",
+    "@repo/auth": "workspace:*",
+    "@repo/database": "workspace:*",
+    "@repo/editor": "workspace:*",
+    "@repo/prompts": "workspace:*",
+    "@repo/types": "workspace:*",
     "@repo/ui": "workspace:*",
+    "bootstrap": "^5.3.8",
+    "framer-motion": "^12.40.0",
+    "gsap": "^3.15.0",
+    "material-symbols": "^0.44.9",
     "next": "16.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
@@ -19,11 +32,15 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "^4.3.0",
     "@tauri-apps/cli": "^2.11.2",
     "@types/node": "^22.15.3",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
+    "autoprefixer": "^10.5.0",
     "eslint": "^9.39.1",
+    "postcss": "^8.5.14",
+    "tailwindcss": "^4.3.0",
     "typescript": "5.9.2"
   }
 }

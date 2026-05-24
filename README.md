@@ -1,26 +1,24 @@
-# Turborepo starter
+# Docspyre AI
 
-This Turborepo starter is maintained by the Turborepo core team.
-
-## Using this example
-
-Run the following command:
-
-```sh
-npx create-turbo@latest
-```
+An AI-powered document processing and management platform.
 
 ## What's inside?
 
-This Turborepo includes the following packages/apps:
+This Turborepo monorepo includes the following packages/apps:
 
 ### Apps and Packages
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- `web`: [Next.js](https://nextjs.org/) application with Tauri desktop support
+- `@repo/ai`: AI integration and processing utilities
+- `@repo/api-client`: API client for backend communication
+- `@repo/auth`: Authentication and authorization utilities
+- `@repo/database`: Database schemas and utilities
+- `@repo/editor`: Document editor components
+- `@repo/prompts`: AI prompt templates and management
+- `@repo/types`: Shared TypeScript types
+- `@repo/ui`: Shared React component library
+- `@repo/eslint-config`: ESLint configurations
+- `@repo/typescript-config`: TypeScript configurations
 
 Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 
@@ -34,126 +32,58 @@ This Turborepo has some additional tools already setup for you:
 
 ### Build
 
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+To build all apps and packages:
 
 ```sh
-cd my-turborepo
-turbo build
+pnpm build
 ```
 
-Without global `turbo`, use your package manager:
+To build a specific package:
 
 ```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+pnpm --filter web build
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### Development
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+To start the development server:
 
 ```sh
-turbo build --filter=docs
+pnpm dev
 ```
 
-Without global `turbo`:
+To run the Tauri desktop app in development:
 
 ```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+pnpm tauri:dev
 ```
 
-### Develop
+### Other Commands
 
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
+Type checking:
 ```sh
-cd my-turborepo
-turbo dev
+pnpm check-types
 ```
 
-Without global `turbo`, use your package manager:
-
+Linting:
 ```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
+pnpm lint
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
+Code formatting:
 ```sh
-turbo dev --filter=web
+pnpm format
 ```
 
-Without global `turbo`:
-
+Build Tauri desktop app:
 ```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+pnpm tauri:build
 ```
 
-### Remote Caching
+## Tech Stack
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- **Frontend**: Next.js 16, React 19, TailwindCSS, Framer Motion
+- **Desktop**: Tauri
+- **Build Tool**: Turborepo
+- **Package Manager**: pnpm
+- **Language**: TypeScript

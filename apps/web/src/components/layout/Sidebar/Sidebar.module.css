@@ -1,0 +1,150 @@
+.sidebar {
+  width: 80px;
+  height: 100%;
+  background: transparent;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.topSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.centerSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  flex: 1;
+  justify-content: center;
+}
+
+.bottomSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+/* Theme Toggle Container - Switch style */
+.themeToggleContainer {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.themeBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.themeBtn:hover {
+  color: var(--foreground);
+  background: var(--surface-hover);
+}
+
+.themeBtn.themeActive {
+  background: var(--surface-active);
+  color: var(--foreground);
+}
+
+.themeBtn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Bordered circular wrapper for icons */
+.navItemCircle, .actionIconCircle {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+  background: transparent;
+  text-decoration: none;
+}
+
+.navItemCircle:hover, .actionIconCircle:hover {
+  border-color: var(--foreground);
+  color: var(--foreground);
+  background: var(--surface-hover);
+}
+
+.navItemCircle.active:hover {
+  background: var(--surface-active);
+}
+
+.navItemCircle.active,
+a.navItemCircle.active {
+  border-color: var(--foreground) !important;
+  color: var(--foreground) !important;
+  background: var(--surface-active) !important;
+}
+
+.navItemCircle .material-symbols-outlined, .actionIconCircle .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* Rectangular pill-style label revealed on hover */
+.pillLabel {
+  position: absolute;
+  left: 56px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  font-family: var(--font-noto), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+  transform: translateX(-4px);
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.navItemCircle:hover .pillLabel, .actionIconCircle:hover .pillLabel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+/* Mobile Responsive - Hide sidebar on mobile */
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+}

@@ -36,3 +36,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Tauri
+**/src-tauri/target/
+**/src-tauri/WixTools/

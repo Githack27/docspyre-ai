@@ -13,9 +13,14 @@
     "check-types": {
       "dependsOn": ["^check-types"]
     },
+    "tauri:build": {
+      "dependsOn": ["build"],
+      "outputs": ["src-tauri/target/release/bundle/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true
     }
+
   }
 }
