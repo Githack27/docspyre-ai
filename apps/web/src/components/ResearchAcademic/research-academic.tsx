@@ -1,8 +1,16 @@
-export default function ResearchAcademic() {
+interface ResearchAcademicProps {
+  children?: React.ReactNode;
+}
+
+export default function ResearchAcademic({ children }: ResearchAcademicProps) {
   return (
-    <div>
-      <h1>Research & Academic Tools</h1>
-      <p>Tools for research and academic writing.</p>
+    <div className="research-academic-container">
+      {children || (
+        <div>
+          <h1>Research & Academic Tools</h1>
+          <p>Select a tool from the sidebar to get started.</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,11 @@
-export default function AITools() {
+interface AIToolsProps {
+  children?: React.ReactNode;
+}
+
+export default function AITools({ children }: AIToolsProps) {
   return (
-    <div>
-      <h1>AI Tools</h1>
-      <p>Explore our AI-powered tools and features.</p>
+    <div className="ai-tools-container">
+      {children}
     </div>
   );
 }
