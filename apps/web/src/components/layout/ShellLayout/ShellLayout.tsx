@@ -111,8 +111,8 @@ export default function ShellLayout({ children }: ShellLayoutProps) {
             <Image
               src="/images/Docspyre_logo.png"
               alt="DocSpyre Logo"
-              width={38}
-              height={38}
+              width={42}
+              height={42}
             />
             <div className={styles.logoText}>
               <span className={styles.logoPrimary}>DOCSPYRE</span>

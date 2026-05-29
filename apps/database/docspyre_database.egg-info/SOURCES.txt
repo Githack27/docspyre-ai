@@ -1,0 +1,15 @@
+pyproject.toml
+db/__init__.py
+db/config.py
+db/connection.py
+db/entities/__init__.py
+db/entities/base.py
+db/entities/document.py
+db/entities/user.py
+db/functions/__init__.py
+db/triggers/__init__.py
+docspyre_database.egg-info/PKG-INFO
+docspyre_database.egg-info/SOURCES.txt
+docspyre_database.egg-info/dependency_links.txt
+docspyre_database.egg-info/requires.txt
+docspyre_database.egg-info/top_level.txt

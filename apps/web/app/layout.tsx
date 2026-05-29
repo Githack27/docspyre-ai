@@ -1,6 +1,7 @@
 import { JetBrains_Mono, Noto_Sans, Merriweather_Sans } from 'next/font/google';
 import type { Metadata } from 'next';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'material-symbols/outlined.css';
 import './globals.css';
 import LayoutShell from '@/components/layout/LayoutShell';

@@ -22,6 +22,7 @@
     "@repo/types": "workspace:*",
     "@repo/ui": "workspace:*",
     "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
     "framer-motion": "^12.40.0",
     "gsap": "^3.15.0",
     "material-symbols": "^0.44.9",

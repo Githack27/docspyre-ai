@@ -50,8 +50,9 @@ export default function Login() {
       {/* Left Section: Brand & Slogan */}
       <div className={styles['login-left']}>
         <div className={styles['brand-section']}>
-          <div className={styles['logo-container']}>
-            <img src="/images/Docspyre_logo.png" alt="DocSpyre AI Logo" className={styles['brand-logo']} />
+          <div className={styles['banner-container']}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/login-banner.png" alt="Login Banner" className={styles['brand-banner']} />
           </div>
           <h1 className={styles['brand-title']}>DocSpyre AI</h1>
           <p className={styles['brand-description']}>Transform your documents with intelligent AI-powered analysis and insights</p>

@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: docspyre-database
+Version: 0.1.0
+Summary: Postgres database schema, entities, triggers, functions and migrations for Docspyre AI
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: sqlalchemy>=2.0.30
+Requires-Dist: alembic>=1.13.1
+Requires-Dist: psycopg[binary]>=3.1.18

@@ -1,5 +1,5 @@
 import LegalEnterprise from '@/components/LegalEnterprise/legal-enterprise';
 
 export default function LegalEnterprisePage() {
-  return null;
+  return <LegalEnterprise />;
 }
