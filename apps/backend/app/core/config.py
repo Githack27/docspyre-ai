@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Database config (can be overridden by DATABASE_URL environment variable)
-    DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/docspyre"
+    DATABASE_URL: str = "postgresql+psycopg://postgres@localhost:5434/docspyre"
 
     model_config = SettingsConfigDict(
         env_file=".env",

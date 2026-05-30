@@ -5,23 +5,29 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 
 class UserBase(BaseModel):
     email: EmailStr
-    is_active: Optional[bool] = True
+    isActive: Optional[bool] = True
 
 
 class UserCreate(UserBase):
     password: str
+    roleId: int
+    planId: Optional[int] = None
 
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-    is_active: Optional[bool] = None
+    isActive: Optional[bool] = None
+    roleId: Optional[int] = None
+    planId: Optional[int] = None
 
 
 class UserResponse(UserBase):
-    id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    userId: int
+    roleId: int
+    planId: Optional[int] = None
+    createdDate: datetime.datetime
+    lastUpdatedDate: datetime.datetime
 
     model_config = ConfigDict(from_attributes=True)
 

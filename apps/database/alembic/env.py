@@ -8,8 +8,7 @@ from alembic import context
 
 # Import the SQLAlchemy Base and models to enable autogenerate
 from db.entities.base import Base
-from db.entities.user import User  # noqa: F401
-from db.entities.document import Document  # noqa: F401
+import db.entities  # noqa: F401
 
 # this is the Alembic Config object, which provides access to the values within the .ini file in use.
 config = context.config

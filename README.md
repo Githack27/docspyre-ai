@@ -80,6 +80,30 @@ Build Tauri desktop app:
 pnpm tauri:build
 ```
 
+## Database Setup & Migrations
+
+The project uses PostgreSQL with SQLAlchemy and Alembic for migrations. The database module is located in `apps/database`.
+
+### Database Initialization
+
+To check/create the database, run migrations, and apply SQL functions/triggers:
+1. Ensure the PostgreSQL server is running (by default on port `5434`).
+2. Run the initialization script from the project root:
+   ```sh
+   .venv\Scripts\python apps/database/init_db.py
+   ```
+
+### Working with Migrations
+
+To generate a new database migration after modifying the Python entities:
+1. Make the schema changes in `apps/database/db/entities/`.
+2. Run the following commands from the `apps/database` directory:
+   ```sh
+   cd apps/database
+   ..\..\.venv\Scripts\alembic revision --autogenerate -m "Description of changes"
+   ..\..\.venv\Scripts\alembic upgrade head
+   ```
+
 ## Tech Stack
 
 - **Frontend**: Next.js 16, React 19, TailwindCSS, Framer Motion

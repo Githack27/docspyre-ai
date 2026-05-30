@@ -23,8 +23,10 @@ def create_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)) -> A
     # In a real app, hash password before saving
     db_user = DbUser(
         email=user_in.email,
-        hashed_password=user_in.password,  # Stored directly as a mock setup
-        is_active=user_in.is_active,
+        hashedPassword=user_in.password,  # Stored directly as a mock setup
+        isActive=user_in.isActive,
+        roleId=user_in.roleId,
+        planId=user_in.planId,
     )
     db.add(db_user)
     db.commit()
@@ -32,10 +34,10 @@ def create_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)) -> A
     return db_user
 
 
-@router.get("/{user_id}", response_model=schemas.UserResponse)
-def read_user_by_id(user_id: int, db: Session = Depends(get_db)) -> Any:
+@router.get("/{userId}", response_model=schemas.UserResponse)
+def read_user_by_id(userId: int, db: Session = Depends(get_db)) -> Any:
     """Get a specific user by id."""
-    user = db.query(DbUser).filter(DbUser.id == user_id).first()
+    user = db.query(DbUser).filter(DbUser.userId == userId).first()
     if not user:
         raise HTTPException(
             status_code=404,

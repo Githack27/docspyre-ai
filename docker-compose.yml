@@ -1,0 +1,120 @@
+services:
+  docspyre_postgres:
+    image: postgres:16-alpine
+    container_name: docspyre_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: docspyre
+    ports:
+      - "5434:5432"
+    volumes:
+      - docspyre_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  docspyre_etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: docspyre_etcd
+    restart: always
+    environment:
+      - ETCD_AUTO_COMPACTION_RETENTION=1
+      - ETCD_LOG_LEVEL=info
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://docspyre_etcd:2380
+      - ETCD_ADVERTISE_CLIENT_URLS=http://docspyre_etcd:2379
+      - ETCD_INITIAL_CLUSTER=docspyre_etcd=http://docspyre_etcd:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+    volumes:
+      - docspyre_etcd_data:/etcd
+    command: etcd --data-dir /etcd
+
+  docspyre_minio:
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    container_name: docspyre_minio
+    restart: always
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - docspyre_minio_data:/data
+    command: minio server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  docspyre_milvus:
+    image: milvusdb/milvus:v2.4.0
+    container_name: docspyre_milvus
+    restart: always
+    command: ["milvus", "run", "standalone"]
+    environment:
+      - ETCD_ENDPOINTS=docspyre_etcd:2379
+      - MINIO_ADDRESS=docspyre_minio:9000
+    volumes:
+      - docspyre_milvus_data:/var/lib/milvus
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - docspyre_etcd
+      - docspyre_minio
+
+  docspyre_litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: docspyre_litellm
+    restart: always
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm-config.yaml:/app/config.yaml
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+
+  docspyre_backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: docspyre_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://postgres:password@docspyre_postgres:5432/docspyre
+      - MILVUS_HOST=docspyre_milvus
+      - MILVUS_PORT=19530
+      - LITELLM_URL=http://docspyre_litellm:4000
+    depends_on:
+      docspyre_postgres:
+        condition: service_healthy
+      docspyre_milvus:
+        condition: service_started
+      docspyre_litellm:
+        condition: service_started
+
+  docspyre_web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: docspyre_web
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - docspyre_backend
+
+volumes:
+  docspyre_postgres_data:
+  docspyre_etcd_data:
+  docspyre_minio_data:
+  docspyre_milvus_data:
