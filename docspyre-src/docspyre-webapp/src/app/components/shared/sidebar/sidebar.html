@@ -1,0 +1,80 @@
+<div class="sidebar-backdrop" [class.is-visible]="drawerOpen()" (click)="closeDrawer()"></div>
+
+<aside class="sidebar" [class.is-open]="drawerOpen()">
+  <div class="sidebar__drawer-head">
+    <span class="sidebar__drawer-title">Menu</span>
+    <button type="button" class="icon-btn" aria-label="Close menu" (click)="closeDrawer()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <div class="sidebar__top">
+    <button
+      type="button"
+      class="nav-link nav-link--toggle"
+      (click)="toggleTheme()"
+    >
+      <i class="bi" [class.bi-sun]="mode() === 'light'" [class.bi-moon-stars]="mode() === 'dark'"></i>
+      <span class="nav-link__label">{{ mode() === 'light' ? 'Light Mode' : 'Dark Mode' }}</span>
+    </button>
+  </div>
+
+  <nav class="sidebar__items">
+    @for (item of activeCategory().items; track item.id) {
+    <a
+      class="nav-link"
+      [routerLink]="item.route"
+      routerLinkActive="is-active"
+      (click)="closeDrawer()"
+    >
+      <i class="bi {{ item.icon }}"></i>
+      <span class="nav-link__label">{{ item.label }}</span>
+    </a>
+    }
+  </nav>
+
+  <nav class="sidebar__accordion">
+    @for (category of categories(); track category.id) {
+    <div class="accordion-group">
+      <button
+        type="button"
+        class="accordion-head"
+        [class.is-active]="activeCategoryId() === category.id"
+        (click)="toggleAccordion(category.id)"
+      >
+        <span>{{ category.label }}</span>
+        <i class="bi" [class.bi-chevron-down]="expandedCategory() !== category.id" [class.bi-chevron-up]="expandedCategory() === category.id"></i>
+      </button>
+      @if (expandedCategory() === category.id) {
+      <div class="accordion-body">
+        @for (item of category.items; track item.id) {
+        <a
+          class="nav-link"
+          [routerLink]="item.route"
+          routerLinkActive="is-active"
+          (click)="closeDrawer()"
+        >
+          <i class="bi {{ item.icon }}"></i>
+          <span class="nav-link__label">{{ item.label }}</span>
+        </a>
+        }
+      </div>
+      }
+    </div>
+    }
+  </nav>
+
+  <div class="sidebar__bottom">
+    @for (item of utilityItems(); track item.id) {
+    <button type="button" class="nav-link">
+      <i class="bi {{ item.icon }}"></i>
+      <span class="nav-link__label">{{ item.label }}</span>
+    </button>
+    }
+
+    <button type="button" class="nav-link nav-link--logout" (click)="logout()">
+      <i class="bi bi-box-arrow-right"></i>
+      <span class="nav-link__label">Logout</span>
+    </button>
+  </div>
+</aside>

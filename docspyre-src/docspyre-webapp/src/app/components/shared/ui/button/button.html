@@ -1,0 +1,15 @@
+<button
+  [type]="type()"
+  [disabled]="disabled()"
+  class="app-btn"
+  [class.app-btn--primary]="variant() === 'primary'"
+  [class.app-btn--block]="fullWidth()"
+>
+  @if (icon() && iconPosition() === 'left') {
+    <i class="bi {{ icon() }}" aria-hidden="true"></i>
+  }
+  <span class="app-btn__label"><ng-content></ng-content></span>
+  @if (icon() && iconPosition() === 'right') {
+    <i class="bi {{ icon() }}" aria-hidden="true"></i>
+  }
+</button>

@@ -1,0 +1,13 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--app-bg);
+}
+
+.layout__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}

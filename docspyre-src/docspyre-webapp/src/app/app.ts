@@ -8,5 +8,5 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('docspyre-webapp');
+  protected readonly title = signal('Docspyre');
 }

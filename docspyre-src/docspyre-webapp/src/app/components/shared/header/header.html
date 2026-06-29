@@ -1,0 +1,55 @@
+<header class="header">
+  <button
+    type="button"
+    class="burger"
+    [class.is-open]="drawerOpen()"
+    aria-label="Toggle navigation"
+    (click)="toggleDrawer()"
+  >
+    <i class="bi" [class.bi-list]="!drawerOpen()" [class.bi-x-lg]="drawerOpen()"></i>
+  </button>
+
+  <a class="brand" href="#" (click)="$event.preventDefault()">
+    <span class="brand__logo">
+      <img src="/images/docspyre-logo.png" alt="DocSpyre" />
+    </span>
+    <span class="brand__text">
+      <span class="brand__name">DOCSPYRE</span>
+      <span class="brand__sub">AI Platform</span>
+    </span>
+  </a>
+
+  <nav class="header__nav">
+    <span class="nav-indicator" [style]="indicatorStyle()"></span>
+    @for (tab of tabs(); track tab.id) {
+    <button
+      #tabBtn
+      type="button"
+      class="nav-tab"
+      [class.is-active]="activeTab() === tab.id"
+      (click)="selectTab(tab)"
+    >
+      {{ tab.label }}
+    </button>
+    }
+  </nav>
+
+  <div class="user">
+    <span class="user__avatar">
+      <i class="bi bi-person" aria-hidden="true"></i>
+    </span>
+    <span class="user__meta">
+      <span class="user__name">{{ user().name }}</span>
+      <span class="user__plan">{{ user().plan }} | <i class="bi bi-coin" aria-hidden="true"></i> {{ user().credits }}</span>
+    </span>
+  </div>
+
+  <app-button
+    class="header__logout"
+    variant="primary"
+    icon="bi-box-arrow-right"
+    (click)="logout()"
+  >
+    Logout
+  </app-button>
+</header>
