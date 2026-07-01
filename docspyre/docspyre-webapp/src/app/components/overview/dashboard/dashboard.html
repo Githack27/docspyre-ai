@@ -31,7 +31,7 @@
     <aside class="week" data-hero>
       <div class="week__head">
         <span class="week__label">This week</span>
-        <span class="week__total"><span #num [attr.data-target]="weekTotal()" data-decimals="0">0</span> actions</span>
+        <span class="week__total"><span #num [attr.data-target]="weekTotal()" data-decimals="0">{{ weekTotal() }}</span> actions</span>
       </div>
       <div class="week__bars">
         @for (v of week(); track $index) {
@@ -53,7 +53,7 @@
       <button type="button" class="kpi" [attr.data-accent]="k.accent" data-kpi (click)="go('/app/overview/activity')">
         <span class="kpi__icon"><i class="bi {{ k.icon }}"></i></span>
         <span class="kpi__body">
-          <span class="kpi__value"><span #num [attr.data-target]="k.value" [attr.data-decimals]="k.decimals ? 1 : 0">0</span><em>{{ k.suffix }}</em></span>
+          <span class="kpi__value"><span #num [attr.data-target]="k.value" [attr.data-decimals]="k.decimals ? 1 : 0">{{ k.value }}</span><em>{{ k.suffix }}</em></span>
           <span class="kpi__label">{{ k.label }}</span>
         </span>
       </button>

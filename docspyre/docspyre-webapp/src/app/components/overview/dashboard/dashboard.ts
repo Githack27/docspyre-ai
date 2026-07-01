@@ -13,7 +13,8 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DocumentService } from '../../../core/documents/document.service';
 import { WorkspaceService } from '../../../core/workspace/workspace.service';
 import { ShareService } from '../../../core/shares/share.service';
@@ -168,9 +169,9 @@ export class Dashboard {
 
   private load(): void {
     forkJoin({
-      docs: this.documents.list(),
-      projects: this.workspace.listProjects(),
-      shared: this.shares.sharedWithMe(),
+      docs: this.documents.list().pipe(catchError(() => of([] as DocumentItem[]))),
+      projects: this.workspace.listProjects().pipe(catchError(() => of([] as ProjectSummary[]))),
+      shared: this.shares.sharedWithMe().pipe(catchError(() => of([] as { sharedAt: string }[]))),
     }).subscribe({
       next: ({ docs, projects, shared }) => {
         const storageMb = docs.reduce((s, d) => s + d.sizeBytes, 0) / (1024 * 1024);
