@@ -20,19 +20,20 @@ export class AuthService {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly storage = new AuthStorage(this.isBrowser);
   private readonly baseUrl = `${environment.apiBaseUrl}/auth`;
+  private readonly isDesktop = environment.desktop;
 
   private accessToken: string | null = this.storage.readAccessToken();
 
-  
+
   private refresh$: Observable<string> | null = null;
 
-  
+
   readonly currentUser = signal<PublicUser | null>(this.storage.readUser());
 
-  
+
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
 
-  
+
   register(payload: SignupPayload): Observable<PublicUser> {
     const body: RegisterRequest = {
       email: payload.email,
@@ -44,7 +45,7 @@ export class AuthService {
       .pipe(tap((res) => this.applySession(res, false)), map((res) => res.user));
   }
 
-  
+
   login(credentials: LoginCredentials): Observable<PublicUser> {
     const body: LoginRequest = {
       email: credentials.email,
@@ -59,23 +60,26 @@ export class AuthService {
     );
   }
 
-  
+
   logout(): Observable<void> {
     return this.http
-      .post<void>(`${this.baseUrl}/logout`, {})
+      .post<void>(`${this.baseUrl}/logout`, this.isDesktop ? { refreshToken: this.storage.readRefreshToken() } : {})
       .pipe(tap({ next: () => this.clearSession(), error: () => this.clearSession() }));
   }
 
-  
+
   refresh(): Observable<string> {
     if (this.refresh$) {
       return this.refresh$;
     }
 
-    this.refresh$ = this.http.post<AuthResponse>(`${this.baseUrl}/refresh`, {}).pipe(
+    this.refresh$ = this.http.post<AuthResponse>(`${this.baseUrl}/refresh`, this.isDesktop ? { refreshToken: this.storage.readRefreshToken() } : {}).pipe(
       tap((res) => {
         this.accessToken = res.accessToken;
         this.storage.updateAccessToken(res.accessToken);
+        if (this.isDesktop && res.refreshToken) {
+          this.storage.updateRefreshToken(res.refreshToken);
+        }
         this.currentUser.set(res.user);
       }),
       map((res) => res.accessToken),
@@ -85,7 +89,7 @@ export class AuthService {
     return this.refresh$;
   }
 
-  
+
   loadProfile(): Observable<PublicUser> {
     return this.http
       .get<{ user: PublicUser }>(`${this.baseUrl}/me`)
@@ -100,21 +104,28 @@ export class AuthService {
     return this.storage.getRememberedEmail();
   }
 
-  
+
   clearSession(): void {
     this.accessToken = null;
     this.currentUser.set(null);
     this.storage.clear();
   }
 
-  
+
   private applySession(res: AuthResponse, remember: boolean): void {
     this.accessToken = res.accessToken;
     this.currentUser.set(res.user);
-    this.storage.save({ accessToken: res.accessToken, user: res.user }, remember);
+    this.storage.save(
+      {
+        accessToken: res.accessToken,
+        user: res.user,
+        refreshToken: this.isDesktop ? res.refreshToken : undefined,
+      },
+      remember,
+    );
   }
 
-  
+
   private splitName(fullName: string): { firstName?: string; lastName?: string } {
     const parts = fullName.trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) return {};

@@ -1,0 +1,20 @@
+{
+  "name": "docspyre-desktop",
+  "version": "0.0.0",
+  "description": "Tauri desktop shell for the DocSpyre Angular webapp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build:debug": "tauri build --debug",
+    "icon": "tauri icon",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "productName": "DocSpyre",
+  "version": "0.0.0",
+  "identifier": "ai.docspyre.desktop",
+  "build": {
+    "beforeDevCommand": "npm --prefix ../docspyre-webapp start",
+    "devUrl": "http://localhost:4200",
+    "beforeBuildCommand": "npm --prefix ../docspyre-webapp run build -- --configuration desktop",
+    "frontendDist": "../../docspyre-webapp/dist/docspyre-webapp/browser"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "DocSpyre",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

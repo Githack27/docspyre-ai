@@ -1,10 +1,10 @@
 :host { display: block; flex: 1; min-height: 0; }
 
-[data-accent='violet'] { --c: #8a2be2; }
-[data-accent='orange'] { --c: #ff8a00; }
-[data-accent='pink']   { --c: #ff4e85; }
-[data-accent='blue']   { --c: #3b82f6; }
-[data-accent='green']  { --c: #10b981; }
+[data-accent='violet'] { --c: var(--accent-violet); }
+[data-accent='orange'] { --c: var(--accent-orange); }
+[data-accent='pink']   { --c: var(--accent-pink); }
+[data-accent='blue']   { --c: var(--accent-blue); }
+[data-accent='green']  { --c: var(--accent-green); }
 
 .dash {
   position: relative;
@@ -19,8 +19,8 @@
 /* ambient */
 .dash__bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .orb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.4; will-change: transform; }
-.orb--1 { width: 340px; height: 340px; background: #8a2be2; top: -80px; left: -20px; animation: float1 16s ease-in-out infinite; }
-.orb--2 { width: 300px; height: 300px; background: #3b82f6; top: 10%; right: -40px; animation: float2 19s ease-in-out infinite; }
+.orb--1 { width: 340px; height: 340px; background: var(--accent-violet); top: -80px; left: -20px; animation: float1 16s ease-in-out infinite; }
+.orb--2 { width: 300px; height: 300px; background: var(--accent-blue); top: 10%; right: -40px; animation: float2 19s ease-in-out infinite; }
 .grid-glow {
   position: absolute; inset: 0;
   background-image:

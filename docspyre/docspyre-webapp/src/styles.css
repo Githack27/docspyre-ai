@@ -7,10 +7,10 @@
 }
 
 :root {
-  --primary-color: #ff8a00;
+  --primary-color: #22C7A9;
   --secondary-color: #ff4e85;
   --highlight-text-color: #8a2be2;
-  --dark-bg-color: #381d82;
+  --dark-bg-color: #061417;
   --light-bg-color: #f2f2f2;
 
   --app-bg: #ffffff;
@@ -30,28 +30,49 @@
   --btn-primary-from: #8a2be2;
   --btn-primary-to: #a855f7;
   --btn-primary-glow: rgba(138, 43, 226, 0.35);
+  --accent-violet: #8a2be2;
+  --accent-orange: #ff8a00;
+  --accent-pink: #ff4e85;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
 
   --scrollbar-thumb: rgba(17, 17, 17, 0.22);
   --scrollbar-thumb-hover: rgba(138, 43, 226, 0.55);
 }
 
 .dark {
-  --app-bg: #1a1430;
-  --surface: #241c3d;
-  --surface-muted: #2c2350;
-  --surface-hover: #342a5c;
+  --app-bg: #10262B;
+  --surface: #10262B;
+  --surface-muted: #10262B;
+  --surface-hover: #10262B;
   --text-strong: #f2f2f2;
   --text-muted: #b6abd6;
   --border-color: #f2f2f2;
   --border-soft: rgba(242, 242, 242, 0.18);
   --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --accent: var(--primary-color);
   --active-highlight: var(--primary-color);
+  --btn-primary-from: #22C7A9;
+  --btn-primary-to: #22C7A9;
+  --btn-primary-glow: color-mix(in srgb, var(--primary-color) 50%, transparent);
   --tooltip-bg: #0f0b1f;
   --tooltip-text: #f2f2f2;
 
+  /* Dark theme: every accent collapses to the primary color for a unified look. */
+  --accent-violet: var(--primary-color);
+  --accent-orange: var(--primary-color);
+  --accent-pink: var(--primary-color);
+  --accent-blue: var(--primary-color);
+  --accent-green: var(--primary-color);
+
   --scrollbar-thumb: rgba(242, 242, 242, 0.22);
-  --scrollbar-thumb-hover: rgba(255, 138, 0, 0.6);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--primary-color) 60%, transparent);
+}
+
+.dark .btn--solid {
+  background: linear-gradient(135deg, var(--btn-primary-from) 0%, var(--btn-primary-to) 100%);
+  box-shadow: 0 6px 16px var(--btn-primary-glow);
 }
 
 body {

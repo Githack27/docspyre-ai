@@ -42,6 +42,9 @@ export interface LoginRequest {
 export interface AuthResponse {
   user: PublicUser;
   accessToken: string;
+  // Present only for desktop clients, which carry the refresh token in the
+  // body instead of an HttpOnly cookie.
+  refreshToken?: string;
 }
 
 

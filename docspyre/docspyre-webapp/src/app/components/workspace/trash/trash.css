@@ -6,11 +6,11 @@
   color: var(--text-strong);
 }
 
-[data-accent='violet'] { --c: #8a2be2; }
-[data-accent='orange'] { --c: #ff8a00; }
-[data-accent='pink']   { --c: #ff4e85; }
-[data-accent='blue']   { --c: #3b82f6; }
-[data-accent='green']  { --c: #10b981; }
+[data-accent='violet'] { --c: var(--accent-violet); }
+[data-accent='orange'] { --c: var(--accent-orange); }
+[data-accent='pink']   { --c: var(--accent-pink); }
+[data-accent='blue']   { --c: var(--accent-blue); }
+[data-accent='green']  { --c: var(--accent-green); }
 
 .trash__title { margin: 0; font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; }
 .trash__sub { margin: 0.3rem 0 0; color: var(--text-muted); font-size: 0.95rem; }

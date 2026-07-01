@@ -19,9 +19,16 @@ const isApiRequest = (url: string): boolean =>
 const isBypassed = (url: string): boolean => AUTH_BYPASS.some((path) => url.includes(path));
 
 const withAuth = (req: HttpRequest<unknown>, token: string | null): HttpRequest<unknown> => {
-  
-  const headers = token ? { setHeaders: { Authorization: `Bearer ${token}` } } : {};
-  return req.clone({ withCredentials: true, ...headers });
+  const setHeaders: Record<string, string> = {};
+  if (token) {
+    setHeaders['Authorization'] = `Bearer ${token}`;
+  }
+  // Signal desktop clients so the backend returns the refresh token in the body
+  // instead of relying on the cross-origin HttpOnly cookie.
+  if (environment.desktop) {
+    setHeaders['X-Client-Type'] = 'desktop';
+  }
+  return req.clone({ withCredentials: true, setHeaders });
 };
 
 

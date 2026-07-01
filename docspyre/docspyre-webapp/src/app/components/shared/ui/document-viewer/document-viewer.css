@@ -46,10 +46,10 @@
   background: color-mix(in srgb, var(--accent) 15%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
 }
-.viewer__kind[data-kind='IMAGE'] { color: #3b82f6; background: color-mix(in srgb, #3b82f6 15%, var(--surface)); border-color: color-mix(in srgb, #3b82f6 30%, transparent); }
-.viewer__kind[data-kind='VIDEO'] { color: #ff4e85; background: color-mix(in srgb, #ff4e85 15%, var(--surface)); border-color: color-mix(in srgb, #ff4e85 30%, transparent); }
-.viewer__kind[data-kind='AUDIO'] { color: #10b981; background: color-mix(in srgb, #10b981 15%, var(--surface)); border-color: color-mix(in srgb, #10b981 30%, transparent); }
-.viewer__kind[data-kind='PDF'] { color: #ff8a00; background: color-mix(in srgb, #ff8a00 15%, var(--surface)); border-color: color-mix(in srgb, #ff8a00 30%, transparent); }
+.viewer__kind[data-kind='IMAGE'] { color: var(--accent-blue); background: color-mix(in srgb, var(--accent-blue) 15%, var(--surface)); border-color: color-mix(in srgb, var(--accent-blue) 30%, transparent); }
+.viewer__kind[data-kind='VIDEO'] { color: var(--accent-pink); background: color-mix(in srgb, var(--accent-pink) 15%, var(--surface)); border-color: color-mix(in srgb, var(--accent-pink) 30%, transparent); }
+.viewer__kind[data-kind='AUDIO'] { color: var(--accent-green); background: color-mix(in srgb, var(--accent-green) 15%, var(--surface)); border-color: color-mix(in srgb, var(--accent-green) 30%, transparent); }
+.viewer__kind[data-kind='PDF'] { color: var(--accent-orange); background: color-mix(in srgb, var(--accent-orange) 15%, var(--surface)); border-color: color-mix(in srgb, var(--accent-orange) 30%, transparent); }
 .viewer__name {
   font-family: var(--font-mono);
   font-size: 0.9rem;
