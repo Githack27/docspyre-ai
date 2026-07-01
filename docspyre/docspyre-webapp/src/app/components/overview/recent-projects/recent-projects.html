@@ -1,0 +1,46 @@
+<section class="feature-page">
+  <header class="feature-page__head">
+    <i class="bi bi-clock-history feature-page__icon"></i>
+    <div>
+      <h1 class="feature-page__title">Recent Projects</h1>
+      <p class="feature-page__desc">Quickly jump back into your latest projects, most recent first.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="recent__grid">
+      @for (s of [1, 2, 3, 4]; track s) {
+        <div class="recent__skeleton"></div>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="recent__state">
+      <i class="bi bi-wifi-off"></i>
+      <p>{{ error() }}</p>
+      <button type="button" class="btn btn--ghost" (click)="load()">
+        <i class="bi bi-arrow-clockwise"></i> Retry
+      </button>
+    </div>
+  } @else if (projects().length) {
+    <div class="recent__grid">
+      @for (project of projects(); track project.id; let i = $index) {
+        <app-project-card
+          [name]="project.name"
+          [accent]="accentFor(i)"
+          [role]="project.role"
+          [members]="project.memberCount"
+          [files]="project.fileCount"
+          [initials]="userInitials()"
+          [timeLabel]="lastAccessed(project.updatedAt)"
+          (open)="openProject(project.id)"
+        />
+      }
+    </div>
+  } @else {
+    <div class="recent__state recent__state--empty">
+      <i class="bi bi-folder2-open"></i>
+      <h3>No projects yet</h3>
+      <p>Create a project from My Projects and it will show up here.</p>
+    </div>
+  }
+</section>

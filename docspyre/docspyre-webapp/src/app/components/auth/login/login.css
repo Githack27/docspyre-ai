@@ -1,0 +1,248 @@
+:host {
+  display: block;
+}
+
+.auth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+.auth__left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.auth__brand {
+  text-align: center;
+  color: #fff;
+}
+
+.auth__banner {
+  width: 100%;
+  max-width: 22rem;
+  max-height: 27rem;
+  margin: 0 auto 1.5rem;
+  display: block;
+}
+
+.auth__title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+}
+
+.auth__title span {
+  color: var(--highlight-text-color);
+}
+
+.auth__tagline {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+
+.auth__right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: #fff;
+}
+
+.auth__stack {
+  display: grid;
+  width: 100%;
+  max-width: 26rem;
+  padding-block: 1rem;
+}
+
+
+.auth-form {
+  grid-area: 1 / 1;
+  align-self: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s ease;
+}
+
+.auth-form.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: auto;
+}
+
+.auth-form__head {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.auth-form__head h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.35rem;
+}
+
+.auth-form__head p {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+
+.field {
+  margin-bottom: 2rem;
+}
+
+.field > label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.4rem;
+}
+
+.field__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field__control i {
+  position: absolute;
+  left: 0.85rem;
+  color: #94a3b8;
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.field__control input {
+  width: 100%;
+  padding: 0.7rem 0.85rem 0.7rem 2.4rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  color: #0f172a;
+  background: #f8fafc;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field__control input::placeholder {
+  color: #94a3b8;
+}
+
+.field__control input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(255, 138, 0, 0.15);
+  background: #fff;
+}
+
+.field__control.is-invalid input {
+  border-color: #ef4444;
+  background: #fff5f5;
+}
+
+.field__control.is-invalid input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.field__control.is-invalid i {
+  color: #ef4444;
+}
+
+.field__error {
+  display: block;
+  margin-top: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #ef4444;
+}
+
+.alert {
+  margin-bottom: 1.25rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+  border: 1px solid transparent;
+}
+
+.alert--success {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.alert--error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+
+.auth-form__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.25rem 0 1.4rem;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.825rem;
+  color: #475569;
+  cursor: pointer;
+}
+
+.checkbox input {
+  accent-color: var(--primary-color);
+}
+
+.link {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--highlight-text-color);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.auth-form__divider {
+  width: 24rem;
+  height: 2px;
+  margin: 2rem auto 0;
+  background: #e2e8f0;
+}
+
+.auth-form__switch {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 1.4rem 0 0;
+}
+
+
+@media (max-width: 768px) {
+  .auth {
+    grid-template-columns: 1fr;
+  }
+
+  .auth__left {
+    display: none;
+  }
+}

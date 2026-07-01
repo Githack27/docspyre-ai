@@ -1,0 +1,60 @@
+<section class="projects">
+
+  <header class="projects__head">
+    <div>
+      <h1 class="projects__title">My Projects</h1>
+      <p class="projects__sub">Group your work, keep files together, invite people when you need to.</p>
+    </div>
+  </header>
+
+
+  @if (loading()) {
+    <div class="grid">
+      @for (s of [1,2,3,4]; track s) {
+        <div class="skeleton"></div>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="state">
+      <i class="bi bi-wifi-off"></i>
+      <p>{{ error() }}</p>
+      <button type="button" class="btn btn--ghost" (click)="load()">
+        <i class="bi bi-arrow-clockwise"></i> Retry
+      </button>
+    </div>
+  } @else {
+    <div class="grid">
+
+      <button type="button" class="folder folder--new" (click)="openDialog()">
+        <span class="folder--new__plus"><i class="bi bi-plus-lg"></i></span>
+        <span class="folder--new__label">New project</span>
+        <span class="folder--new__hint">Start something fresh</span>
+      </button>
+
+
+      @for (project of projects(); track project.id; let i = $index) {
+        <app-project-card
+          [name]="project.name"
+          [accent]="accentFor(i)"
+          [role]="project.role"
+          [members]="project.memberCount"
+          [files]="project.fileCount"
+          [initials]="userInitials()"
+          (open)="openProject(project.id)"
+        />
+      }
+    </div>
+
+    @if (!projects().length) {
+      <div class="state state--empty">
+        <i class="bi bi-folder2-open"></i>
+        <h3>No projects yet</h3>
+        <p>Create your first project to start organizing your work.</p>
+      </div>
+    }
+  }
+</section>
+
+@if (dialogOpen()) {
+  <app-create-project-dialog (closed)="closeDialog()" (created)="onCreated($event)" />
+}

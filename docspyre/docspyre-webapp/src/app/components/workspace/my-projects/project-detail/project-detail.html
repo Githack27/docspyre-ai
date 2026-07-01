@@ -1,0 +1,141 @@
+<section class="detail">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a routerLink="/app/workspace/my-projects" class="crumbs__link">
+      <i class="bi bi-folder2"></i> My Projects
+    </a>
+    <i class="bi bi-chevron-right crumbs__sep"></i>
+    <span class="crumbs__current">{{ project()?.name ?? 'Project' }}</span>
+  </nav>
+
+  @if (loading()) {
+    <div class="loadingbar"><i class="bi bi-arrow-repeat spin"></i> Opening project...</div>
+  } @else if (error()) {
+    <div class="state">
+      <i class="bi bi-folder-x"></i>
+      <p>{{ error() }}</p>
+      <a routerLink="/app/workspace/my-projects" class="btn btn--ghost">
+        <i class="bi bi-arrow-left"></i> Back to My Projects
+      </a>
+    </div>
+  } @else if (project(); as p) {
+    <header class="phead">
+      <div class="phead__main">
+        <span class="phead__icon"><i class="bi bi-folder-fill"></i></span>
+        <div>
+          <h1 class="phead__title">{{ p.name }}</h1>
+          <p class="phead__meta">
+            <span class="role role--owner">{{ p.role }}</span>
+            <span><i class="bi bi-people-fill"></i> {{ p.members.length }} member(s)</span>
+            <span><i class="bi bi-file-earmark-fill"></i> {{ files().length }} file(s)</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="members">
+        @for (m of p.members; track m.userId) {
+          <span class="member" [title]="memberName(m) + ' · ' + m.role">{{ memberInitials(m) }}</span>
+        }
+      </div>
+    </header>
+
+    <div class="files">
+      <div class="files__head">
+        <h2 class="files__title"><i class="bi bi-collection"></i> Files</h2>
+        <div class="files__actions">
+          <button type="button" class="btn btn--ghost" (click)="openPicker()">
+            <i class="bi bi-folder-symlink"></i> From Documents
+          </button>
+          <label class="btn btn--solid">
+            @if (uploading()) {
+              <i class="bi bi-arrow-repeat spin"></i> Uploading...
+            } @else {
+              <i class="bi bi-cloud-arrow-up"></i> Upload
+            }
+            <input type="file" multiple hidden (change)="onFilesPicked($event)" />
+          </label>
+        </div>
+      </div>
+
+      @if (files().length) {
+        <div class="filegrid">
+          @for (file of files(); track file.id) {
+            <app-document-card
+              [name]="file.name"
+              [mime]="file.kind"
+              [sizeBytes]="file.sizeBytes"
+              [viewable]="!!file.documentId"
+              [deleting]="deletingId() === file.id"
+              (open)="openFile(file)"
+            >
+              <button
+                actions
+                type="button"
+                class="file__del"
+                [disabled]="deletingId() === file.id"
+                (click)="removeFile(file)"
+                [attr.aria-label]="'Remove ' + file.name"
+                title="Remove from project"
+              >
+                @if (deletingId() === file.id) {
+                  <i class="bi bi-arrow-repeat spin"></i>
+                } @else {
+                  <i class="bi bi-trash"></i>
+                }
+              </button>
+            </app-document-card>
+          }
+        </div>
+      } @else {
+        <label class="dropzone">
+          <i class="bi bi-cloud-arrow-up"></i>
+          <span class="dropzone__title">Upload your first files</span>
+          <span class="dropzone__hint">or use "From Documents" to attach existing uploads.</span>
+          <input type="file" multiple hidden (change)="onFilesPicked($event)" />
+        </label>
+      }
+    </div>
+  }
+</section>
+
+@if (pickerOpen()) {
+  <div class="picker" (click)="closePicker()">
+    <div class="picker__panel" (click)="$event.stopPropagation()">
+      <header class="picker__head">
+        <h3 class="picker__title"><i class="bi bi-folder-symlink"></i> Choose from My Documents</h3>
+        <button type="button" class="picker__close" (click)="closePicker()"><i class="bi bi-x-lg"></i></button>
+      </header>
+
+      <div class="picker__body">
+        @if (pickerLoading()) {
+          <div class="picker__msg"><i class="bi bi-arrow-repeat spin"></i> Loading…</div>
+        } @else if (pickerDocs().length) {
+          <ul class="picker__list">
+            @for (doc of pickerDocs(); track doc.id) {
+              <li>
+                <button type="button" class="picker__item" (click)="attach(doc)" [disabled]="attachingId() === doc.id">
+                  <span class="picker__icon"><i class="bi {{ docIcon(doc.kind) }}"></i></span>
+                  <span class="picker__text">
+                    <span class="picker__name" [title]="doc.name">{{ doc.name }}</span>
+                    <span class="picker__meta">{{ doc.kind }} · {{ formatSize(doc.sizeBytes) }}</span>
+                  </span>
+                  @if (attachingId() === doc.id) {
+                    <i class="bi bi-arrow-repeat spin"></i>
+                  } @else {
+                    <i class="bi bi-plus-lg"></i>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="picker__msg">
+            <i class="bi bi-folder2-open"></i>
+            <p>No documents yet. Upload files in My Documents first.</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<app-document-viewer [doc]="viewing()" (closed)="closeViewer()" />

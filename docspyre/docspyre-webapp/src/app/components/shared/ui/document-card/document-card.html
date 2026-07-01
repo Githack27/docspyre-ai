@@ -1,0 +1,21 @@
+<article class="card" [attr.data-accent]="accent()" [class.is-deleting]="deleting()">
+  <button type="button" class="card__preview" (click)="open.emit()" [disabled]="!viewable()" [attr.aria-label]="'Open ' + name()">
+    @if (isImage() && thumbUrl()) {
+      <img [src]="thumbUrl()" [alt]="name()" loading="lazy" />
+    } @else {
+      <span class="card__glyph"><i class="bi {{ icon() }}"></i></span>
+    }
+    <span class="card__badge">{{ badge() }}</span>
+    @if (viewable()) {
+      <span class="card__open"><i class="bi bi-eye-fill"></i></span>
+    }
+  </button>
+
+  <div class="card__foot">
+    <span class="card__name" [title]="name()">{{ name() }}</span>
+    <div class="card__meta">
+      <span class="card__size">{{ sizeLabel() }}</span>
+      <span class="card__actions"><ng-content select="[actions]"></ng-content></span>
+    </div>
+  </div>
+</article>

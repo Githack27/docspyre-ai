@@ -1,0 +1,99 @@
+<div class="sd" (click)="close()">
+  <div class="sd__panel" (click)="$event.stopPropagation()">
+    <header class="sd__head">
+      <div class="sd__heading">
+        <span class="sd__icon"><i class="bi bi-share-fill"></i></span>
+        <div>
+          <h3 class="sd__title">Share file</h3>
+          <p class="sd__sub" [title]="name()">{{ name() }}</p>
+        </div>
+      </div>
+      <button type="button" class="sd__close" (click)="close()"><i class="bi bi-x-lg"></i></button>
+    </header>
+
+    <div class="sd__body">
+      <label class="sd__label">Invite people</label>
+      <div class="sd__search">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          class="sd__input"
+          placeholder="Search by name or email…"
+          [value]="query()"
+          (input)="onSearch($event)"
+        />
+        @if (searching()) { <i class="bi bi-arrow-repeat spin"></i> }
+      </div>
+
+      @if (results().length) {
+        <ul class="sd__results">
+          @for (u of results(); track u.id) {
+            <li>
+              <button type="button" class="sd__result" (click)="add(u)">
+                <span class="sd__avatar">{{ initials((u.firstName || '') + ' ' + (u.lastName || '') || u.email) }}</span>
+                <span class="sd__result-text">
+                  <span class="sd__result-name">{{ u.firstName || u.email }} {{ u.lastName }}</span>
+                  <span class="sd__result-email">{{ u.email }}</span>
+                </span>
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (selected().length) {
+        <div class="sd__chips">
+          @for (s of selected(); track s.id) {
+            <span class="sd__chip">
+              {{ s.name }}
+              <button type="button" (click)="removeSelected(s.id)"><i class="bi bi-x"></i></button>
+            </span>
+          }
+        </div>
+
+        <div class="sd__perm">
+          <span class="sd__label">Access</span>
+          <div class="sd__toggle">
+            <button type="button" [class.is-active]="permission() === 'VIEW'" (click)="setPermission('VIEW')">
+              <i class="bi bi-eye"></i> View
+            </button>
+            <button type="button" [class.is-active]="permission() === 'DOWNLOAD'" (click)="setPermission('DOWNLOAD')">
+              <i class="bi bi-download"></i> Download
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="sd__share" (click)="submit()" [disabled]="sharing()">
+          @if (sharing()) { <i class="bi bi-arrow-repeat spin"></i> Sharing… }
+          @else { <i class="bi bi-send"></i> Share with {{ selected().length }} }
+        </button>
+      }
+
+      @if (error()) { <p class="sd__error"><i class="bi bi-exclamation-triangle"></i> {{ error() }}</p> }
+
+      <div class="sd__divider"></div>
+
+      <span class="sd__label">People with access</span>
+      @if (loading()) {
+        <div class="sd__msg"><i class="bi bi-arrow-repeat spin"></i> Loading…</div>
+      } @else if (recipients().length) {
+        <ul class="sd__people">
+          @for (r of recipients(); track r.id) {
+            <li class="sd__person">
+              <span class="sd__avatar">{{ initials(r.name) }}</span>
+              <span class="sd__person-text">
+                <span class="sd__person-name">{{ r.name }}</span>
+                <span class="sd__person-email">{{ r.email }}</span>
+              </span>
+              <span class="sd__badge">{{ r.permission }}</span>
+              <button type="button" class="sd__revoke" (click)="revoke(r.id)" title="Remove access"><i class="bi bi-x-circle"></i></button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="sd__msg">Not shared with anyone yet.</p>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,99 @@
+<div class="backdrop" (click)="close()">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cp-title" (click)="$event.stopPropagation()">
+    <header class="dialog__head">
+      <div class="dialog__heading">
+        <span class="dialog__icon"><i class="bi bi-folder-plus"></i></span>
+        <div>
+          <h2 id="cp-title" class="dialog__title">New project</h2>
+          <p class="dialog__sub">Name it and invite your people.</p>
+        </div>
+      </div>
+      <button type="button" class="iconbtn" (click)="close()" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </header>
+
+    <div class="dialog__body">
+      
+      <label class="field">
+        <span class="field__label">Project name</span>
+        <input
+          type="text"
+          class="field__input"
+          placeholder="e.g. Q3 Research Report"
+          [formControl]="name"
+          maxlength="120"
+          autocomplete="off"
+        />
+      </label>
+
+      
+      <div class="field">
+        <span class="field__label">Add people <em>(optional — you can work solo)</em></span>
+        <div class="search">
+          <i class="bi bi-search"></i>
+          <input
+            type="text"
+            class="search__input"
+            placeholder="Search by email..."
+            [formControl]="emailSearch"
+            autocomplete="off"
+          />
+          @if (searching()) {
+            <i class="bi bi-arrow-repeat spin"></i>
+          }
+        </div>
+
+        
+        @if (emailSearch.value.trim().length >= 2) {
+          <div class="results">
+            @for (user of results(); track user.id) {
+              <button type="button" class="result" (click)="addMember(user)">
+                <span class="avatar">{{ initials(user) }}</span>
+                <span class="result__text">
+                  <span class="result__name">{{ displayName(user) }}</span>
+                  <span class="result__email">{{ user.email }}</span>
+                </span>
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            } @empty {
+              @if (!searching()) {
+                <p class="results__empty">No registered users match that email.</p>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      
+      @if (selected().length) {
+        <div class="chips">
+          @for (user of selected(); track user.id) {
+            <span class="chip">
+              <span class="avatar avatar--sm">{{ initials(user) }}</span>
+              {{ displayName(user) }}
+              <button type="button" (click)="removeMember(user.id)" aria-label="Remove">
+                <i class="bi bi-x"></i>
+              </button>
+            </span>
+          }
+        </div>
+      }
+
+      @if (error()) {
+        <p class="alert"><i class="bi bi-exclamation-triangle"></i> {{ error() }}</p>
+      }
+    </div>
+
+    <footer class="dialog__foot">
+      <button type="button" class="btn btn--ghost" (click)="close()">Cancel</button>
+      <button type="button" class="btn btn--solid" [disabled]="!canSubmit()" (click)="submit()">
+        @if (submitting()) {
+          <i class="bi bi-arrow-repeat spin"></i> Creating...
+        } @else {
+          <i class="bi bi-check2"></i> Create project
+        }
+      </button>
+    </footer>
+  </div>
+</div>

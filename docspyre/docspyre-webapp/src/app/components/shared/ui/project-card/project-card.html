@@ -1,0 +1,23 @@
+<button type="button" class="folder" [attr.data-accent]="accent()" (click)="open.emit()">
+  <span class="folder__tab"></span>
+  <span class="folder__body">
+    <span class="folder__top">
+      <span class="folder__icon"><i class="bi bi-folder-fill"></i></span>
+      @if (role()) {
+        <span class="role" [class.role--owner]="role() === 'OWNER'">{{ role() }}</span>
+      }
+    </span>
+    <span class="folder__name">{{ name() }}</span>
+    <span class="folder__meta">
+      <span><i class="bi bi-people-fill"></i> {{ members() }}</span>
+      <span><i class="bi bi-file-earmark-fill"></i> {{ files() }}</span>
+      @if (timeLabel()) {
+        <span class="folder__time"><i class="bi bi-clock"></i> {{ timeLabel() }}</span>
+      }
+    </span>
+  </span>
+  <span class="folder__foot">
+    <span class="avatar">{{ initials() }}</span>
+    <span class="folder__open">Open <i class="bi bi-arrow-right"></i></span>
+  </span>
+</button>

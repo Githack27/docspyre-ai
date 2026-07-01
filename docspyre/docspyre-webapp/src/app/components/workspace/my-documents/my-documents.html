@@ -1,0 +1,97 @@
+<section class="docs-page">
+  <header class="docs-page__head">
+    <div>
+      <h1 class="docs-page__title">My Documents</h1>
+      <p class="docs-page__sub">Upload, preview and manage everything in one creative library.</p>
+    </div>
+    <div class="docs-page__stat">
+      <span class="docs-page__count">{{ total() }}</span>
+      <span class="docs-page__count-label">items</span>
+    </div>
+  </header>
+
+  <!-- Upload zone -->
+  <label
+    class="drop"
+    [class.is-drag]="dragging()"
+    [class.is-busy]="uploading()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    <input type="file" multiple hidden (change)="onFilesPicked($event)" />
+    <span class="drop__icon">
+      @if (uploading()) { <i class="bi bi-arrow-repeat spin"></i> }
+      @else { <i class="bi bi-cloud-arrow-up-fill"></i> }
+    </span>
+    <span class="drop__title">
+      @if (uploading()) { Uploading… } @else { Drop files here or click to upload }
+    </span>
+    <span class="drop__hint">Documents, images, video, audio — up to 100 MB each</span>
+  </label>
+
+  <!-- Filters -->
+  <div class="filters">
+    @for (f of filters; track f.id) {
+      <button
+        type="button"
+        class="chip"
+        [class.is-active]="activeFilter() === f.id"
+        [attr.data-accent]="f.accent"
+        (click)="setFilter(f.id)"
+      >
+        <i class="bi {{ f.icon }}"></i>
+        {{ f.label }}
+        <span class="chip__count">{{ countFor(f.id) }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- Gallery -->
+  @if (loading()) {
+    <div class="gallery">
+      @for (s of [1,2,3,4,5,6]; track s) { <div class="skeleton"></div> }
+    </div>
+  } @else if (error()) {
+    <div class="state">
+      <i class="bi bi-wifi-off"></i>
+      <p>{{ error() }}</p>
+      <button type="button" class="dbtn dbtn--ghost" (click)="load()"><i class="bi bi-arrow-clockwise"></i> Retry</button>
+    </div>
+  } @else if (filtered().length) {
+    <div class="gallery">
+      @for (doc of filtered(); track doc.id) {
+        <app-document-card
+          [name]="doc.name"
+          [mime]="doc.mimeType"
+          [sizeBytes]="doc.sizeBytes"
+          [thumbUrl]="thumb(doc.id)"
+          [deleting]="deletingId() === doc.id"
+          (open)="open(doc)"
+        >
+          <span actions>
+            <button type="button" class="tile__act" (click)="openShare(doc)" title="Share">
+              <i class="bi bi-share"></i>
+            </button>
+            <button type="button" class="tile__act tile__act--del" (click)="remove(doc.id)" [disabled]="deletingId() === doc.id" title="Move to Trash">
+              @if (deletingId() === doc.id) { <i class="bi bi-arrow-repeat spin"></i> }
+              @else { <i class="bi bi-trash"></i> }
+            </button>
+          </span>
+        </app-document-card>
+      }
+    </div>
+  } @else {
+    <div class="state state--empty">
+      <i class="bi bi-folder2-open"></i>
+      <h3>Nothing here yet</h3>
+      <p>Upload a file above to start building your library.</p>
+    </div>
+  }
+</section>
+
+<app-document-viewer [doc]="viewing()" (closed)="closeViewer()" (deleted)="remove($event)" />
+
+@if (sharing(); as doc) {
+  <app-share-dialog [documentId]="doc.id" [name]="doc.name" (closed)="closeShare()" />
+}

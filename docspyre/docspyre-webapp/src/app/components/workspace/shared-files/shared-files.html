@@ -1,0 +1,116 @@
+<section class="shared">
+  <header class="shared__head">
+    <div>
+      <h1 class="shared__title">Shared Files</h1>
+      <p class="shared__sub">Files you've shared and files shared with you — including shared projects.</p>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button type="button" class="tab" [class.is-active]="tab() === 'with'" (click)="setTab('with')">
+      <i class="bi bi-inbox-fill"></i> Shared with me <span class="tab__count">{{ incomingCount() }}</span>
+    </button>
+    <button type="button" class="tab" [class.is-active]="tab() === 'by'" (click)="setTab('by')">
+      <i class="bi bi-send-fill"></i> Shared by me <span class="tab__count">{{ outgoingCount() }}</span>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="cards">
+      @for (s of [1,2,3]; track s) { <div class="card-skeleton"></div> }
+    </div>
+  } @else if (error()) {
+    <div class="state">
+      <i class="bi bi-wifi-off"></i>
+      <p>{{ error() }}</p>
+      <button type="button" class="sbtn sbtn--ghost" (click)="load()"><i class="bi bi-arrow-clockwise"></i> Retry</button>
+    </div>
+  } @else {
+
+    @if (tab() === 'with') {
+      @if (incoming().length) {
+        <div class="cards">
+          @for (item of incoming(); track item.id) {
+            <article class="card" [attr.data-accent]="accentFor(item.name, item.mimeType)">
+              <button type="button" class="card__body" (click)="open(item)" [disabled]="!item.documentId">
+                <span class="card__icon"><i class="bi {{ iconFor(item.name, item.mimeType) }}"></i></span>
+                <span class="card__text">
+                  <span class="card__name" [title]="item.name">{{ item.name }}</span>
+                  <span class="card__meta">{{ formatSize(item.sizeBytes) }} · {{ timeAgo(item.sharedAt) }}</span>
+                </span>
+                @if (item.documentId) { <i class="bi bi-eye card__view"></i> }
+              </button>
+              <div class="card__foot">
+                <span class="who">
+                  <span class="who__avatar">{{ initials(item.from.name) }}</span>
+                  <span class="who__text">
+                    <span class="who__label">from</span>
+                    <span class="who__name" [title]="item.from.email">{{ item.from.name }}</span>
+                  </span>
+                </span>
+                @if (item.source === 'PROJECT') {
+                  <span class="src src--project" [title]="item.projectName || ''"><i class="bi bi-folder-fill"></i> {{ item.projectName }}</span>
+                } @else {
+                  <span class="src src--direct"><i class="bi bi-person-fill"></i> Direct · {{ item.permission }}</span>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="state state--empty">
+          <i class="bi bi-inbox"></i>
+          <h3>Nothing shared with you</h3>
+          <p>Files others share with you — and files in projects you're part of — appear here.</p>
+        </div>
+      }
+    }
+
+    @if (tab() === 'by') {
+      @if (outgoing().length) {
+        <div class="cards">
+          @for (item of outgoing(); track item.id) {
+            <article class="card" [attr.data-accent]="accentFor(item.name, item.mimeType)">
+              <button type="button" class="card__body" (click)="open(item)" [disabled]="!item.documentId">
+                <span class="card__icon"><i class="bi {{ iconFor(item.name, item.mimeType) }}"></i></span>
+                <span class="card__text">
+                  <span class="card__name" [title]="item.name">{{ item.name }}</span>
+                  <span class="card__meta">{{ formatSize(item.sizeBytes) }} · {{ timeAgo(item.sharedAt) }}</span>
+                </span>
+                @if (item.documentId) { <i class="bi bi-eye card__view"></i> }
+              </button>
+              <div class="card__foot card__foot--col">
+                <div class="recips">
+                  <span class="who__label">shared with</span>
+                  <div class="recips__list">
+                    @for (r of item.recipients; track r.id) {
+                      <span class="recip" [title]="r.name + ' · ' + r.permission">
+                        <span class="who__avatar who__avatar--sm">{{ initials(r.name) }}</span>
+                        @if (item.source === 'DIRECT') {
+                          <button type="button" class="recip__x" (click)="revoke(item, r.id)" title="Remove access"><i class="bi bi-x"></i></button>
+                        }
+                      </span>
+                    }
+                  </div>
+                </div>
+                @if (item.source === 'PROJECT') {
+                  <span class="src src--project" [title]="item.projectName || ''"><i class="bi bi-folder-fill"></i> {{ item.projectName }}</span>
+                } @else {
+                  <span class="src src--direct"><i class="bi bi-person-fill"></i> Direct</span>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="state state--empty">
+          <i class="bi bi-send"></i>
+          <h3>You haven't shared anything</h3>
+          <p>Share a file from My Documents, or add members to a project to share its files.</p>
+        </div>
+      }
+    }
+  }
+</section>
+
+<app-document-viewer [doc]="viewing()" (closed)="closeViewer()" />

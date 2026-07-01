@@ -1,0 +1,141 @@
+<section class="docs" [attr.data-accent]="activeAccent()">
+  
+  <header class="docs__hero">
+    <div class="docs__intro">
+      <span class="docs__eyebrow"><i class="bi bi-journal-bookmark-fill"></i> Documentation</span>
+      <h1 class="docs__title">
+        Everything DocSpyre does, <span class="hl">explained simply.</span>
+      </h1>
+      <p class="docs__lead">
+        {{ totalItems() }} quick guides across {{ suites().length }} suites. Search, click, learn.
+      </p>
+    </div>
+
+    <label class="search">
+      <i class="bi bi-search search__icon"></i>
+      <input
+        type="text"
+        class="search__input"
+        placeholder="Search a tool or guide..."
+        [value]="query()"
+        (input)="onSearch($any($event.target).value)"
+        aria-label="Search guides"
+      />
+      @if (searching()) {
+        <button type="button" class="search__clear" (click)="clearSearch()" aria-label="Clear search">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      }
+    </label>
+  </header>
+
+  
+  @if (!searching()) {
+    <nav class="suitebar" aria-label="Suites">
+      @for (suite of suites(); track suite.id) {
+        <button
+          type="button"
+          class="pill"
+          [class.is-active]="suite.id === activeSuiteId()"
+          [attr.data-accent]="suite.accent"
+          (click)="selectSuite(suite.id)"
+        >
+          <i class="bi {{ suite.icon }}"></i>
+          <span class="pill__label">{{ suite.label }}</span>
+          <em class="pill__count">{{ suite.items.length }}</em>
+        </button>
+      }
+    </nav>
+  }
+
+  
+  <div class="docs__body">
+    
+    <div class="list">
+      <p class="list__meta">
+        @if (searching()) {
+          <i class="bi bi-funnel"></i> {{ visibleItems().length }} result(s) for “{{ query() }}”
+        } @else {
+          <i class="bi {{ activeSuite().icon }}"></i> {{ activeSuite().tagline }}
+        }
+      </p>
+
+      @for (row of visibleItems(); track row.item.id) {
+        <button
+          type="button"
+          class="card"
+          [class.is-active]="row.item.id === activeItemId()"
+          [attr.data-accent]="row.suite.accent"
+          (click)="selectItem(row.item.id)"
+        >
+          <span class="tile"><i class="bi {{ row.item.icon }}"></i></span>
+          <span class="card__text">
+            <span class="card__title">{{ row.item.title }}</span>
+            <span class="card__what">{{ row.item.what }}</span>
+          </span>
+          @if (searching()) {
+            <span class="card__suite">{{ row.suite.label }}</span>
+          }
+          <i class="bi bi-chevron-right card__arrow"></i>
+        </button>
+      } @empty {
+        <div class="empty">
+          <i class="bi bi-binoculars"></i>
+          <p>No guides match that. Try another word.</p>
+        </div>
+      }
+
+      @if (!searching()) {
+        <div class="list__foot">
+          <i class="bi bi-lightbulb"></i>
+          <span>Tip: use the search bar to jump to any of {{ totalItems() }} guides.</span>
+        </div>
+      }
+    </div>
+
+    
+    <aside class="panel">
+      @for (row of activeRow(); track row.item.id) {
+        <article class="detail" [attr.data-accent]="row.suite.accent">
+          <div class="detail__glow" aria-hidden="true"></div>
+
+          <div class="detail__scroll">
+            <header class="detail__head">
+              <span class="tile tile--xl"><i class="bi {{ row.item.icon }}"></i></span>
+              <div>
+                <span class="detail__suite"><i class="bi {{ row.suite.icon }}"></i> {{ row.suite.label }}</span>
+                <h2 class="detail__title">{{ row.item.title }}</h2>
+              </div>
+            </header>
+
+            <p class="detail__what">{{ row.item.what }}</p>
+
+            <h3 class="detail__sub"><i class="bi bi-signpost-2"></i> How to work with it</h3>
+            <ol class="timeline">
+              @for (step of row.item.steps; track $index) {
+                <li class="timeline__step">
+                  <span class="timeline__node">{{ $index + 1 }}</span>
+                  <p>{{ step }}</p>
+                </li>
+              }
+            </ol>
+
+            <div class="tip">
+              <i class="bi bi-lightbulb-fill"></i>
+              <p><strong>Tip.</strong> {{ row.item.tip }}</p>
+            </div>
+
+            <a [routerLink]="row.item.route" class="btn btn--solid">
+              <i class="bi bi-box-arrow-up-right"></i> Open {{ row.item.title }}
+            </a>
+          </div>
+        </article>
+      } @empty {
+        <div class="detail detail--empty">
+          <i class="bi bi-hand-index-thumb"></i>
+          <p>Pick a guide to see how it works.</p>
+        </div>
+      }
+    </aside>
+  </div>
+</section>

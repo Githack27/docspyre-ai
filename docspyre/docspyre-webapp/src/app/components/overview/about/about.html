@@ -1,0 +1,165 @@
+<section class="about">
+
+  <header class="hero">
+    <div class="hero__content">
+      <span class="badge">
+        <img src="/images/docspyre-logo.png" alt="" class="badge__logo" />
+        DocSpyre AI
+      </span>
+
+      <h1 class="hero__title">
+        The AI pipeline that turns
+        <span class="hl">documents, research and media</span>
+        into finished work.
+      </h1>
+
+      <p class="hero__lead">
+        One place to read, write, translate and summarize. You bring the idea, DocSpyre does the busywork.
+      </p>
+
+      <div class="hero__actions">
+        <a routerLink="/app/overview/dashboard" class="btn btn--solid">
+          <i class="bi bi-grid-fill"></i> Open Dashboard
+        </a>
+        <a routerLink="/app/document-ai/chat-with-document" class="btn btn--ghost">
+          <i class="bi bi-chat-dots"></i> Try Document AI
+        </a>
+      </div>
+
+      <ul class="hero__stats">
+        @for (stat of stats; track stat.label) {
+          <li class="hero__stat">
+            <strong>{{ stat.value }}</strong>
+            <span>{{ stat.label }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+
+
+    <div class="hero__visual" aria-hidden="true">
+      <div class="frame">
+        <div class="frame__bar">
+          <span></span><span></span><span></span>
+        </div>
+        <img src="/images/about-hero.png" alt="" class="frame__img" />
+        <div class="frame__foot">
+          <span class="frame__live"><span class="dot"></span> Live workspace</span>
+          <span class="frame__tags">
+            <i class="bi bi-file-earmark-text"></i>
+            <i class="bi bi-translate"></i>
+            <i class="bi bi-stars"></i>
+          </span>
+        </div>
+      </div>
+      <span class="chip chip--violet"><i class="bi bi-file-earmark-text"></i> Docs</span>
+      <span class="chip chip--pink"><i class="bi bi-soundwave"></i> Media</span>
+      <span class="chip chip--orange"><i class="bi bi-journal-text"></i> Research</span>
+    </div>
+  </header>
+
+
+  <section class="concepts">
+    <div class="concepts__intro">
+      <i class="bi bi-quote statement__mark"></i>
+      <p class="statement__text">
+        Most tools do one thing. DocSpyre connects them into a single, smart flow —
+        so work moves from <em>idea</em> to <em>done</em>.
+      </p>
+      <span class="kicker">Good to know</span>
+    </div>
+
+    <div class="concepts__grid">
+      @for (concept of concepts; track concept.term) {
+        <article class="concept" [attr.data-accent]="concept.accent">
+          <span class="tile"><i class="bi {{ concept.icon }}"></i></span>
+          <div>
+            <h3 class="concept__term">{{ concept.term }}</h3>
+            <p class="concept__def">{{ concept.def }}</p>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+
+  <section class="block">
+    <div class="block__head">
+      <span class="kicker">What it can do</span>
+      <h2 class="block__title">Five suites. One pipeline.</h2>
+      <p class="block__sub">Everything you need to create, side by side.</p>
+    </div>
+
+    <div class="caps">
+      @for (cap of capabilities; track cap.title) {
+        <article class="cap" [attr.data-accent]="cap.accent">
+          <div class="cap__top">
+            <span class="tile"><i class="bi {{ cap.icon }}"></i></span>
+            <h3 class="cap__title">{{ cap.title }}</h3>
+          </div>
+          <p class="cap__blurb">{{ cap.blurb }}</p>
+          <ul class="cap__list">
+            @for (point of cap.points; track point) {
+              <li><i class="bi bi-check2"></i> {{ point }}</li>
+            }
+          </ul>
+        </article>
+      }
+    </div>
+  </section>
+
+
+  <section class="block block--muted">
+    <div class="block__head">
+      <span class="kicker">How it works</span>
+      <h2 class="block__title">From upload to done in four steps.</h2>
+      <p class="block__sub">No setup. No clutter. Just flow.</p>
+    </div>
+
+    <ol class="steps">
+      @for (step of pipeline; track step.index) {
+        <li class="step" [attr.data-accent]="step.accent">
+          <span class="step__num">{{ step.index }}</span>
+          <span class="tile tile--lg"><i class="bi {{ step.icon }}"></i></span>
+          <h3 class="step__title">{{ step.title }}</h3>
+          <p class="step__text">{{ step.text }}</p>
+        </li>
+      }
+    </ol>
+  </section>
+
+
+  <section class="block">
+    <div class="block__head">
+      <span class="kicker">Why DocSpyre</span>
+      <h2 class="block__title">Built to redefine how work gets made.</h2>
+      <p class="block__sub">Fast, private and always in your hands.</p>
+    </div>
+
+    <div class="values">
+      @for (value of values; track value.title) {
+        <article class="value" [attr.data-accent]="value.accent">
+          <span class="tile"><i class="bi {{ value.icon }}"></i></span>
+          <h3 class="value__title">{{ value.title }}</h3>
+          <p class="value__text">{{ value.text }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+
+  <section class="cta">
+    <div class="cta__inner">
+      <h2 class="cta__title">Ready to make something?</h2>
+      <p class="cta__text">Pick a suite and start. Your next document is minutes away.</p>
+      <div class="cta__actions">
+        <a routerLink="/app/document-ai/ai-writer" class="btn btn--solid">
+          <i class="bi bi-pencil-square"></i> Start writing
+        </a>
+        <a routerLink="/app/templates/template-marketplace" class="btn btn--ghost">
+          <i class="bi bi-shop"></i> Browse templates
+        </a>
+      </div>
+    </div>
+  </section>
+</section>

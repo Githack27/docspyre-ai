@@ -1,0 +1,126 @@
+<section #root class="act" (pointermove)="onPointerMove($event)">
+  <div class="act__bg" aria-hidden="true">
+    <span class="orb orb--1" data-parallax></span>
+    <span class="orb orb--2" data-parallax></span>
+    <span class="orb orb--3" data-parallax></span>
+    <span class="grid-glow"></span>
+  </div>
+
+  <header class="act__head" data-reveal>
+    <div>
+      <span class="act__eyebrow"><span class="live-dot"></span> Live workspace pulse</span>
+      <h1 class="act__title">Activity</h1>
+    </div>
+    <p class="act__lead">Every upload, project update and share — tracked day by day.</p>
+  </header>
+
+  <div class="act__stage">
+    <!-- Contribution heatmap -->
+    <section class="heat" data-reveal>
+      <div class="heat__top">
+        <h2 class="heat__title"><i class="bi bi-grid-3x3"></i> Contribution activity <span class="heat__sub">last 6 months</span></h2>
+        <button type="button" class="info" (click)="openInfo('heatmap')" aria-label="How activity is counted"><i class="bi bi-info"></i></button>
+      </div>
+
+      <div class="heat__chart">
+        <div class="heat__months">
+          @for (w of weeks(); track $index) {
+            <span class="heat__month">{{ w.month }}</span>
+          }
+        </div>
+        <div class="heat__main">
+          <div class="heat__days">
+            @for (d of dayLabels; track $index) { <span>{{ d }}</span> }
+          </div>
+          <div class="heat__grid">
+            @for (w of weeks(); track $index) {
+              <div class="heat__col">
+                @for (day of w.days; track $index) {
+                  @if (day.level === null) {
+                    <span class="cell cell--none"></span>
+                  } @else {
+                    <span class="cell cell--{{ day.level }}" data-cell
+                          [title]="day.count + ' contribution' + (day.count === 1 ? '' : 's')"></span>
+                  }
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="heat__foot">
+        <div class="streaks">
+          @for (t of track(); track t.key) {
+            <span class="streak" data-reveal>
+              <i class="bi {{ t.icon }}"></i>
+              <span class="streak__val"><span #num [attr.data-target]="t.value" data-decimals="0">0</span>{{ t.unit ? ' ' + t.unit : '' }}</span>
+              <span class="streak__label">{{ t.label }}</span>
+            </span>
+          }
+          <button type="button" class="info info--inline" (click)="openInfo('streak')" aria-label="About streaks"><i class="bi bi-info"></i></button>
+        </div>
+        <div class="legend">
+          <span>Less</span>
+          <span class="cell cell--0"></span>
+          <span class="cell cell--1"></span>
+          <span class="cell cell--2"></span>
+          <span class="cell cell--3"></span>
+          <span class="cell cell--4"></span>
+          <span>More</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Metric cards -->
+    <div class="stats">
+      @for (stat of stats(); track stat.key) {
+        <article class="stat" [attr.data-accent]="stat.accent" data-reveal (pointermove)="tilt($event)" (pointerleave)="untilt($event)">
+          <button type="button" class="info" (click)="openInfo(stat.info)" [attr.aria-label]="'About ' + stat.label"><i class="bi bi-info"></i></button>
+          <span class="stat__icon"><i class="bi {{ stat.icon }}"></i></span>
+          <span class="stat__value"><span #num [attr.data-target]="stat.value" [attr.data-decimals]="stat.decimals ? 1 : 0">0</span><em>{{ stat.suffix }}</em></span>
+          <span class="stat__label">{{ stat.label }}</span>
+        </article>
+      }
+    </div>
+
+    <!-- Recent stream -->
+    <div class="stream" data-reveal>
+      <div class="stream__head">
+        <h2 class="stream__title"><span class="live-dot"></span> Recent stream</h2>
+      </div>
+      <ul class="stream__list">
+        @if (ready() && events().length) {
+          @for (e of events(); track e.text + e.at) {
+            <li class="event" [attr.data-accent]="e.accent" data-event>
+              <span class="event__dot"><i class="bi {{ e.icon }}"></i></span>
+              <span class="event__text" [title]="e.text">{{ e.text }}</span>
+              <span class="event__time">{{ relTime(e.at) }}</span>
+            </li>
+          }
+        } @else if (ready()) {
+          <li class="event event--empty" data-event>
+            <span class="event__dot"><i class="bi bi-stars"></i></span>
+            <span class="event__text">No activity yet — create a project or upload a file to get started.</span>
+          </li>
+        } @else {
+          @for (s of [1,2,3,4]; track s) { <li class="event event--skel"></li> }
+        }
+      </ul>
+    </div>
+  </div>
+
+  @if (activeInfo(); as info) {
+    <div class="modal" (click)="closeInfo()">
+      <div class="modal__card" (click)="$event.stopPropagation()">
+        <span class="modal__glow" aria-hidden="true"></span>
+        <div class="modal__head">
+          <span class="modal__icon"><i class="bi bi-info-lg"></i></span>
+          <h3 class="modal__title">{{ info.title }}</h3>
+          <button type="button" class="modal__close" (click)="closeInfo()" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <p class="modal__body">{{ info.body }}</p>
+      </div>
+    </div>
+  }
+</section>

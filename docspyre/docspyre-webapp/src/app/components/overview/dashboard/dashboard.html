@@ -1,0 +1,134 @@
+<section #root class="dash" (pointermove)="onPointerMove($event)">
+  <div class="dash__bg" aria-hidden="true">
+    <span class="orb orb--1" data-parallax></span>
+    <span class="orb orb--2" data-parallax></span>
+    <span class="grid-glow"></span>
+  </div>
+
+  <!-- Hero -->
+  <header class="hero" data-hero>
+    <div class="hero__intro">
+      <span class="hero__date">{{ today() }}</span>
+      <h1 class="hero__title">{{ greeting() }}, <span class="hl">{{ firstName() }}</span></h1>
+      <p class="hero__lead">Your workspace at a glance — jump back in or start something new.</p>
+
+      <div class="actions">
+        @for (a of quickActions; track a.label) {
+          <button type="button" class="action" [attr.data-accent]="a.accent" data-action
+                  (click)="go(a.route)" (pointermove)="tilt($event)" (pointerleave)="untilt($event)">
+            <span class="action__icon"><i class="bi {{ a.icon }}"></i></span>
+            <span class="action__text">
+              <span class="action__label">{{ a.label }}</span>
+              <span class="action__hint">{{ a.hint }}</span>
+            </span>
+            <i class="bi bi-arrow-right action__go"></i>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- This week mini chart -->
+    <aside class="week" data-hero>
+      <div class="week__head">
+        <span class="week__label">This week</span>
+        <span class="week__total"><span #num [attr.data-target]="weekTotal()" data-decimals="0">0</span> actions</span>
+      </div>
+      <div class="week__bars">
+        @for (v of week(); track $index) {
+          <div class="week__col">
+            <span class="week__bar" data-bar [style.height.%]="barHeight(v)" [class.is-zero]="v === 0"></span>
+            <span class="week__day">{{ weekLabels[$index] }}</span>
+          </div>
+        }
+      </div>
+      <a class="week__link" (click)="go('/app/overview/activity')">
+        View full activity <i class="bi bi-arrow-right"></i>
+      </a>
+    </aside>
+  </header>
+
+  <!-- KPI strip -->
+  <div class="kpis">
+    @for (k of kpis(); track k.key) {
+      <button type="button" class="kpi" [attr.data-accent]="k.accent" data-kpi (click)="go('/app/overview/activity')">
+        <span class="kpi__icon"><i class="bi {{ k.icon }}"></i></span>
+        <span class="kpi__body">
+          <span class="kpi__value"><span #num [attr.data-target]="k.value" [attr.data-decimals]="k.decimals ? 1 : 0">0</span><em>{{ k.suffix }}</em></span>
+          <span class="kpi__label">{{ k.label }}</span>
+        </span>
+      </button>
+    }
+  </div>
+
+  <!-- Main grid -->
+  <div class="grid">
+    <!-- Jump back in -->
+    <section class="panel" data-reveal>
+      <div class="panel__head">
+        <h2 class="panel__title"><i class="bi bi-arrow-counterclockwise"></i> Jump back in</h2>
+        <a class="panel__link" (click)="go('/app/workspace/my-projects')">All projects</a>
+      </div>
+      @if (ready() && recentProjects().length) {
+        <div class="resume">
+          @for (p of recentProjects(); track p.id; let i = $index) {
+            <button type="button" class="resume__card" [attr.data-accent]="accentAt(i)"
+                    (click)="openProject(p.id)" (pointermove)="tilt($event)" (pointerleave)="untilt($event)">
+              <span class="resume__icon"><i class="bi bi-folder-fill"></i></span>
+              <span class="resume__name" [title]="p.name">{{ p.name }}</span>
+              <span class="resume__meta"><i class="bi bi-people-fill"></i> {{ p.memberCount }} · <i class="bi bi-file-earmark-fill"></i> {{ p.fileCount }}</span>
+              <span class="resume__go">Resume <i class="bi bi-arrow-right"></i></span>
+            </button>
+          }
+        </div>
+      } @else if (ready()) {
+        <div class="empty"><i class="bi bi-folder2-open"></i> No projects yet — create your first one.</div>
+      } @else {
+        <div class="resume"><span class="sk"></span><span class="sk"></span></div>
+      }
+    </section>
+
+    <!-- Recent files -->
+    <section class="panel" data-reveal>
+      <div class="panel__head">
+        <h2 class="panel__title"><i class="bi bi-clock-history"></i> Recent files</h2>
+        <a class="panel__link" (click)="go('/app/workspace/my-documents')">All files</a>
+      </div>
+      @if (ready() && recentDocs().length) {
+        <ul class="files">
+          @for (d of recentDocs(); track d.id) {
+            <li class="file" [attr.data-accent]="docAccent(d)" (click)="openDoc(d)">
+              <span class="file__icon"><i class="bi {{ docIcon(d) }}"></i></span>
+              <span class="file__text">
+                <span class="file__name" [title]="d.name">{{ d.name }}</span>
+                <span class="file__meta">{{ size(d.sizeBytes) }}</span>
+              </span>
+              <i class="bi bi-eye file__eye"></i>
+            </li>
+          }
+        </ul>
+      } @else if (ready()) {
+        <div class="empty"><i class="bi bi-inboxes"></i> Upload a file to see it here.</div>
+      } @else {
+        <ul class="files"><li class="sk sk--row"></li><li class="sk sk--row"></li><li class="sk sk--row"></li></ul>
+      }
+    </section>
+  </div>
+
+  <!-- Suite shortcuts -->
+  <section class="suites-wrap" data-reveal>
+    <h2 class="panel__title panel__title--pad"><i class="bi bi-compass"></i> Explore suites</h2>
+    <div class="suites">
+      @for (s of suites(); track s.id) {
+        <button type="button" class="suite" [attr.data-accent]="s.accent"
+                (click)="go(s.route)" (pointermove)="tilt($event)" (pointerleave)="untilt($event)">
+          <span class="suite__glow" aria-hidden="true"></span>
+          <span class="suite__icon"><i class="bi {{ s.icon }}"></i></span>
+          <span class="suite__label">{{ s.label }}</span>
+          <span class="suite__count">{{ s.count }} tools</span>
+        </button>
+      }
+    </div>
+  </section>
+</section>
+
+<app-document-viewer [doc]="viewing()" (closed)="closeViewer()" />

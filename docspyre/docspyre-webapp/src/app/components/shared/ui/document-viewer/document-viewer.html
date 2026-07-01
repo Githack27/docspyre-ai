@@ -1,0 +1,136 @@
+@if (doc(); as d) {
+  <div class="viewer" (click)="close()">
+    <div class="viewer__shell" (click)="$event.stopPropagation()">
+      <header class="viewer__bar">
+        <div class="viewer__id">
+          <span class="viewer__kind" [attr.data-kind]="d.kind"><i class="bi" [class]="
+            d.kind === 'IMAGE' ? 'bi-image' :
+            d.kind === 'VIDEO' ? 'bi-camera-video' :
+            d.kind === 'AUDIO' ? 'bi-music-note-beamed' :
+            d.kind === 'PDF' ? 'bi-file-earmark-pdf' :
+            d.kind === 'DOCUMENT' ? 'bi-file-earmark-text' : 'bi-file-earmark'"></i></span>
+          <span class="viewer__name" [title]="d.name">{{ d.name }}</span>
+        </div>
+        <div class="viewer__tools">
+          <button type="button" class="vbtn" (click)="download()" title="Download"><i class="bi bi-download"></i></button>
+          <button type="button" class="vbtn vbtn--danger" (click)="removeCurrent()" title="Move to Trash"><i class="bi bi-trash"></i></button>
+          <button type="button" class="vbtn" (click)="close()" title="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+      </header>
+
+      <div class="viewer__stage">
+        @if (loading()) {
+          <div class="viewer__msg"><i class="bi bi-arrow-repeat spin"></i> Loading…</div>
+        } @else if (error()) {
+          <div class="viewer__msg"><i class="bi bi-exclamation-triangle"></i> {{ error() }}</div>
+        } @else if (url(); as src) {
+
+          @switch (renderKind()) {
+            @case ('IMAGE') {
+              <div class="stage-image" (wheel)="onWheel($event)">
+                <img
+                  [src]="src"
+                  [alt]="d.name"
+                  [style.transform]="'translate(' + panX() + 'px,' + panY() + 'px) scale(' + zoom() + ')'"
+                  [style.cursor]="zoom() > 1 ? 'grab' : 'default'"
+                  (pointerdown)="startPan($event)"
+                  (pointermove)="movePan($event)"
+                  (pointerup)="endPan()"
+                  (pointercancel)="endPan()"
+                  draggable="false"
+                />
+              </div>
+            }
+
+            @case ('VIDEO') {
+              <div class="stage-media">
+                <video #media [src]="src" (loadedmetadata)="onLoadedMeta()" (timeupdate)="onTimeUpdate()"
+                       (ended)="onEnded()" (click)="togglePlay()"></video>
+              </div>
+            }
+
+            @case ('AUDIO') {
+              <div class="stage-audio">
+                <div class="audio-orb" [class.is-playing]="playing()"><i class="bi bi-music-note-beamed"></i></div>
+                <p class="audio-name">{{ d.name }}</p>
+                <audio #media [src]="src" (loadedmetadata)="onLoadedMeta()" (timeupdate)="onTimeUpdate()" (ended)="onEnded()"></audio>
+              </div>
+            }
+
+            @case ('PDF') {
+              <div class="stage-pdf">
+                @if (pdfRendering()) { <div class="pdf-loading"><i class="bi bi-arrow-repeat spin"></i></div> }
+                <canvas #pdfCanvas class="pdf-canvas"></canvas>
+              </div>
+            }
+
+            @default {
+              <div class="stage-file">
+                <i class="bi bi-file-earmark-arrow-down"></i>
+                <p>No inline preview for this file type.</p>
+                <button type="button" class="vbtn vbtn--solid" (click)="download()">
+                  <i class="bi bi-download"></i> Download
+                </button>
+              </div>
+            }
+          }
+        }
+      </div>
+
+      <!-- Per-kind custom control rails -->
+      @if (!loading() && !error() && url()) {
+        @switch (renderKind()) {
+          @case ('IMAGE') {
+            <footer class="ctrl">
+              <button type="button" class="cbtn" (click)="zoomBy(-0.2)"><i class="bi bi-zoom-out"></i></button>
+              <span class="ctrl__val">{{ (zoom() * 100) | number:'1.0-0' }}%</span>
+              <button type="button" class="cbtn" (click)="zoomBy(0.2)"><i class="bi bi-zoom-in"></i></button>
+              <button type="button" class="cbtn" (click)="resetZoom()"><i class="bi bi-arrow-counterclockwise"></i></button>
+            </footer>
+          }
+          @case ('VIDEO') {
+            <footer class="ctrl ctrl--media">
+              <button type="button" class="cbtn" (click)="togglePlay()">
+                <i class="bi" [class.bi-play-fill]="!playing()" [class.bi-pause-fill]="playing()"></i>
+              </button>
+              <span class="ctrl__time">{{ formatTime(currentTime()) }}</span>
+              <input class="scrub" type="range" min="0" [max]="duration() || 0" step="0.1"
+                     [value]="currentTime()" (input)="seek($event)" [style.--p]="progress + '%'" />
+              <span class="ctrl__time">{{ formatTime(duration()) }}</span>
+              <button type="button" class="cbtn" (click)="toggleMute()">
+                <i class="bi" [class.bi-volume-up-fill]="!muted()" [class.bi-volume-mute-fill]="muted()"></i>
+              </button>
+              <input class="vol" type="range" min="0" max="1" step="0.05" [value]="volume()" (input)="setVolume($event)" />
+              <button type="button" class="cbtn" (click)="toggleFullscreen()"><i class="bi bi-fullscreen"></i></button>
+            </footer>
+          }
+          @case ('AUDIO') {
+            <footer class="ctrl ctrl--media">
+              <button type="button" class="cbtn" (click)="togglePlay()">
+                <i class="bi" [class.bi-play-fill]="!playing()" [class.bi-pause-fill]="playing()"></i>
+              </button>
+              <span class="ctrl__time">{{ formatTime(currentTime()) }}</span>
+              <input class="scrub" type="range" min="0" [max]="duration() || 0" step="0.1"
+                     [value]="currentTime()" (input)="seek($event)" [style.--p]="progress + '%'" />
+              <span class="ctrl__time">{{ formatTime(duration()) }}</span>
+              <button type="button" class="cbtn" (click)="toggleMute()">
+                <i class="bi" [class.bi-volume-up-fill]="!muted()" [class.bi-volume-mute-fill]="muted()"></i>
+              </button>
+            </footer>
+          }
+          @case ('PDF') {
+            <footer class="ctrl">
+              <button type="button" class="cbtn" (click)="pdfPrev()" [disabled]="pdfPage() <= 1"><i class="bi bi-chevron-left"></i></button>
+              <span class="ctrl__val">{{ pdfPage() }} / {{ pdfPages() || '–' }}</span>
+              <button type="button" class="cbtn" (click)="pdfNext()" [disabled]="pdfPage() >= pdfPages()"><i class="bi bi-chevron-right"></i></button>
+              <span class="ctrl__sep"></span>
+              <button type="button" class="cbtn" (click)="pdfZoom(-0.2)"><i class="bi bi-zoom-out"></i></button>
+              <button type="button" class="cbtn" (click)="pdfZoom(0.2)"><i class="bi bi-zoom-in"></i></button>
+            </footer>
+          }
+        }
+      }
+    </div>
+  </div>
+}
+

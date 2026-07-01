@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+
+# User-uploaded file storage (binaries are never committed).
+uploads/*
+!uploads/.gitkeep
