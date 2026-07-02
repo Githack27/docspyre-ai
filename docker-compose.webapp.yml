@@ -1,0 +1,40 @@
+# =============================================================================
+# Stack 3/3 — Web app (Angular 21 SSR, port 4000)
+# -----------------------------------------------------------------------------
+# The public entrypoint. Serves the SSR app; the browser calls the API at the
+# relative path `/api/v1`, so the same public host must also route /api to the
+# backend (see DEPLOYMENT.md).
+#
+# Local:   docker compose -f docker-compose.webapp.yml --env-file .env.webapp up -d --build
+# Dokploy: create a "Compose" service pointing at this file; attach the domain
+#          <your-host> with path prefix / .
+# =============================================================================
+
+name: docspyre-webapp
+
+services:
+  webapp:
+    build:
+      context: ./docspyre/docspyre-webapp
+      dockerfile: Dockerfile
+    image: docspyre-webapp:latest
+    container_name: docspyre-webapp
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+    expose:
+      - "4000"
+    networks:
+      - dokploy-network
+    # --- Traefik / Dokploy routing (reference) -------------------------------
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.docspyre-web.rule=Host(`app.example.com`)"
+    #   - "traefik.http.routers.docspyre-web.entrypoints=websecure"
+    #   - "traefik.http.routers.docspyre-web.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.docspyre-web.loadbalancer.server.port=4000"
+
+networks:
+  dokploy-network:
+    external: true

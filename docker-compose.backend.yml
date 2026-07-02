@@ -1,0 +1,58 @@
+# =============================================================================
+# Stack 2/3 — Backend API (Express + Prisma, port 8000)
+# -----------------------------------------------------------------------------
+# Deploy AFTER the db stack. Connects to Postgres over the shared
+# `dokploy-network` using the service hostname `docspyre-postgres`.
+#
+# Local:   docker compose -f docker-compose.backend.yml --env-file .env.backend up -d --build
+# Dokploy: create a "Compose" service pointing at this file; attach the domain
+#          <your-host> with path prefix /api (see DEPLOYMENT.md).
+# =============================================================================
+
+name: docspyre-backend
+
+services:
+  backend:
+    build:
+      context: ./docspyre
+      dockerfile: docspyre-backend/Dockerfile
+    image: docspyre-backend:latest
+    container_name: docspyre-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8000
+      DATABASE_URL: ${DATABASE_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-7}
+      BCRYPT_SALT_ROUNDS: ${BCRYPT_SALT_ROUNDS:-12}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      UPLOAD_DIR: ${UPLOAD_DIR:-uploads}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-104857600}
+      TRASH_RETENTION_DAYS: ${TRASH_RETENTION_DAYS:-30}
+    volumes:
+      # Uploaded files must survive redeploys.
+      - docspyre-uploads:/app/docspyre-backend/uploads
+    expose:
+      - "8000"
+    networks:
+      - dokploy-network
+    # --- Traefik / Dokploy routing (reference) -------------------------------
+    # Dokploy usually sets these from the UI when you add a domain. If you wire
+    # Traefik manually, route /api on the public host to this service:
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.docspyre-api.rule=Host(`app.example.com`) && PathPrefix(`/api`)"
+    #   - "traefik.http.routers.docspyre-api.entrypoints=websecure"
+    #   - "traefik.http.routers.docspyre-api.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.docspyre-api.loadbalancer.server.port=8000"
+
+volumes:
+  docspyre-uploads:
+
+networks:
+  dokploy-network:
+    external: true

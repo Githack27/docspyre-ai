@@ -1,0 +1,20 @@
+# Build context for the backend image is the `docspyre/` directory (it needs
+# both docspyre-backend and its `file:` dependency docspyre-database).
+# Everything else is excluded to keep the context small and builds fast.
+
+**/node_modules
+**/dist
+**/.angular
+**/.env
+**/.env.*
+**/*.log
+**/.git
+**/.DS_Store
+
+# Sibling modules not needed by the backend image
+docspyre-webapp
+docspyre-desktop
+docspyre-ai-services
+
+# Runtime data
+docspyre-backend/uploads
