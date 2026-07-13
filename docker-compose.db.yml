@@ -21,10 +21,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-docspyre_app}
     volumes:
       - docspyre-pgdata:/var/lib/postgresql/data
-    # Keep Postgres OFF the public internet. Uncomment only for trusted admin
-    # access, and prefer an SSH tunnel instead.
-    # ports:
-    #   - "5434:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-docspyre} -d ${POSTGRES_DB:-docspyre_app}"]
       interval: 10s
@@ -49,8 +45,6 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@docspyre.local}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-ChangeMe123!}
-    # Migrate only (default). To seed on first deploy, switch to:
-    # command: ["sh", "-c", "npx prisma migrate deploy && npx tsx prisma/seed.ts"]
     command: ["npx", "prisma", "migrate", "deploy"]
     networks:
       - dokploy-network

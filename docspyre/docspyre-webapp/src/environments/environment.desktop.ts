@@ -9,5 +9,5 @@
 export const environment = {
   production: true,
   desktop: true,
-  apiBaseUrl: 'https://docspyre-ai.onrender.com/api/v1',
+  apiBaseUrl: 'http://docspyre-api.detqel.com/api/v1',
 } as const;
