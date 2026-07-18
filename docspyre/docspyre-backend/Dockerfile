@@ -49,6 +49,10 @@ ENV NODE_ENV=production \
 COPY --from=build --chown=app:app /app/docspyre-database ./docspyre-database
 COPY --from=build --chown=app:app /app/docspyre-backend ./docspyre-backend
 
+# Ensure upload directory exists and is owned by the app user so that volume mounts
+# do not default to root-only permissions.
+RUN mkdir -p /app/docspyre-backend/uploads && chown -R app:app /app/docspyre-backend/uploads
+
 USER app
 WORKDIR /app/docspyre-backend
 

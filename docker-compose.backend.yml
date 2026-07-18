@@ -35,7 +35,7 @@ services:
       TRASH_RETENTION_DAYS: ${TRASH_RETENTION_DAYS:-30}
     volumes:
       # Uploaded files must survive redeploys.
-      - docspyre-uploads:/app/docspyre-backend/uploads
+      - ${BACKEND_UPLOAD_VOLUME:-docspyre-uploads}:/app/docspyre-backend/uploads
     expose:
       - "8000"
     networks:
