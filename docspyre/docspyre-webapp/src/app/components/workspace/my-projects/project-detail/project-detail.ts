@@ -1,5 +1,5 @@
 import { Component, PLATFORM_ID, inject, signal } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { WorkspaceService } from '../../../../core/workspace/workspace.service';
 import { ProjectDetail, ProjectFile, ProjectMember } from '../../../../core/workspace/workspace.models';
@@ -8,10 +8,12 @@ import { DocumentService } from '../../../../core/documents/document.service';
 import { DocumentItem, kindFromMime } from '../../../../core/documents/document.models';
 import { DocumentViewer } from '../../../shared/ui/document-viewer/document-viewer';
 import { DocumentCard } from '../../../shared/ui/document-card/document-card';
+import { ChatService } from '../../../../core/chat/chat.service';
+import { ChatSession } from '../../../../core/chat/chat.models';
 
 @Component({
   selector: 'app-project-detail',
-  imports: [RouterLink, DocumentViewer, DocumentCard],
+  imports: [RouterLink, DocumentViewer, DocumentCard, DatePipe],
   templateUrl: './project-detail.html',
   styleUrl: './project-detail.css',
 })
@@ -20,9 +22,11 @@ export class ProjectDetailComponent {
   private readonly workspace = inject(WorkspaceService);
   private readonly documents = inject(DocumentService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly chatService = inject(ChatService);
 
   protected readonly project = signal<ProjectDetail | null>(null);
   protected readonly files = signal<ProjectFile[]>([]);
+  protected readonly chats = signal<ChatSession[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly uploading = signal(false);
@@ -53,11 +57,19 @@ export class ProjectDetailComponent {
         this.project.set(project);
         this.files.set(project.files);
         this.loading.set(false);
+        this.loadChats();
       },
       error: () => {
         this.error.set('This project could not be opened.');
         this.loading.set(false);
       },
+    });
+  }
+
+  private loadChats(): void {
+    this.chatService.list({ workspaceId: this.projectId }).subscribe({
+      next: (sessions) => this.chats.set(sessions),
+      error: () => {},
     });
   }
 

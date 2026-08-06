@@ -70,6 +70,9 @@
           (open)="open(doc)"
         >
           <span actions>
+            <a [routerLink]="['/app/document-ai/chat-with-document']" [queryParams]="{ documentId: doc.id }" class="tile__act" title="Chat with Document">
+              <i class="bi bi-chat-dots-fill text-emerald-500"></i>
+            </a>
             <button type="button" class="tile__act" (click)="openShare(doc)" title="Share">
               <i class="bi bi-share"></i>
             </button>

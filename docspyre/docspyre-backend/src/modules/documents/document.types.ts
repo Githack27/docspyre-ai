@@ -10,4 +10,7 @@ export interface PublicDocument {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
+  ingestionStatus: string;
+  ingestionError: string | null;
+  pageCount: number | null;
 }

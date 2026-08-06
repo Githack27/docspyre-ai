@@ -97,6 +97,14 @@ export class NavigationService {
         { id: 'community-templates', label: 'Community Templates', icon: 'bi-people', route: '/app/templates/community-templates' },
       ],
     },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      route: '/app/configuration',
+      items: [
+        { id: 'settings', label: 'Settings', icon: 'bi-gear', route: '/app/configuration/settings' },
+      ],
+    },
   ]);
 
 

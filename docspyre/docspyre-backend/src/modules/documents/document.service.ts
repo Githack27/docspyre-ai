@@ -4,6 +4,7 @@ import { ApiError } from '../../utils/api-error';
 import { kindFromMime } from './document.kind';
 import { removeFile, saveBuffer } from './document.storage';
 import type { PublicDocument } from './document.types';
+import { ingestionQueue } from '../ChatDocument/queue.service';
 
 type DocumentRow = Prisma.DocumentGetPayload<Record<string, never>>;
 
@@ -22,6 +23,9 @@ const toPublic = (d: DocumentRow): PublicDocument => ({
   createdAt: d.createdAt,
   updatedAt: d.updatedAt,
   deletedAt: d.deletedAt,
+  ingestionStatus: d.ingestionStatus,
+  ingestionError: d.ingestionError,
+  pageCount: d.pageCount,
 });
 
 export const documentService = {
@@ -38,13 +42,31 @@ export const documentService = {
         sizeBytes: input.buffer.length,
       },
     });
+
+    // Enqueue document ingestion asynchronously
+    ingestionQueue.enqueue({
+      documentId: doc.id,
+      name: doc.name,
+      mimeType: doc.mimeType,
+      storageKey: doc.storageKey
+    });
+
     return toPublic(doc);
   },
 
   /** Active (non-trashed) documents for a user, optionally filtered by kind. */
   async list(ownerId: string, kind?: DocumentKind): Promise<PublicDocument[]> {
     const docs = await prisma.document.findMany({
-      where: { ownerId, deletedAt: null, ...(kind ? { kind } : {}) },
+      where: {
+        ownerId,
+        deletedAt: null,
+        workspaceFiles: {
+          none: {
+            deletedAt: null
+          }
+        },
+        ...(kind ? { kind } : {})
+      },
       orderBy: { createdAt: 'desc' },
     });
     return docs.map(toPublic);

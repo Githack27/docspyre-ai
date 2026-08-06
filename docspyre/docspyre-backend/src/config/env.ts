@@ -32,6 +32,9 @@ const envSchema = z.object({
 
   COOKIE_DOMAIN: z.string().optional(),
 
+  // Key used to encrypt sensitive configuration credentials (AES-256-GCM, must be 32 chars)
+  ENCRYPTION_KEY: z.string().length(32, 'ENCRYPTION_KEY must be exactly 32 characters'),
+
   // Absolute or relative (to backend cwd) directory for uploaded file storage.
   UPLOAD_DIR: z.string().default('uploads'),
   // Hard cap for a single uploaded file (bytes). Default 100 MB.

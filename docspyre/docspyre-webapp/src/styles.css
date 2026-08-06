@@ -29,7 +29,7 @@
   --tooltip-text: #f7f7f8;
   --btn-primary-from: #8a2be2;
   --btn-primary-to: #a855f7;
-  --btn-primary-glow: rgba(138, 43, 226, 0.35);
+  --btn-primary-glow: transparent;
   --accent-violet: #8a2be2;
   --accent-orange: #ff8a00;
   --accent-pink: #ff4e85;
@@ -55,7 +55,7 @@
   --active-highlight: var(--primary-color);
   --btn-primary-from: #22C7A9;
   --btn-primary-to: #22C7A9;
-  --btn-primary-glow: color-mix(in srgb, var(--primary-color) 50%, transparent);
+  --btn-primary-glow: transparent;
   --tooltip-bg: #0f0b1f;
   --tooltip-text: #f2f2f2;
 

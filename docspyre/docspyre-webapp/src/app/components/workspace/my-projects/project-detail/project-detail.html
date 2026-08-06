@@ -67,21 +67,30 @@
               [deleting]="deletingId() === file.id"
               (open)="openFile(file)"
             >
-              <button
-                actions
-                type="button"
-                class="file__del"
-                [disabled]="deletingId() === file.id"
-                (click)="removeFile(file)"
-                [attr.aria-label]="'Remove ' + file.name"
-                title="Remove from project"
-              >
-                @if (deletingId() === file.id) {
-                  <i class="bi bi-arrow-repeat spin"></i>
-                } @else {
-                  <i class="bi bi-trash"></i>
-                }
-              </button>
+              <span actions class="flex items-center gap-1">
+                <a
+                  [routerLink]="['/app/document-ai/chat-with-document']"
+                  [queryParams]="{ projectId: p.id, fileId: file.id }"
+                  class="file__chat animate-pulse"
+                  title="Chat with Document"
+                >
+                  <i class="bi bi-chat-dots-fill text-emerald-500"></i>
+                </a>
+                <button
+                  type="button"
+                  class="file__del"
+                  [disabled]="deletingId() === file.id"
+                  (click)="removeFile(file)"
+                  [attr.aria-label]="'Remove ' + file.name"
+                  title="Remove from project"
+                >
+                  @if (deletingId() === file.id) {
+                    <i class="bi bi-arrow-repeat spin"></i>
+                  } @else {
+                    <i class="bi bi-trash"></i>
+                  }
+                </button>
+              </span>
             </app-document-card>
           }
         </div>
@@ -92,6 +101,38 @@
           <span class="dropzone__hint">or use "From Documents" to attach existing uploads.</span>
           <input type="file" multiple hidden (change)="onFilesPicked($event)" />
         </label>
+      }
+    </div>
+
+    <!-- Document Chats Section -->
+    <div class="chats">
+      <div class="chats__head">
+        <h2 class="chats__title"><i class="bi bi-chat-dots-fill text-emerald-500"></i> Document Chats</h2>
+        <a [routerLink]="['/app/document-ai/chat-with-document']" [queryParams]="{ projectId: p.id }" class="btn btn--ghost">
+          <i class="bi bi-chat-dots"></i> Open Chat Room
+        </a>
+      </div>
+
+      @if (chats().length) {
+        <div class="chat-grid">
+          @for (chat of chats(); track chat.id) {
+            <a [routerLink]="['/app/document-ai/chat-with-document']" [queryParams]="{ sessionId: chat.id }" class="chat-row">
+              <span class="chat-row__info">
+                <span class="chat-row__icon"><i class="bi bi-chat-left-text-fill"></i></span>
+                <span class="chat-row__title" [title]="chat.title">{{ chat.title }}</span>
+              </span>
+              <span class="chat-row__meta">
+                Updated {{ chat.updatedAt | date:'short' }}
+              </span>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="state state--empty">
+          <i class="bi bi-chat-left-dots"></i>
+          <h3>No Chats Initiated Yet</h3>
+          <p>Click the chat icon on any document card above to start a conversation with your project team.</p>
+        </div>
       }
     </div>
   }

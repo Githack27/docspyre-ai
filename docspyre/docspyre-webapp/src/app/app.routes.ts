@@ -36,6 +36,10 @@ export const routes: Routes = [
         path: 'templates',
         loadChildren: () => import('./pages/templates/templates.routes').then((m) => m.TEMPLATES_ROUTES),
       },
+      {
+        path: 'configuration',
+        loadChildren: () => import('./pages/configuration/configuration.routes').then((m) => m.CONFIGURATION_ROUTES),
+      },
     ],
   },
   { path: '**', component: NotFound },

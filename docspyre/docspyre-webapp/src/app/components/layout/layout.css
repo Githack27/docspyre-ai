@@ -11,3 +11,9 @@
   flex: 1;
   min-height: 0;
 }
+
+@media (min-width: 1024px) {
+  .layout--no-sidebar app-sidebar {
+    display: none;
+  }
+}

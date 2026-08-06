@@ -1,9 +1,317 @@
-<section class="feature-page">
-  <header class="feature-page__head">
-    <i class="bi bi-chat-dots feature-page__icon"></i>
-    <div>
-      <h1 class="feature-page__title">Chat with Document</h1>
-      <p class="feature-page__desc">Ask questions and chat with your documents.</p>
+<section [class.feature-page]="!selectedDoc()" [class.chat-page-fullscreen]="selectedDoc()">
+  <!-- 1. DOCUMENT SELECTION VIEW -->
+  @if (!selectedDoc()) {
+    <header class="hero-banner">
+      <div class="hero-banner__content">
+        <span class="hero-banner__icon">
+          <i class="bi bi-chat-dots-fill"></i>
+          <span class="pulse-indicator"></span>
+        </span>
+        <div class="hero-banner__text">
+          <h1 class="hero-banner__title">Chat with <span class="gradient-text">Document AI</span></h1>
+          <p class="hero-banner__desc">Upload and interrogate your files in real time. Powered by isolated local workspace context.</p>
+        </div>
+        <div class="hero-banner__badge">
+          <span class="badge-pill">
+            <span class="badge-pill__pulse"></span>
+            AI Context Active
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button type="button" class="tab-btn" [class.is-active]="selectedTab() === 'my-documents'" (click)="setTab('my-documents')">
+        <i class="bi bi-file-earmark-richtext"></i> My Documents
+      </button>
+      <button type="button" class="tab-btn" [class.is-active]="selectedTab() === 'projects'" (click)="setTab('projects')">
+        <i class="bi bi-folder"></i> Projects / Workspaces
+      </button>
     </div>
-  </header>
+
+    <!-- Personal Documents Tab -->
+    @if (selectedTab() === 'my-documents') {
+      <label
+        class="drop"
+        [class.is-drag]="dragging()"
+        [class.is-busy]="uploading()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)"
+      >
+        <input type="file" multiple hidden (change)="onFilesPicked($event)" />
+        <span class="drop__icon">
+          @if (uploading()) { <i class="bi bi-arrow-repeat spin"></i> }
+          @else { <i class="bi bi-cloud-arrow-up-fill"></i> }
+        </span>
+        <span class="drop__title">
+          @if (uploading()) { Uploading… } @else { Drop files here or click to upload }
+        </span>
+        <span class="drop__hint">Drop files to upload and chat with them instantly</span>
+      </label>
+
+      @if (loadingDocs()) {
+        <div class="gallery">
+          @for (s of [1,2,3,4]; track s) { <div class="skeleton"></div> }
+        </div>
+      } @else if (personalDocs().length) {
+        <div class="gallery">
+          @for (doc of personalDocs(); track doc.id) {
+            <app-document-card
+              [name]="doc.name"
+              [mime]="doc.mimeType"
+              [sizeBytes]="doc.sizeBytes"
+              (open)="selectDoc({ id: doc.id, name: doc.name, kind: doc.kind, sizeBytes: doc.sizeBytes, workspaceId: null, workspaceFileId: null })"
+            >
+              <span actions>
+                <button
+                  type="button"
+                  class="tile__act"
+                  (click)="selectDoc({ id: doc.id, name: doc.name, kind: doc.kind, sizeBytes: doc.sizeBytes, workspaceId: null, workspaceFileId: null })"
+                  title="Start Chatting"
+                >
+                  <i class="bi bi-chat-dots-fill text-emerald-500"></i>
+                </button>
+              </span>
+            </app-document-card>
+          }
+        </div>
+      } @else {
+        <div class="state state--empty">
+          <i class="bi bi-folder2-open"></i>
+          <h3>No documents upload yet</h3>
+          <p>Drag & drop files above to populate your library and begin chatting.</p>
+        </div>
+      }
+    }
+
+    <!-- Projects / Workspaces Tab -->
+    @if (selectedTab() === 'projects') {
+      @if (!activeProject()) {
+        <!-- Projects Index List -->
+        @if (projects().length) {
+          <div class="proj-grid">
+            @for (p of projects(); track p.id) {
+              <button type="button" class="proj-card" (click)="selectProject(p)">
+                <span class="proj-card__glyph"><i class="bi bi-folder-fill"></i></span>
+                <span class="proj-card__info">
+                  <span class="proj-card__name">{{ p.name }}</span>
+                  <span class="proj-card__meta">
+                    <span class="role role--owner">{{ p.role }}</span>
+                    <span><i class="bi bi-file-earmark-fill"></i> {{ p.fileCount }} files</span>
+                  </span>
+                </span>
+                <i class="bi bi-chevron-right proj-card__arrow"></i>
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="state state--empty">
+            <i class="bi bi-folder-x"></i>
+            <h3>No Projects Available</h3>
+            <p>Go to Workspace > My Projects to group files into projects.</p>
+          </div>
+        }
+      } @else {
+        <!-- Inside Selected Project: list workspace files -->
+        <div class="project-view-head">
+          <button type="button" class="dbtn dbtn--ghost" (click)="deselectProject()">
+            <i class="bi bi-arrow-left"></i> Back to Projects
+          </button>
+          <h2>Files in {{ activeProject()?.name }}</h2>
+        </div>
+
+        @if (activeProject()?.files?.length) {
+          <div class="gallery">
+            @for (file of activeProject()!.files; track file.id) {
+              <app-document-card
+                [name]="file.name"
+                [mime]="file.kind"
+                [sizeBytes]="file.sizeBytes"
+                (open)="selectDoc({ id: file.documentId || file.id, name: file.name, kind: kindFromMime(file.kind), sizeBytes: file.sizeBytes || 0, workspaceId: activeProject()!.id, workspaceFileId: file.id })"
+              >
+                <span actions>
+                  <button
+                    type="button"
+                    class="tile__act"
+                    (click)="selectDoc({ id: file.documentId || file.id, name: file.name, kind: kindFromMime(file.kind), sizeBytes: file.sizeBytes || 0, workspaceId: activeProject()!.id, workspaceFileId: file.id })"
+                    title="Start Chatting"
+                  >
+                    <i class="bi bi-chat-dots-fill text-emerald-500"></i>
+                  </button>
+                </span>
+              </app-document-card>
+            }
+          </div>
+        } @else {
+          <div class="state state--empty">
+            <i class="bi bi-file-earmark-lock"></i>
+            <h3>No files in project</h3>
+            <p>Upload files directly to project page or link from My Documents first.</p>
+          </div>
+        }
+      }
+    }
+  }
+
+  <!-- 2. ACTIVE CHAT INTERFACE -->
+  @else {
+    <div class="chat-container">
+      <!-- Chat Header -->
+      <header class="chat-header">
+        <button type="button" class="back-btn" (click)="deselectDoc()">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+
+        <div class="chat-doc-card" [attr.data-accent]="docAccent(selectedDoc()!.kind)">
+          <span class="chat-doc-card__glyph"><i class="bi {{ docIcon(selectedDoc()!.kind) }}"></i></span>
+          <div class="chat-doc-card__info">
+            <h3 class="chat-doc-card__name" [title]="selectedDoc()!.name">{{ selectedDoc()!.name }}</h3>
+            <p class="chat-doc-card__meta">
+              {{ selectedDoc()!.kind }} · {{ formatSize(selectedDoc()!.sizeBytes) }}
+              @if (selectedDoc()!.workspaceId) {
+                · <span class="badge badge--project"><i class="bi bi-people-fill"></i> Project Chat</span>
+              } @else {
+                · <span class="badge badge--private"><i class="bi bi-lock-fill"></i> Private Chat</span>
+              }
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Sidebar + Chat Split Pane -->
+      <div class="chat-split">
+        <!-- ChatGPT-style Sidebar -->
+        <aside class="chat-sidebar">
+          <button type="button" class="new-chat-btn" (click)="createNewSession()">
+            <i class="bi bi-plus-lg"></i> New Chat Session
+          </button>
+
+          <div class="sidebar-list">
+            @if (sessions().length) {
+              @for (s of sessions(); track s.id) {
+                <div
+                  class="sidebar-item"
+                  [class.is-active]="activeSessionId() === s.id"
+                  (click)="selectSession(s.id)"
+                >
+                  <i class="bi bi-chat-left-text sidebar-item__icon"></i>
+
+                  @if (editingSessionId() === s.id) {
+                    <input
+                      type="text"
+                      class="sidebar-item__input"
+                      [(ngModel)]="editingSessionTitle"
+                      (keydown.enter)="saveRename(s)"
+                      (keydown.escape)="cancelRename()"
+                      (click)="$event.stopPropagation()"
+                      focus
+                    />
+                    <div class="sidebar-item__actions">
+                      <button type="button" class="sidebar-item__act" (click)="$event.stopPropagation(); saveRename(s)">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                      <button type="button" class="sidebar-item__act" (click)="$event.stopPropagation(); cancelRename()">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  } @else {
+                    <span class="sidebar-item__title" [title]="s.title">{{ s.title }}</span>
+                    <div class="sidebar-item__actions">
+                      <button type="button" class="sidebar-item__act" (click)="startRename(s, $event)" title="Rename">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button type="button" class="sidebar-item__act sidebar-item__act--danger" (click)="deleteSession(s, $event)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            } @else {
+              <div class="sidebar-empty">
+                <i class="bi bi-chat-square-dots"></i>
+                <p>No chat sessions for this document.</p>
+              </div>
+            }
+          </div>
+        </aside>
+
+        <!-- Main Chat Window -->
+        <main class="chat-win">
+          @if (loadingChat()) {
+            <div class="chat-win__loader">
+              <i class="bi bi-arrow-repeat spin"></i> Loading chat session...
+            </div>
+          } @else {
+            <div class="chat-win__messages">
+              @if (messages().length) {
+                @for (msg of messages(); track msg.id) {
+                  <div class="chat-msg" [class.chat-msg--user]="msg.role === 'user'" [class.chat-msg--assistant]="msg.role === 'assistant'">
+                    <div class="chat-msg__avatar">
+                      @if (msg.role === 'user') {
+                        <i class="bi bi-person-fill"></i>
+                      } @else {
+                        <i class="bi bi-robot"></i>
+                      }
+                    </div>
+                    <div class="chat-msg__body">
+                      <div class="chat-msg__sender">
+                        {{ msg.role === 'user' ? 'You' : 'Docspyre AI' }}
+                      </div>
+                      <div class="chat-msg__content">
+                        @if (msg.content === '') {
+                          <!-- Typing Indicator -->
+                          <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                          </div>
+                        } @else {
+                          {{ msg.content }}
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              } @else {
+                <div class="chat-win__empty">
+                  <i class="bi bi-robot"></i>
+                  <h2>How can I help you with this document?</h2>
+                  <p>Ask a question, ask to summarize specific sections, or query values in tables.</p>
+                </div>
+              }
+            </div>
+
+            <!-- Input area -->
+            <div class="chat-win__footer">
+              <div class="chat-win__input-container">
+                <textarea
+                  class="chat-win__input"
+                  placeholder="Type your message about this document... (Enter to send, Shift+Enter for new line)"
+                  [(ngModel)]="newMessage"
+                  (keydown)="onKeydown($event)"
+                  [disabled]="sending()"
+                  rows="1"
+                ></textarea>
+                <button
+                  type="button"
+                  class="chat-win__send-btn"
+                  [disabled]="!newMessage().trim() || sending()"
+                  (click)="sendMessage()"
+                >
+                  @if (sending()) {
+                    <i class="bi bi-arrow-repeat spin"></i>
+                  } @else {
+                    <i class="bi bi-send-fill"></i>
+                  }
+                </button>
+              </div>
+              <p class="chat-win__hint">Pressing Enter sends the message. AI context is maintained for this chat window.</p>
+            </div>
+          }
+        </main>
+      </div>
+    </div>
+  }
 </section>

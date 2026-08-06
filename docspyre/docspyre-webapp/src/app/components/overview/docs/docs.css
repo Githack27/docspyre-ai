@@ -322,16 +322,7 @@
 }
 
 .detail__glow {
-  position: absolute;
-  top: -60px;
-  right: -50px;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: var(--c);
-  opacity: 0.16;
-  filter: blur(46px);
-  pointer-events: none;
+  display: none;
 }
 .detail__head { display: flex; align-items: center; gap: 1rem; position: relative; }
 .detail__suite {

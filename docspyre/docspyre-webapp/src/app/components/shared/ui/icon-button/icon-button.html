@@ -1,0 +1,9 @@
+<button
+  type="button"
+  class="icon-btn"
+  [style.background]="color() || null"
+  [attr.aria-label]="value()"
+>
+  <i class="bi {{ icon() }}" aria-hidden="true"></i>
+</button>
+<div class="icon-btn__pill" role="tooltip">{{ value() }}</div>

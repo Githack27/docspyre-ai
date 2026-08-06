@@ -1,0 +1,196 @@
+<div class="settings-container">
+  <header class="settings-header">
+    <div class="settings-header__info">
+      <h1 class="settings-title">AI Provider Configuration</h1>
+      <p class="settings-subtitle">Connect, manage, and toggle multiple AI service providers and models.</p>
+    </div>
+    <button type="button" class="btn-add-provider" (click)="openModal()">
+      <i class="bi bi-plus-lg"></i>
+      <span>Add New Provider</span>
+    </button>
+  </header>
+
+  <!-- Connected Providers Grid -->
+  @if (providers().length > 0) {
+    <div class="providers-grid">
+      @for (provider of providers(); track provider.id) {
+        <div class="provider-card" [class.provider-card--inactive]="!provider.active">
+          <div class="provider-card__header">
+            <div class="provider-card__brand">
+              <span class="provider-card__icon" [class]="'provider-card__icon--' + provider.providerId">
+                <i class="bi {{ getProviderIconClass(provider.providerId) }}"></i>
+              </span>
+              <div class="provider-card__title-group">
+                <h3 class="provider-card__name">{{ provider.providerName }}</h3>
+                <span class="provider-card__model">{{ provider.model }}</span>
+              </div>
+            </div>
+            
+            <div class="provider-card__actions">
+              <!-- Custom Toggle Switch -->
+              <label class="switch" [attr.aria-label]="'Toggle ' + provider.providerName">
+                <input 
+                  type="checkbox" 
+                  [checked]="provider.active" 
+                  (change)="toggleProvider(provider.id, $event)"
+                />
+                <span class="slider"></span>
+              </label>
+
+              <!-- Edit Button -->
+              <button 
+                type="button" 
+                class="btn-edit" 
+                (click)="openEditModal(provider)"
+                [attr.aria-label]="'Edit ' + provider.providerName"
+              >
+                <i class="bi bi-pencil"></i>
+              </button>
+              
+              <!-- Delete Button -->
+              <button 
+                type="button" 
+                class="btn-delete" 
+                (click)="deleteProvider(provider.id)"
+                [attr.aria-label]="'Delete ' + provider.providerName"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="provider-card__body">
+            <div class="provider-info-row">
+              <span class="provider-info-label">API Key</span>
+              <span class="provider-info-value font-mono">••••••••••••••••</span>
+            </div>
+            @if (provider.systemPrompt) {
+              <div class="provider-info-row provider-info-row--prompt">
+                <span class="provider-info-label">System Prompt</span>
+                <p class="provider-info-prompt-preview" [title]="provider.systemPrompt">
+                  {{ provider.systemPrompt }}
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <div class="empty-state__icon">
+        <i class="bi bi-cpu"></i>
+      </div>
+      <h2>No Providers Connected</h2>
+      <p>Configure and enable at least one AI service provider to start analyzing your documents.</p>
+    </div>
+  }
+
+  <!-- Modal Dialog -->
+  @if (isModalOpen()) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <button type="button" class="modal-close-btn" (click)="closeModal()" aria-label="Close modal">
+          <i class="bi bi-x-lg"></i>
+        </button>
+
+        <div class="modal-split">
+          <!-- Left side: Providers list -->
+          <div class="modal-left">
+            <h2 class="modal-title">Select Provider</h2>
+            <div class="provider-list">
+              @for (p of availableProviders; track p.id) {
+                <button 
+                  type="button" 
+                  class="provider-select-btn" 
+                  [class.is-selected]="selectedProviderId() === p.id"
+                  (click)="selectProvider(p.id)"
+                >
+                  <span class="provider-select-btn__icon" [class]="'provider-card__icon--' + p.id">
+                    <i class="bi {{ getProviderIconClass(p.id) }}"></i>
+                  </span>
+                  <span class="provider-select-btn__name">{{ p.name }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Right side: Config Form -->
+          <div class="modal-right">
+            <h2 class="modal-title">
+              @if (editingProviderId) { Update Credentials } @else { Credentials & Config }
+            </h2>
+            
+            <form class="config-form" (submit)="$event.preventDefault(); connectProvider()">
+              <!-- Model Selection -->
+              <div class="form-group">
+                <label for="modelSelect">Select Model</label>
+                <select 
+                  id="modelSelect"
+                  name="modelSelect"
+                  [(ngModel)]="selectedModel" 
+                  class="form-control"
+                >
+                  @for (model of selectedProvider()?.models; track model) {
+                    <option [value]="model">{{ model }}</option>
+                  }
+                  <option value="custom">Custom Model...</option>
+                </select>
+              </div>
+
+              <!-- Custom Model Input -->
+              @if (selectedModel === 'custom') {
+                <div class="form-group animate-slide-down">
+                  <label for="customModel">Model Name / Identifier</label>
+                  <input 
+                    type="text" 
+                    id="customModel"
+                    name="customModel"
+                    [(ngModel)]="customModel" 
+                    placeholder="e.g. gpt-4-32k or claude-v1"
+                    class="form-control"
+                    required
+                  />
+                </div>
+              }
+
+              <!-- API Key Input -->
+              <div class="form-group">
+                <label for="apiKey">API Key</label>
+                <input 
+                  type="password" 
+                  id="apiKey"
+                  name="apiKey"
+                  [(ngModel)]="apiKey" 
+                  placeholder="Enter API key"
+                  class="form-control"
+                  required
+                />
+              </div>
+
+              <!-- Optional System Prompt -->
+              <div class="form-group">
+                <label for="systemPrompt">System Prompt (Optional)</label>
+                <textarea 
+                  id="systemPrompt"
+                  name="systemPrompt"
+                  [(ngModel)]="systemPrompt" 
+                  placeholder="Define custom persona or system guidelines for this model..."
+                  class="form-control"
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
+                <button type="submit" class="btn-connect">
+                  @if (editingProviderId) { Update Provider } @else { Connect Provider }
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

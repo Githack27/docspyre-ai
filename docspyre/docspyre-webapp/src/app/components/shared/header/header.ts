@@ -16,6 +16,7 @@ import { displayName, userInitials } from '../../../core/auth/user-display';
 import { NavCategory, NavigationService } from '../../../core/navigation/navigation.service';
 import { ShellService } from '../../../core/shell/shell.service';
 import { Button } from '../ui/button/button';
+import { IconButton } from '../ui/icon-button/icon-button';
 
 interface UserSummary {
   name: string;
@@ -26,7 +27,7 @@ interface UserSummary {
 
 @Component({
   selector: 'app-header',
-  imports: [Button],
+  imports: [Button, IconButton],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })

@@ -1,5 +1,6 @@
 import { Component, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { DocumentService } from '../../../core/documents/document.service';
 import {
   DOCUMENT_FILTERS,
@@ -14,7 +15,7 @@ import { DocumentCard } from '../../shared/ui/document-card/document-card';
 
 @Component({
   selector: 'app-my-documents',
-  imports: [DocumentViewer, ShareDialog, DocumentCard],
+  imports: [RouterLink, DocumentViewer, ShareDialog, DocumentCard],
   templateUrl: './my-documents.html',
   styleUrl: './my-documents.css',
 })
