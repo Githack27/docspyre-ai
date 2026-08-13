@@ -67,4 +67,9 @@ export const documentController = {
     await documentService.permanentDelete(req.auth!.userId, req.params.documentId!);
     res.status(204).send();
   }),
+
+  reingest: asyncHandler(async (req: Request, res: Response) => {
+    const document = await documentService.reingest(req.auth!.userId, req.params.documentId!);
+    res.status(200).json({ document });
+  }),
 };

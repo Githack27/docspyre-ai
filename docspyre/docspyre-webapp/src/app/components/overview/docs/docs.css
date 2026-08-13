@@ -58,9 +58,9 @@
 .btn--solid {
   background: var(--c, var(--accent));
   color: #fff;
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--c, var(--accent)) 32%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--c, var(--accent)) 20%, transparent);
 }
-.btn--solid:hover { transform: translateY(-2px); }
+.btn--solid:hover { transform: translateY(-2px); box-shadow: 0 4px 12px color-mix(in srgb, var(--c, var(--accent)) 25%, transparent); }
 
 
 .docs__hero {

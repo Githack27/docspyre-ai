@@ -148,4 +148,25 @@ export const documentService = {
     await Promise.all(expired.map((d) => removeFile(d.storageKey)));
     return expired.length;
   },
+
+  /** Re-triggers ingestion for a document (e.g. after migration creates the chunks table). */
+  async reingest(userId: string, documentId: string): Promise<PublicDocument> {
+    const doc = await documentService.getAccessible(userId, documentId);
+
+    await prisma.document.update({
+      where: { id: doc.id },
+      data: { ingestionStatus: 'QUEUED', ingestionError: null }
+    });
+
+    ingestionQueue.enqueue({
+      documentId: doc.id,
+      name: doc.name,
+      mimeType: doc.mimeType,
+      storageKey: doc.storageKey
+    });
+
+    return toPublic(
+      await prisma.document.findUniqueOrThrow({ where: { id: doc.id } })
+    );
+  },
 };

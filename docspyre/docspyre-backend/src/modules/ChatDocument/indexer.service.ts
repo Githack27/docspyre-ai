@@ -41,8 +41,12 @@ export const indexerService = {
     const words = text.toLowerCase().split(/[\s,.\-\/()\[\]{}#_!?]+/);
     const tokens = new Set<string>();
     for (const w of words) {
-      if (!w || STOP_WORDS.has(w) || w.length < 2) continue;
-      tokens.add(stemWord(w));
+      if (!w || STOP_WORDS.has(w)) continue;
+      // Keep short numeric tokens ("1", "2"): they are often the only thing
+      // distinguishing "layer 1" from "layer 2". Other 1-char tokens are noise.
+      const isNumeric = /^\d+$/.test(w);
+      if (w.length < 2 && !isNumeric) continue;
+      tokens.add(isNumeric ? w : stemWord(w));
     }
     return Array.from(tokens).filter(Boolean);
   },
@@ -55,7 +59,6 @@ export const indexerService = {
     if (!apiKey) return null;
 
     try {
-      console.log(`[IndexerService] Requesting Gemini embedding...`);
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
         {
@@ -69,8 +72,6 @@ export const indexerService = {
       );
 
       if (!response.ok) {
-        const errText = await response.text();
-        console.error(`[IndexerService] Gemini embedding API failed: status=${response.status}, body=${errText}`);
         return null;
       }
 
@@ -81,7 +82,6 @@ export const indexerService = {
       }
       return null;
     } catch (e) {
-      console.error(`[IndexerService] Gemini embedding request failed:`, e);
       return null;
     }
   },
@@ -91,8 +91,6 @@ export const indexerService = {
    */
   async getOllamaEmbedding(text: string): Promise<number[] | null> {
     try {
-      console.log(`[IndexerService] Requesting Ollama embedding...`);
-      // We try the standard Ollama endpoints. nomic-embed-text is the default text embedding model.
       const response = await fetch('http://localhost:11434/api/embed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -204,8 +202,6 @@ export const indexerService = {
    * Indexes all chunks generated from a document.
    */
   async indexChunks(documentId: string, chunks: Chunk[]): Promise<void> {
-    console.log(`[IndexerService] Indexing chunks for documentId=${documentId}. Count=${chunks.length}`);
-    
     // Clear any existing chunks for this document
     await prisma.documentChunk.deleteMany({
       where: { documentId }
@@ -237,9 +233,6 @@ export const indexerService = {
       });
 
       await Promise.all(createPromises);
-      console.log(`[IndexerService] Ingested batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(chunks.length / batchSize)}`);
     }
-
-    console.log(`[IndexerService] Successfully indexed all chunks for documentId=${documentId}`);
   }
 };

@@ -1,5 +1,6 @@
 import { prisma } from '../../db/prisma';
 import { indexerService } from './indexer.service';
+import type { ResolvedProvider } from './provider-resolver.service';
 
 export interface RetrievedChunk {
   chunk_id: string;
@@ -11,6 +12,24 @@ export interface RetrievedChunk {
   score: number;
   parent_text?: string;
   parent_chunk_id?: string | null;
+}
+
+// Track whether the document_chunks table exists
+let chunksTableAvailable: boolean | null = null;
+
+async function isChunksTableReady(): Promise<boolean> {
+  if (chunksTableAvailable === true) return true;
+
+  try {
+    const result: any[] = await (prisma as any).$queryRawUnsafe(
+      `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'document_chunks') AS "exists"`
+    );
+    chunksTableAvailable = result[0]?.exists === true;
+  } catch {
+    chunksTableAvailable = false;
+  }
+
+  return chunksTableAvailable ?? false;
 }
 
 // Dot product
@@ -54,9 +73,11 @@ export const retrieverService = {
   async retrieve(
     query: string,
     filters: { documentId?: string; workspaceId?: string },
-    topK = 5
+    topK = 5,
+    provider?: ResolvedProvider | null
   ): Promise<RetrievedChunk[]> {
-    console.log(`[RetrieverService] Starting retrieval for query="${query}", filters=${JSON.stringify(filters)}`);
+    // Skip if table doesn't exist yet (migration not applied)
+    if (!(await isChunksTableReady())) return [];
 
     // 1. Resolve Document IDs within scope
     let documentIds: string[] = [];
@@ -71,7 +92,6 @@ export const retrieverService = {
     }
 
     if (documentIds.length === 0) {
-      console.log(`[RetrieverService] No documents found in target scope.`);
       return [];
     }
 
@@ -84,11 +104,8 @@ export const retrieverService = {
     });
 
     if (childChunks.length === 0) {
-      console.log(`[RetrieverService] No indexed chunks found in scope.`);
       return [];
     }
-
-    console.log(`[RetrieverService] Scoring ${childChunks.length} child chunks...`);
 
     // 2. Dense Vector Retrieval
     const queryVector = await indexerService.generateEmbedding(query);
@@ -146,7 +163,6 @@ export const retrieverService = {
     }).sort((a, b) => b.score - a.score).slice(0, topK);
 
     // 6. Parent Chunk Expansion
-    console.log(`[RetrieverService] Expanding top-${reranked.length} matches to parent chunks...`);
     const results: RetrievedChunk[] = [];
     
     for (const item of reranked) {

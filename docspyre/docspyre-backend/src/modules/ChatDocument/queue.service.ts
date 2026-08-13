@@ -20,7 +20,6 @@ class IngestionQueue {
    * Enqueues a document for background ingestion.
    */
   enqueue(job: IngestionJob): void {
-    console.log(`[IngestionQueue] Enqueuing documentId=${job.documentId}, name=${job.name}`);
     this.queue.push(job);
     this.triggerProcessor();
   }
@@ -28,8 +27,7 @@ class IngestionQueue {
   private triggerProcessor(): void {
     if (this.processing) return;
     this.processing = true;
-    this.processNext().catch(err => {
-      console.error('[IngestionQueue] Processor crashed:', err);
+    this.processNext().catch(() => {
       this.processing = false;
     });
   }
@@ -41,7 +39,6 @@ class IngestionQueue {
     }
 
     const job = this.queue.shift()!;
-    console.log(`[IngestionQueue] Starting job documentId=${job.documentId}`);
 
     try {
       // 1. Set status to PARSING
@@ -80,11 +77,7 @@ class IngestionQueue {
         where: { id: job.documentId },
         data: { ingestionStatus: 'READY' }
       });
-
-      console.log(`[IngestionQueue] Job completed successfully for documentId=${job.documentId}`);
     } catch (error: any) {
-      console.error(`[IngestionQueue] Job failed for documentId=${job.documentId}:`, error);
-      
       // Update status to FAILED and record error message
       await prisma.document.update({
         where: { id: job.documentId },
@@ -92,13 +85,12 @@ class IngestionQueue {
           ingestionStatus: 'FAILED',
           ingestionError: error.message || 'Unknown parsing or indexing error'
         }
-      });
+      }).catch(() => {});
     }
 
     // Continue processing next job
     setTimeout(() => {
-      this.processNext().catch(err => {
-        console.error('[IngestionQueue] Background processor chain error:', err);
+      this.processNext().catch(() => {
         this.processing = false;
       });
     }, 100);

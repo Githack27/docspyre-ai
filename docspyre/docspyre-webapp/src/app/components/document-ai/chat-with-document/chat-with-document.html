@@ -267,8 +267,10 @@
                             <span></span>
                             <span></span>
                           </div>
-                        } @else {
+                        } @else if (msg.role === 'user') {
                           {{ msg.content }}
+                        } @else {
+                          <div class="md" [innerHTML]="msg.content | markdown"></div>
                         }
                       </div>
                     </div>

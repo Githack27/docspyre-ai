@@ -24,7 +24,6 @@ export const chunkerService = {
    * Returns a list of chunks (both parent and child chunks).
    */
   chunkDocument(docId: string, blocks: IRBlock[]): Chunk[] {
-    console.log(`[ChunkerService] Starting chunking for docId=${docId}, total blocks=${blocks.length}`);
     const result: Chunk[] = [];
 
     // Group blocks by sections to keep semantic cohesion
@@ -108,7 +107,6 @@ export const chunkerService = {
       }
     }
 
-    console.log(`[ChunkerService] Chunking complete. Generated total chunks=${result.length}`);
     return result;
   },
 

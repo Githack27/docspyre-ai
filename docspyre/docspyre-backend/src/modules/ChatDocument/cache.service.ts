@@ -1,103 +1,89 @@
 import { createHash } from 'node:crypto';
 import { prisma } from '../../db/prisma';
-import { indexerService } from './indexer.service';
 
 export interface CachedResponse {
   answer: string;
   citations: any;
 }
 
-// Simple Jaccard similarity between two sets of tokens
-function jaccardSimilarity(setA: Set<string>, setB: Set<string>): number {
-  const intersection = new Set([...setA].filter(x => setB.has(x)));
-  const union = new Set([...setA, ...setB]);
-  if (union.size === 0) return 0;
-  return intersection.size / union.size;
+// Track whether the semantic_caches table exists to avoid repeated error logs
+let cacheTableAvailable: boolean | null = null;
+
+async function isCacheTableReady(): Promise<boolean> {
+  if (cacheTableAvailable === true) return true;
+
+  try {
+    const result: any[] = await (prisma as any).$queryRawUnsafe(
+      `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'semantic_caches') AS "exists"`
+    );
+    cacheTableAvailable = result[0]?.exists === true;
+  } catch {
+    cacheTableAvailable = false;
+  }
+
+  return cacheTableAvailable ?? false;
 }
 
 export const cacheService = {
   /**
-   * Generates a stable hash for a query.
+   * Normalises a query into a stable cache identity. Only whitespace and case
+   * are collapsed — no stemming or stop-word removal, because those are lossy
+   * and would make semantically different questions share a key.
    */
   hashQuery(query: string): string {
-    const q = query.trim().toLowerCase();
+    const q = query.trim().toLowerCase().replace(/\s+/g, ' ');
     const hash = createHash('sha256');
     return hash.update(q).digest('hex');
   },
 
   /**
-   * Attempts to find a cached answer for a near-duplicate query in the target document or workspace.
+   * Looks up a previously generated answer for the *same* question in the same
+   * scope.
+   *
+   * Deliberately exact-match only. A previous implementation also accepted any
+   * entry with >= 0.85 Jaccard overlap on stemmed, stop-word-filtered tokens.
+   * That tokeniser discards tokens shorter than two characters, so "What is
+   * layer 1?" and "What is layer 2?" both collapsed to {layer} and scored 1.00,
+   * causing the first answer to be replayed for a different question. Fuzzy
+   * matching on a lossy token set cannot be made safe by tuning the threshold,
+   * so it is removed.
    */
   async find(
     query: string,
     filters: { documentId?: string; workspaceId?: string }
   ): Promise<CachedResponse | null> {
-    console.log(`[CacheService] Checking cache for query="${query}"`);
+    if (!(await isCacheTableReady())) return null;
 
-    const queryHash = this.hashQuery(query);
-    const whereClause: any = {
-      queryHash,
-      documentId: filters.documentId ?? null,
-      workspaceId: filters.workspaceId ?? null
-    };
+    try {
+      const exactMatch = await prisma.semanticCache.findFirst({
+        where: {
+          queryHash: this.hashQuery(query),
+          documentId: filters.documentId ?? null,
+          workspaceId: filters.workspaceId ?? null
+        }
+      });
 
-    // 1. Direct exact-hash match lookup (fastest)
-    const exactMatch = await prisma.semanticCache.findFirst({
-      where: whereClause
-    });
-
-    if (exactMatch) {
-      console.log(`[CacheService] Cache hit (exact match)`);
-      return {
-        answer: exactMatch.answer,
-        citations: exactMatch.citations
-      };
-    }
-
-    // 2. Semantic matching: fetch recent cache entries in the same scope
-    const recentCaches = await prisma.semanticCache.findMany({
-      where: {
-        documentId: filters.documentId ?? null,
-        workspaceId: filters.workspaceId ?? null
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 20
-    });
-
-    const queryTokens = new Set(indexerService.tokenizeText(query));
-    if (queryTokens.size === 0) return null;
-
-    for (const cached of recentCaches) {
-      const cachedTokens = new Set(indexerService.tokenizeText(cached.query));
-      const similarity = jaccardSimilarity(queryTokens, cachedTokens);
-
-      // Jaccard threshold: 85% overlap indicates near-duplicate semantically
-      if (similarity >= 0.85) {
-        console.log(`[CacheService] Cache hit (semantic similarity match: ${(similarity * 100).toFixed(0)}%)`);
-        return {
-          answer: cached.answer,
-          citations: cached.citations
-        };
+      if (exactMatch) {
+        return { answer: exactMatch.answer, citations: exactMatch.citations };
       }
-    }
 
-    console.log(`[CacheService] Cache miss`);
-    return null;
+      return null;
+    } catch {
+      cacheTableAvailable = false;
+      return null;
+    }
   },
 
-  /**
-   * Saves a response to the semantic cache.
-   */
   async save(
     query: string,
     filters: { documentId?: string; workspaceId?: string },
     answer: string,
     citations: any
   ): Promise<void> {
-    console.log(`[CacheService] Saving query to cache: "${query}"`);
-    const queryHash = this.hashQuery(query);
+    if (!(await isCacheTableReady())) return;
 
     try {
+      const queryHash = this.hashQuery(query);
       await prisma.semanticCache.create({
         data: {
           documentId: filters.documentId ?? null,
@@ -108,8 +94,8 @@ export const cacheService = {
           citations: citations as any
         }
       });
-    } catch (e) {
-      console.error(`[CacheService] Failed to write cache:`, e);
+    } catch {
+      cacheTableAvailable = false;
     }
   }
 };

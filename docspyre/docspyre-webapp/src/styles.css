@@ -72,7 +72,7 @@
 
 .dark .btn--solid {
   background: linear-gradient(135deg, var(--btn-primary-from) 0%, var(--btn-primary-to) 100%);
-  box-shadow: 0 6px 16px var(--btn-primary-glow);
+  box-shadow: 0 2px 8px var(--btn-primary-glow);
 }
 
 body {

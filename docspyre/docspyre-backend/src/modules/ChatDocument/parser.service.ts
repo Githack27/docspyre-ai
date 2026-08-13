@@ -39,8 +39,6 @@ export const parserService = {
     mimeType: string,
     buffer: Buffer
   ): Promise<UnifiedIR> {
-    console.log(`[ParserService] Starting parse for docId=${docId}, name=${name}, mime=${mimeType}`);
-    
     const isDocx = mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || name.endsWith('.docx');
     const isPdf = mimeType === 'application/pdf' || name.endsWith('.pdf');
 
@@ -53,7 +51,6 @@ export const parserService = {
         throw new Error(`Unsupported document format for file: ${name}`);
       }
     } catch (error: any) {
-      console.error(`[ParserService] Critical parsing error for docId=${docId}:`, error);
       throw error;
     }
   },
@@ -91,8 +88,6 @@ export const parserService = {
     let currentSectionPath: string[] = [];
     const pageCount = pageTexts.length;
 
-    console.log(`[ParserService] PDF parsed. Pages detected: ${pageCount}`);
-
     for (let pIdx = 0; pIdx < pageTexts.length; pIdx++) {
       const pageNum = pIdx + 1;
       const pageText = pageTexts[pIdx];
@@ -100,7 +95,6 @@ export const parserService = {
 
       // If page has almost no text, assume it's scanned and run mock OCR fallback
       if (pageText.trim().length < 20) {
-        console.log(`[ParserService] Page ${pageNum} is empty or scanned. Applying OCR fallback.`);
         const blockId = randomUUID();
         blocks.push({
           block_id: blockId,
@@ -265,7 +259,6 @@ export const parserService = {
    * DOCX Parser using mammoth to convert to HTML, and structured tag extraction to retain layouts/tables.
    */
   async parseDocx(docId: string, name: string, buffer: Buffer): Promise<UnifiedIR> {
-    console.log(`[ParserService] Rendering DOCX to HTML via mammoth`);
     const { value: html } = await mammoth.convertToHtml({ buffer });
 
     const blocks: IRBlock[] = [];

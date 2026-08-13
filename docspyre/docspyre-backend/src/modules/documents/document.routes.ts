@@ -20,5 +20,6 @@ router.get('/:documentId/raw', validate({ params: documentIdParam }), documentCo
 router.post('/:documentId/restore', validate({ params: documentIdParam }), documentController.restore);
 router.delete('/:documentId/permanent', validate({ params: documentIdParam }), documentController.purge);
 router.delete('/:documentId', validate({ params: documentIdParam }), documentController.remove);
+router.post('/:documentId/reingest', validate({ params: documentIdParam }), documentController.reingest);
 
 export { router as documentRoutes };

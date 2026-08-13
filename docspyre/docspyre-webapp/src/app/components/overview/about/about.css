@@ -49,7 +49,7 @@
 .btn--solid {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 .btn--ghost { background: var(--surface); color: var(--text-strong); border-color: var(--border-soft); }
 .btn:hover { transform: translateY(-2px); }

@@ -14,10 +14,7 @@ declare global {
 
 const createPrismaClient = (): PrismaClient =>
   new PrismaClient({
-    log:
-      process.env.NODE_ENV === 'production'
-        ? ['warn', 'error']
-        : ['query', 'warn', 'error'],
+    log: ['warn', 'error'],
   });
 
 export const prisma: PrismaClient = globalThis.__docspyrePrisma ?? createPrismaClient();

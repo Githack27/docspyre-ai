@@ -30,7 +30,7 @@
 .icon-btn:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-hover);
-  filter: brightness(1.08);
+  filter: brightness(1.03);
 }
 
 .icon-btn:active {

@@ -50,8 +50,8 @@
 }
 
 .app-btn--primary:hover:not(:disabled) {
-  filter: brightness(1.05);
-  box-shadow: 0 8px 22px var(--btn-primary-glow);
+  filter: brightness(1.02);
+  box-shadow: 0 6px 18px var(--btn-primary-glow);
 }
 
 .app-btn__label {

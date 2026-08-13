@@ -5,6 +5,7 @@ import { cacheService } from './cache.service';
 import { retrieverService } from './retriever.service';
 import { generatorService } from './generator.service';
 import { verifierService } from './verifier.service';
+import { providerResolverService } from './provider-resolver.service';
 import { asyncHandler } from '../../utils/async-handler';
 import { ApiError } from '../../utils/api-error';
 
@@ -24,37 +25,47 @@ export const chatDocumentController = {
       throw ApiError.badRequest('Message content is required');
     }
 
-    console.log(`[ChatDocumentController] Stream request received for sessionId=${sessionId}, query="${content.slice(0, 50)}..."`);
+    // Resolve the user's configured AI provider
+    const provider = await providerResolverService.resolve(userId);
 
-    // 1. Authorise user and load chat session details (enforces workspace/document access checks)
+    // 1. Authorise user and load chat session details
     const session = await chatService.getSessionDetail(userId, sessionId);
+
+    // 2. Save user message immediately so it persists regardless of pipeline outcome
+    await prisma.chatMessage.create({
+      data: { sessionId, senderId: userId, role: 'user', content }
+    });
+    await prisma.chatSession.update({
+      where: { id: sessionId },
+      data: { updatedAt: new Date() }
+    });
 
     // Resolve query filters based on session parameters
     const filters: { documentId?: string; workspaceId?: string } = {};
-    if (session.workspaceId) {
-      filters.workspaceId = session.workspaceId;
-    } else if (session.documentId) {
-      filters.documentId = session.documentId;
-    } else if (session.workspaceFileId) {
-      // Find document linked to this workspace file
+    if (session.workspaceFileId) {
+      // Specific file in a workspace — resolve its linked document
       const wFile = await prisma.workspaceFile.findUnique({
         where: { id: session.workspaceFileId }
       });
       if (wFile && wFile.documentId) {
         filters.documentId = wFile.documentId;
+      } else if (session.workspaceId) {
+        filters.workspaceId = session.workspaceId;
       }
+    } else if (session.documentId) {
+      filters.documentId = session.documentId;
+    } else if (session.workspaceId) {
+      filters.workspaceId = session.workspaceId;
     }
 
-    // 2. Check Semantic Cache
+    // 3. Check Semantic Cache
     const cached = await cacheService.find(content, filters);
     if (cached) {
-      // Setup SSE Headers
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
 
-      // Stream cached text
       const tokens = cached.answer.split(/(\s+)/);
       for (const token of tokens) {
         if (!token) continue;
@@ -62,7 +73,6 @@ export const chatDocumentController = {
         await new Promise(resolve => setTimeout(resolve, 15));
       }
 
-      // Stream final event with cached citations and verification status
       res.write(`data: ${JSON.stringify({
         done: true,
         citations: cached.citations,
@@ -71,33 +81,49 @@ export const chatDocumentController = {
 
       res.end();
 
-      // Save user & assistant messages to the DB
-      await prisma.chatMessage.create({
-        data: { sessionId, senderId: userId, role: 'user', content }
-      });
+      // Save assistant response
       await prisma.chatMessage.create({
         data: { sessionId, senderId: null, role: 'assistant', content: cached.answer }
       });
-      await prisma.chatSession.update({
-        where: { id: sessionId },
-        data: { updatedAt: new Date() }
-      });
 
-      console.log(`[ChatDocumentController] Stream finished via cached match.`);
       return;
     }
 
-    // 3. Retrieval
-    const retrievedChunks = await retrieverService.retrieve(content, filters);
+    // 4. Intent classification runs first so that conversational turns can skip
+    // retrieval entirely.
+    const intent = await generatorService.classifyIntent(content, provider);
 
-    // 4. Intent Classification
-    const intent = await generatorService.classifyIntent(content);
+    // 5. Retrieval. Skipped for greetings/small talk: pulling document excerpts
+    // for "Hi" invites an answer that ignores what the user actually said.
+    let retrievedChunks: Awaited<ReturnType<typeof retrieverService.retrieve>> = [];
+    if (intent !== 'out_of_scope') {
+      try {
+        retrievedChunks = await retrieverService.retrieve(content, filters, 5, provider);
+      } catch {
+        // document_chunks table may not exist yet — proceed with empty context
+      }
+    }
 
-    // 5. Generate and Stream SSE response
-    const genResult = await generatorService.streamResponse(content, intent, retrievedChunks, res);
+    // 6. Recent conversation history so follow-ups like "why?" resolve correctly.
+    // `session` was loaded before the current message was saved, so it holds only
+    // prior turns. Trimmed to the last few to bound prompt size.
+    const history = session.messages
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .slice(-6)
+      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
-    // 6. Claim Verification (post-generation check)
-    const verificationResult = await verifierService.verifyAnswer(genResult.text, genResult.citations, retrievedChunks);
+    // 7. Generate and Stream SSE response
+    const genResult = await generatorService.streamResponse(
+      content,
+      intent,
+      retrievedChunks,
+      res,
+      provider,
+      history
+    );
+
+    // 8. Claim Verification
+    const verificationResult = await verifierService.verifyAnswer(genResult.text, genResult.citations, retrievedChunks, provider);
 
     // Send final payload
     res.write(`data: ${JSON.stringify({
@@ -108,21 +134,17 @@ export const chatDocumentController = {
 
     res.end();
 
-    // 7. Save to Cache
-    await cacheService.save(content, filters, genResult.text, genResult.citations);
-
-    // 8. Save user and assistant messages to database history
-    await prisma.chatMessage.create({
-      data: { sessionId, senderId: userId, role: 'user', content }
-    });
+    // 9. Save assistant message
     await prisma.chatMessage.create({
       data: { sessionId, senderId: null, role: 'assistant', content: genResult.text }
     });
-    await prisma.chatSession.update({
-      where: { id: sessionId },
-      data: { updatedAt: new Date() }
-    });
 
-    console.log(`[ChatDocumentController] Stream finished successfully. Verification status: ${verificationResult.status}`);
+    // 10. Cache only genuine, grounded answers. Degraded output (offline mock) or
+    // answers produced with no retrieved context must not be cached, otherwise a
+    // transient failure gets replayed forever for the same query.
+    const isCacheable = genResult.source !== 'fallback' && retrievedChunks.length > 0;
+    if (isCacheable) {
+      await cacheService.save(content, filters, genResult.text, genResult.citations);
+    }
   })
 };

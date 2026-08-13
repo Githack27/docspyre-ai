@@ -164,8 +164,8 @@
   text-decoration: none;
   transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
-.btn--solid { background: var(--accent); color: #fff; box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 30%, transparent); }
-.btn--solid:hover { transform: translateY(-2px); }
+.btn--solid { background: var(--accent); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent); }
+.btn--solid:hover { transform: translateY(-2px); box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 25%, transparent); }
 .btn--ghost { background: var(--surface); color: var(--text-strong); border-color: var(--border-soft); }
 .btn--ghost:hover { border-color: var(--accent); color: var(--accent); }
 

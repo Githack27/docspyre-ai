@@ -80,9 +80,9 @@
 }
 
 .btn-add-provider:hover {
-  transform: translateY(-3px);
-  filter: brightness(1.08);
-  box-shadow: 0 8px 24px var(--btn-primary-glow);
+  transform: translateY(-2px);
+  filter: brightness(1.02);
+  box-shadow: 0 4px 14px var(--btn-primary-glow);
 }
 
 .btn-add-provider:active {
@@ -584,8 +584,8 @@ textarea.form-control {
 }
 
 .btn-connect:hover {
-  transform: translateY(-1.5px);
-  filter: brightness(1.05);
+  transform: translateY(-1px);
+  filter: brightness(1.02);
 }
 
 .btn-connect:active {
@@ -599,13 +599,13 @@ textarea.form-control {
 }
 
 @keyframes modal-slide-up {
-  from { 
+  from {
     opacity: 0;
-    transform: translateY(32px) scale(0.96); 
+    transform: translateY(32px) scale(0.96);
   }
-  to { 
+  to {
     opacity: 1;
-    transform: translateY(0) scale(1); 
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -629,7 +629,7 @@ textarea.form-control {
   .modal-overlay {
     padding: 0;
   }
-  
+
   .modal-card {
     height: 100%;
     max-height: 100%;
@@ -655,7 +655,7 @@ textarea.form-control {
     width: 100%;
     padding: 1.5rem;
   }
-  
+
   .form-actions {
     margin-top: 1.5rem;
   }

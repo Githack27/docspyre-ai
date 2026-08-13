@@ -9,10 +9,11 @@ import { DocumentItem, viewerKind, kindFromMime } from '../../../core/documents/
 import { WorkspaceService } from '../../../core/workspace/workspace.service';
 import { ProjectSummary, ProjectDetail, ProjectFile } from '../../../core/workspace/workspace.models';
 import { DocumentCard } from '../../shared/ui/document-card/document-card';
+import { MarkdownPipe } from '../../../core/markdown/markdown-pipe';
 
 @Component({
   selector: 'app-chat-with-document',
-  imports: [FormsModule, DocumentCard],
+  imports: [FormsModule, DocumentCard, MarkdownPipe],
   templateUrl: './chat-with-document.html',
   styleUrl: './chat-with-document.css',
 })
@@ -379,7 +380,7 @@ export class ChatWithDocument {
 
       // Optimistically add user message to list
       const tempUserMsg: ChatMessage = {
-        id: 'temp-user',
+        id: 'temp-user-' + Date.now(),
         sessionId,
         senderId: 'user',
         role: 'user',
@@ -389,36 +390,69 @@ export class ChatWithDocument {
       this.messages.update((list) => [...list, tempUserMsg]);
       this.scrollToBottom();
 
-      // Show mock typing loader in list
-      const tempAiMsg: ChatMessage = {
-        id: 'temp-ai-typing',
+      // Add streaming AI message placeholder
+      const streamingMsgId = 'temp-ai-streaming-' + Date.now();
+      const streamingAiMsg: ChatMessage = {
+        id: streamingMsgId,
         sessionId,
         senderId: null,
         role: 'assistant',
-        content: '', // empty means typing state
+        content: '',
         createdAt: new Date().toISOString(),
       };
-      setTimeout(() => {
-        this.messages.update((list) => [...list, tempAiMsg]);
-        this.scrollToBottom();
-      }, 400);
+      this.messages.update((list) => [...list, streamingAiMsg]);
+      this.scrollToBottom();
 
-      this.chatService.addMessage(sessionId, text).subscribe({
-        next: (created) => {
-          // Remove temp user and typing message, reload chat detail to get actual responses
-          this.chatService.getDetail(sessionId).subscribe({
-            next: (detail) => {
-              this.messages.set(detail.messages);
-              this.sending.set(false);
-              this.scrollToBottom();
-            },
-            error: () => this.sending.set(false),
-          });
-        },
-        error: () => {
-          this.sending.set(false);
-          this.messages.update((list) => list.filter((m) => m.id !== 'temp-user' && m.id !== 'temp-ai-typing'));
-        },
+      let receivedAnyToken = false;
+
+      this.chatService.streamMessage(sessionId, text, (data) => {
+        if (data.token) {
+          receivedAnyToken = true;
+          // Append token to the streaming message
+          this.messages.update((list) =>
+            list.map((m) =>
+              m.id === streamingMsgId
+                ? { ...m, content: m.content + data.token }
+                : m
+            )
+          );
+          this.scrollToBottom();
+        }
+
+        if (data.done) {
+          if (receivedAnyToken) {
+            // Streaming succeeded — reload session to get persisted messages
+            this.chatService.getDetail(sessionId).subscribe({
+              next: (detail) => {
+                this.messages.set(detail.messages);
+                this.sending.set(false);
+                this.scrollToBottom();
+              },
+              error: () => this.sending.set(false),
+            });
+          } else {
+            // Stream produced no tokens (failed or provider unavailable).
+            // Fall back to the non-streaming endpoint.
+            this.messages.update((list) => list.filter((m) => m.id !== streamingMsgId));
+            this.chatService.addMessage(sessionId, text).subscribe({
+              next: () => {
+                this.chatService.getDetail(sessionId).subscribe({
+                  next: (detail) => {
+                    this.messages.set(detail.messages);
+                    this.sending.set(false);
+                    this.scrollToBottom();
+                  },
+                  error: () => this.sending.set(false),
+                });
+              },
+              error: () => {
+                // Even fallback failed — just keep the user message visible
+                this.messages.update((list) => list.filter((m) => m.id !== streamingMsgId));
+                this.sending.set(false);
+              },
+            });
+          }
+        }
       });
     };
 
