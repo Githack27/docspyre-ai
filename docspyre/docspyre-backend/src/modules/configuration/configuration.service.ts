@@ -1,6 +1,5 @@
 import { db, eq, and, providerConfigs } from '@docspyre/database';
 import { encrypt, decrypt } from '../../core/utils/encryption';
-import { logger } from '../../core/utils/logger';
 import { ApiError } from '../../core/utils/api-error';
 import { requireRow } from '../../core/utils/rows';
 

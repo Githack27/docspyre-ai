@@ -57,6 +57,117 @@ const isTableDivider = (line: string): boolean => /^\s*\|?[\s:|-]+\|[\s:|-]*$/.t
 /** Blockquote marker. Matches "&gt;" because escaping runs before block parsing. */
 const QUOTE_RE = /^\s*&gt;\s?/;
 
+/** Any ordered or unordered list item, capturing indent, marker and content. */
+const LIST_ITEM_RE = /^(\s*)(\d+[.)]|[-*+])\s+(.*)$/;
+
+interface ListItem {
+  indent: number;
+  ordered: boolean;
+  content: string;
+}
+
+/** Leading whitespace width, counting a tab as four columns. */
+const indentWidth = (raw: string): number => {
+  let width = 0;
+  for (const ch of raw) {
+    if (ch === '\t') width += 4;
+    else if (ch === ' ') width += 1;
+    else break;
+  }
+  return width;
+};
+
+const parseListItem = (line: string): ListItem | null => {
+  const match = line.match(LIST_ITEM_RE);
+  if (!match) return null;
+  return {
+    indent: indentWidth(match[1] ?? ''),
+    ordered: /\d/.test(match[2] ?? ''),
+    content: match[3] ?? '',
+  };
+};
+
+/**
+ * Renders a contiguous run of list items into nested <ul>/<ol> markup.
+ *
+ * Collects every consecutive list line, then builds the tree from a stack keyed
+ * on indentation width. Each deeper indent opens a nested list on the previous
+ * item; each shallower indent closes lists back to the matching level. This
+ * produces correct nesting for the multi-level bullets the agent emits.
+ */
+function renderList(lines: string[], start: number): { html: string; next: number } {
+  const items: ListItem[] = [];
+  let i = start;
+
+  while (i < lines.length) {
+    const item = parseListItem(lines[i] ?? '');
+    if (!item) break;
+    items.push(item);
+    i++;
+  }
+
+  return { html: buildListTree(items), next: i };
+}
+
+interface OpenList {
+  indent: number;
+  ordered: boolean;
+  parts: string[];
+}
+
+/** Assembles nested list HTML from a flat, indent-tagged item sequence. */
+function buildListTree(items: ListItem[]): string {
+  const stack: OpenList[] = [];
+  const finished: string[] = [];
+
+  /** Closes the innermost list and folds it into its parent item. */
+  const close = (): void => {
+    const list = stack.pop();
+    if (!list) return;
+    const tag = list.ordered ? 'ol' : 'ul';
+    const markup = `<${tag} class="md-list">${list.parts.join('')}</${tag}>`;
+
+    const parent = stack[stack.length - 1];
+    if (parent) {
+      // Attach the sublist inside the parent's last <li>.
+      const lastIndex = parent.parts.length - 1;
+      if (lastIndex >= 0) {
+        parent.parts[lastIndex] = parent.parts[lastIndex]!.replace(/<\/li>$/, `${markup}</li>`);
+      } else {
+        parent.parts.push(`<li>${markup}</li>`);
+      }
+    } else {
+      finished.push(markup);
+    }
+  };
+
+  for (const item of items) {
+    // Close deeper/sibling lists until the stack top is an ancestor.
+    while (stack.length && item.indent < stack[stack.length - 1]!.indent) {
+      close();
+    }
+
+    const top = stack[stack.length - 1];
+
+    if (top && item.indent === top.indent) {
+      // Same level, but a marker-type switch (bullet <-> number) starts a new list.
+      if (top.ordered !== item.ordered) {
+        close();
+        stack.push({ indent: item.indent, ordered: item.ordered, parts: [] });
+      }
+    } else if (!top || item.indent > top.indent) {
+      // Open a deeper list.
+      stack.push({ indent: item.indent, ordered: item.ordered, parts: [] });
+    }
+
+    stack[stack.length - 1]!.parts.push(`<li>${renderInline(item.content)}</li>`);
+  }
+
+  while (stack.length) close();
+
+  return finished.join('');
+}
+
 export function renderMarkdown(source: string): string {
   if (!source) return '';
 
@@ -125,29 +236,11 @@ export function renderMarkdown(source: string): string {
       continue;
     }
 
-    // Ordered list
-    if (/^\s*\d+\.\s+/.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i] ?? '')) {
-        items.push((lines[i] ?? '').replace(/^\s*\d+\.\s+/, ''));
-        i++;
-      }
-      html.push(
-        `<ol class="md-list">${items.map((t) => `<li>${renderInline(t)}</li>`).join('')}</ol>`,
-      );
-      continue;
-    }
-
-    // Unordered list
-    if (/^\s*[-*+]\s+/.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i] ?? '')) {
-        items.push((lines[i] ?? '').replace(/^\s*[-*+]\s+/, ''));
-        i++;
-      }
-      html.push(
-        `<ul class="md-list">${items.map((t) => `<li>${renderInline(t)}</li>`).join('')}</ul>`,
-      );
+    // List (ordered or unordered), with arbitrary nesting by indentation.
+    if (LIST_ITEM_RE.test(line)) {
+      const { html: listHtml, next } = renderList(lines, i);
+      html.push(listHtml);
+      i = next;
       continue;
     }
 
@@ -160,8 +253,7 @@ export function renderMarkdown(source: string): string {
         /^\s*```/.test(cur) ||
         /^\s*#{1,6}\s+/.test(cur) ||
         QUOTE_RE.test(cur) ||
-        /^\s*\d+\.\s+/.test(cur) ||
-        /^\s*[-*+]\s+/.test(cur)
+        LIST_ITEM_RE.test(cur)
       ) {
         break;
       }

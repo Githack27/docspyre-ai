@@ -19,12 +19,12 @@ export const shareController = {
   }),
 
   withMe: asyncHandler(async (req: Request, res: Response) => {
-    const shares = await shareService.listSharedWithMe(req.auth!.userId);
-    res.status(200).json({ shares });
+    const items = await shareService.listSharedWithMe(req.auth!.userId);
+    res.status(200).json({ items });
   }),
 
   byMe: asyncHandler(async (req: Request, res: Response) => {
-    const shares = await shareService.listSharedByMe(req.auth!.userId);
-    res.status(200).json({ shares });
+    const items = await shareService.listSharedByMe(req.auth!.userId);
+    res.status(200).json({ items });
   }),
 };
