@@ -4,8 +4,6 @@ const email = z.string().trim().toLowerCase().email('A valid email is required')
 
 export const createWorkspaceSchema = z.object({
   name: z.string().trim().min(1, 'Project name is required').max(120, 'Name is too long'),
-  // Emails of registered users to invite as members. Unknown emails are
-  // ignored server-side; the caller is always added as OWNER.
   memberEmails: z.array(email).max(50, 'Too many members').optional().default([]),
 });
 

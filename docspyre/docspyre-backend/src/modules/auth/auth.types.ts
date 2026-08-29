@@ -1,18 +1,19 @@
-import type { User } from '@docspyre/database';
+import type { InferSelectModel } from '@docspyre/database';
+import type { users } from '@docspyre/database';
 
-/** Request metadata captured for sessions and the audit trail. */
+type UserRow = InferSelectModel<typeof users>;
+
 export interface AuthContext {
   ipAddress?: string;
   userAgent?: string;
 }
 
-/** Safe user representation returned to clients (never includes the hash). */
 export interface PublicUser {
   id: string;
   email: string;
   firstName: string | null;
   lastName: string | null;
-  status: User['status'];
+  status: string;
   emailVerifiedAt: Date | null;
   createdAt: Date;
 }
@@ -20,11 +21,10 @@ export interface PublicUser {
 export interface AuthResult {
   user: PublicUser;
   accessToken: string;
-  /** Raw refresh token (delivered via HttpOnly cookie; never persisted raw). */
   refreshToken: string;
 }
 
-export const toPublicUser = (user: User): PublicUser => ({
+export const toPublicUser = (user: UserRow): PublicUser => ({
   id: user.id,
   email: user.email,
   firstName: user.firstName,

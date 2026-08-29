@@ -1,16 +1,12 @@
 import { Router } from 'express';
-import { authRoutes } from '../modules/auth/auth.routes';
-import { workspaceRoutes } from '../modules/workspaces/workspace.routes';
-import { userRoutes } from '../modules/users/users.routes';
-import { documentRoutes } from '../modules/documents/document.routes';
-import { shareRoutes } from '../modules/shares/share.routes';
-import { chatRoutes } from '../modules/chat/chat.routes';
-import { configurationRoutes } from '../modules/configuration/configuration.routes';
+import { authRoutes } from '../modules/auth';
+import { workspaceRoutes } from '../modules/workspaces';
+import { userRoutes } from '../modules/users';
+import { documentRoutes } from '../modules/documents';
+import { shareRoutes } from '../modules/shares';
+import { chatRoutes } from '../modules/chat';
+import { configurationRoutes } from '../modules/configuration';
 
-/**
- * API v1 router. New feature modules (workspaces, documents, ...) mount here,
- * keeping versioning and route composition in one place.
- */
 const router: Router = Router();
 
 router.get('/health', (_req, res) => {

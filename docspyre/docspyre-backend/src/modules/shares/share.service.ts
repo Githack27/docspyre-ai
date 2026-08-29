@@ -1,6 +1,8 @@
-import { prisma } from '../../db/prisma';
-import { SharePermission, UserStatus } from '@docspyre/database';
-import { ApiError } from '../../utils/api-error';
+import {
+  db, eq, and, ne, isNull, isNotNull, inArray, desc,
+  users, documents, documentShares, workspaceFiles, workspaces, workspaceMembers,
+} from '@docspyre/database';
+import { ApiError } from '../../core/utils/api-error';
 import type { IncomingShare, OutgoingShare, ShareRecipient, ShareUser } from './share.types';
 
 interface NamedUser {
@@ -17,194 +19,181 @@ const toUser = (u: NamedUser): ShareUser => ({
 });
 
 export const shareService = {
-  /** Shares an owned document with a set of registered users. */
-  async share(
-    ownerId: string,
-    documentId: string,
-    userIds: string[],
-    permission: SharePermission,
-  ): Promise<ShareRecipient[]> {
-    const doc = await prisma.document.findFirst({
-      where: { id: documentId, ownerId, deletedAt: null },
-    });
+  async share(ownerId: string, documentId: string, userIds: string[], permission: 'VIEW' | 'DOWNLOAD'): Promise<ShareRecipient[]> {
+    const [doc] = await db.select().from(documents).where(and(eq(documents.id, documentId), eq(documents.ownerId, ownerId), isNull(documents.deletedAt))).limit(1);
     if (!doc) throw ApiError.notFound('Document not found');
 
-    const recipients = await prisma.user.findMany({
-      where: {
-        id: { in: Array.from(new Set(userIds)).filter((id) => id !== ownerId) },
-        status: UserStatus.ACTIVE,
-        deletedAt: null,
-      },
-      select: { id: true, email: true, firstName: true, lastName: true },
-    });
+    const uniqueIds = Array.from(new Set(userIds)).filter((id) => id !== ownerId);
+    const recipients = await db
+      .select({ id: users.id, email: users.email, firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(and(inArray(users.id, uniqueIds), eq(users.status, 'ACTIVE'), isNull(users.deletedAt)));
+
     if (!recipients.length) throw ApiError.badRequest('No valid recipients found');
 
-    await prisma.$transaction(
-      recipients.map((r) =>
-        prisma.documentShare.upsert({
-          where: { documentId_sharedWithId: { documentId, sharedWithId: r.id } },
-          create: { documentId, sharedById: ownerId, sharedWithId: r.id, permission },
-          update: { permission },
-        }),
-      ),
-    );
+    for (const r of recipients) {
+      await db
+        .insert(documentShares)
+        .values({ documentId, sharedById: ownerId, sharedWithId: r.id, permission })
+        .onConflictDoUpdate({
+          target: [documentShares.documentId, documentShares.sharedWithId],
+          set: { permission },
+        });
+    }
 
     return recipients.map((r) => ({ ...toUser(r), permission }));
   },
 
-  /** Lists who a document is currently shared with (owner only). */
   async listRecipients(ownerId: string, documentId: string): Promise<ShareRecipient[]> {
-    const doc = await prisma.document.findFirst({ where: { id: documentId, ownerId } });
+    const [doc] = await db.select().from(documents).where(and(eq(documents.id, documentId), eq(documents.ownerId, ownerId))).limit(1);
     if (!doc) throw ApiError.notFound('Document not found');
 
-    const shares = await prisma.documentShare.findMany({
-      where: { documentId },
-      include: { sharedWith: { select: { id: true, email: true, firstName: true, lastName: true } } },
-      orderBy: { createdAt: 'asc' },
-    });
-    return shares.map((s) => ({ ...toUser(s.sharedWith), permission: s.permission }));
+    const shares = await db
+      .select({
+        permission: documentShares.permission,
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(documentShares)
+      .innerJoin(users, eq(documentShares.sharedWithId, users.id))
+      .where(eq(documentShares.documentId, documentId));
+
+    return shares.map((s) => ({ ...toUser(s), permission: s.permission }));
   },
 
-  /** Revokes a single recipient's access to an owned document. */
   async revoke(ownerId: string, documentId: string, userId: string): Promise<void> {
-    const doc = await prisma.document.findFirst({ where: { id: documentId, ownerId } });
+    const [doc] = await db.select().from(documents).where(and(eq(documents.id, documentId), eq(documents.ownerId, ownerId))).limit(1);
     if (!doc) throw ApiError.notFound('Document not found');
-    await prisma.documentShare.deleteMany({ where: { documentId, sharedWithId: userId } });
+    await db.delete(documentShares).where(and(eq(documentShares.documentId, documentId), eq(documentShares.sharedWithId, userId)));
   },
 
-  /** Files shared with the user: direct shares + files in shared projects. */
   async listSharedWithMe(userId: string): Promise<IncomingShare[]> {
-    const direct = await prisma.documentShare.findMany({
-      where: { sharedWithId: userId, document: { deletedAt: null } },
-      include: {
-        document: true,
-        sharedBy: { select: { id: true, email: true, firstName: true, lastName: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Direct shares
+    const directRows = await db
+      .select({
+        shareId: documentShares.id,
+        documentId: documentShares.documentId,
+        permission: documentShares.permission,
+        sharedAt: documentShares.createdAt,
+        docName: documents.name,
+        docMimeType: documents.mimeType,
+        docSizeBytes: documents.sizeBytes,
+        fromId: users.id,
+        fromEmail: users.email,
+        fromFirstName: users.firstName,
+        fromLastName: users.lastName,
+      })
+      .from(documentShares)
+      .innerJoin(documents, eq(documentShares.documentId, documents.id))
+      .innerJoin(users, eq(documentShares.sharedById, users.id))
+      .where(and(eq(documentShares.sharedWithId, userId), isNull(documents.deletedAt)))
+      .orderBy(desc(documentShares.createdAt));
 
-    const directItems: IncomingShare[] = direct.map((s) => ({
-      id: s.id,
+    const directItems: IncomingShare[] = directRows.map((r) => ({
+      id: r.shareId,
       source: 'DIRECT',
-      documentId: s.documentId,
-      name: s.document.name,
-      mimeType: s.document.mimeType,
-      sizeBytes: s.document.sizeBytes,
-      permission: s.permission,
-      from: toUser(s.sharedBy),
+      documentId: r.documentId,
+      name: r.docName,
+      mimeType: r.docMimeType,
+      sizeBytes: r.docSizeBytes,
+      permission: r.permission,
+      from: toUser({ id: r.fromId, email: r.fromEmail, firstName: r.fromFirstName, lastName: r.fromLastName }),
       projectName: null,
-      sharedAt: s.createdAt,
+      sharedAt: r.sharedAt,
     }));
 
-    const projectFiles = await prisma.workspaceFile.findMany({
-      where: {
-        deletedAt: null,
-        documentId: { not: null },
-        uploadedById: { not: userId },
-        workspace: {
-          deletedAt: null,
-          members: { some: { userId } },
-        },
-      },
-      include: {
-        uploadedBy: { select: { id: true, email: true, firstName: true, lastName: true } },
-        workspace: { select: { name: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Project files shared via workspace membership
+    const projectRows = await db
+      .select({
+        fileId: workspaceFiles.id,
+        documentId: workspaceFiles.documentId,
+        name: workspaceFiles.name,
+        kind: workspaceFiles.kind,
+        sizeBytes: workspaceFiles.sizeBytes,
+        createdAt: workspaceFiles.createdAt,
+        workspaceName: workspaces.name,
+        uploaderId: users.id,
+        uploaderEmail: users.email,
+        uploaderFirstName: users.firstName,
+        uploaderLastName: users.lastName,
+      })
+      .from(workspaceFiles)
+      .innerJoin(workspaces, eq(workspaceFiles.workspaceId, workspaces.id))
+      .innerJoin(workspaceMembers, eq(workspaceFiles.workspaceId, workspaceMembers.workspaceId))
+      .innerJoin(users, eq(workspaceFiles.uploadedById, users.id))
+      .where(
+        and(
+          eq(workspaceMembers.userId, userId),
+          isNull(workspaceFiles.deletedAt),
+          isNull(workspaces.deletedAt),
+          isNotNull(workspaceFiles.documentId),
+          ne(workspaceFiles.uploadedById, userId),
+        ),
+      )
+      .orderBy(desc(workspaceFiles.createdAt));
 
-    const projectItems: IncomingShare[] = projectFiles
-      .filter((f) => f.uploadedBy)
-      .map((f) => ({
-        id: f.id,
-        source: 'PROJECT',
-        documentId: f.documentId,
-        name: f.name,
-        mimeType: f.kind ?? 'application/octet-stream',
-        sizeBytes: f.sizeBytes ?? 0,
-        permission: SharePermission.DOWNLOAD,
-        from: toUser(f.uploadedBy!),
-        projectName: f.workspace.name,
-        sharedAt: f.createdAt,
-      }));
+    const projectItems: IncomingShare[] = projectRows.map((r) => ({
+      id: r.fileId,
+      source: 'PROJECT',
+      documentId: r.documentId,
+      name: r.name,
+      mimeType: r.kind ?? 'application/octet-stream',
+      sizeBytes: r.sizeBytes ?? 0,
+      permission: 'DOWNLOAD',
+      from: toUser({ id: r.uploaderId, email: r.uploaderEmail, firstName: r.uploaderFirstName, lastName: r.uploaderLastName }),
+      projectName: r.workspaceName,
+      sharedAt: r.createdAt,
+    }));
 
-    return [...directItems, ...projectItems].sort(
-      (a, b) => b.sharedAt.getTime() - a.sharedAt.getTime(),
-    );
+    return [...directItems, ...projectItems].sort((a, b) => b.sharedAt.getTime() - a.sharedAt.getTime());
   },
 
-  /** Files the user is sharing: direct shares + files in projects they own. */
   async listSharedByMe(userId: string): Promise<OutgoingShare[]> {
-    const direct = await prisma.documentShare.findMany({
-      where: { sharedById: userId, document: { deletedAt: null } },
-      include: {
-        document: true,
-        sharedWith: { select: { id: true, email: true, firstName: true, lastName: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const directRows = await db
+      .select({
+        documentId: documentShares.documentId,
+        permission: documentShares.permission,
+        sharedAt: documentShares.createdAt,
+        docName: documents.name,
+        docMimeType: documents.mimeType,
+        docSizeBytes: documents.sizeBytes,
+        recipientId: users.id,
+        recipientEmail: users.email,
+        recipientFirstName: users.firstName,
+        recipientLastName: users.lastName,
+      })
+      .from(documentShares)
+      .innerJoin(documents, eq(documentShares.documentId, documents.id))
+      .innerJoin(users, eq(documentShares.sharedWithId, users.id))
+      .where(and(eq(documentShares.sharedById, userId), isNull(documents.deletedAt)))
+      .orderBy(desc(documentShares.createdAt));
 
     const byDocument = new Map<string, OutgoingShare>();
-    for (const s of direct) {
-      const existing = byDocument.get(s.documentId);
-      const recipient: ShareRecipient = { ...toUser(s.sharedWith), permission: s.permission };
+    for (const r of directRows) {
+      const recipient: ShareRecipient = {
+        ...toUser({ id: r.recipientId, email: r.recipientEmail, firstName: r.recipientFirstName, lastName: r.recipientLastName }),
+        permission: r.permission,
+      };
+      const existing = byDocument.get(r.documentId);
       if (existing) {
         existing.recipients.push(recipient);
       } else {
-        byDocument.set(s.documentId, {
-          id: s.documentId,
+        byDocument.set(r.documentId, {
+          id: r.documentId,
           source: 'DIRECT',
-          documentId: s.documentId,
-          name: s.document.name,
-          mimeType: s.document.mimeType,
-          sizeBytes: s.document.sizeBytes,
+          documentId: r.documentId,
+          name: r.docName,
+          mimeType: r.docMimeType,
+          sizeBytes: r.docSizeBytes,
           recipients: [recipient],
           projectName: null,
-          sharedAt: s.createdAt,
+          sharedAt: r.sharedAt,
         });
       }
     }
 
-    const uploadedFiles = await prisma.workspaceFile.findMany({
-      where: {
-        deletedAt: null,
-        documentId: { not: null },
-        uploadedById: userId,
-        workspace: {
-          deletedAt: null,
-          members: { some: { userId: { not: userId } } },
-        },
-      },
-      include: {
-        workspace: {
-          include: {
-            members: {
-              where: { userId: { not: userId } },
-              include: { user: { select: { id: true, email: true, firstName: true, lastName: true } } },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const projectItems: OutgoingShare[] = uploadedFiles.map((f) => ({
-      id: f.id,
-      source: 'PROJECT',
-      documentId: f.documentId,
-      name: f.name,
-      mimeType: f.kind ?? 'application/octet-stream',
-      sizeBytes: f.sizeBytes ?? 0,
-      recipients: f.workspace.members.map((m) => ({
-        ...toUser(m.user),
-        permission: SharePermission.DOWNLOAD,
-      })),
-      projectName: f.workspace.name,
-      sharedAt: f.createdAt,
-    }));
-
-    return [...byDocument.values(), ...projectItems].sort(
-      (a, b) => b.sharedAt.getTime() - a.sharedAt.getTime(),
-    );
+    return [...byDocument.values()];
   },
 };

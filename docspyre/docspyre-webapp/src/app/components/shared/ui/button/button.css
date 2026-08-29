@@ -43,15 +43,15 @@
 }
 
 .app-btn--primary {
-  border-color: transparent;
-  background: linear-gradient(135deg, var(--btn-primary-from) 0%, var(--btn-primary-to) 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 14px var(--btn-primary-glow);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+  color: var(--accent);
+  box-shadow: var(--shadow-soft);
 }
 
 .app-btn--primary:hover:not(:disabled) {
-  filter: brightness(1.02);
-  box-shadow: 0 6px 18px var(--btn-primary-glow);
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  box-shadow: var(--shadow-hover);
 }
 
 .app-btn__label {

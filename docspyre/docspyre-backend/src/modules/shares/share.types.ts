@@ -1,16 +1,13 @@
-import type { SharePermission } from '@docspyre/database';
-
 export interface ShareUser {
   id: string;
-  name: string;
   email: string;
+  name: string;
 }
 
 export interface ShareRecipient extends ShareUser {
-  permission: SharePermission;
+  permission: string;
 }
 
-/** A file visible to the current user because it was shared with them. */
 export interface IncomingShare {
   id: string;
   source: 'DIRECT' | 'PROJECT';
@@ -18,13 +15,12 @@ export interface IncomingShare {
   name: string;
   mimeType: string;
   sizeBytes: number;
-  permission: SharePermission;
+  permission: string;
   from: ShareUser;
   projectName: string | null;
   sharedAt: Date;
 }
 
-/** A file the current user is sharing with others. */
 export interface OutgoingShare {
   id: string;
   source: 'DIRECT' | 'PROJECT';

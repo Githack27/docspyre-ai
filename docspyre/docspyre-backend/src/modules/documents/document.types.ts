@@ -1,10 +1,7 @@
-import type { DocumentKind } from '@docspyre/database';
-
-/** Public shape of a document returned to clients (no storage internals). */
 export interface PublicDocument {
   id: string;
   name: string;
-  kind: DocumentKind;
+  kind: string;
   mimeType: string;
   sizeBytes: number;
   createdAt: Date;

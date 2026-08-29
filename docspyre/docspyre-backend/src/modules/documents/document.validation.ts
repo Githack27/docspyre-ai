@@ -1,5 +1,5 @@
 import { z } from 'zod';
 
 export const documentIdParam = z.object({
-  documentId: z.string().uuid('Invalid document id'),
+  documentId: z.string().uuid(),
 });

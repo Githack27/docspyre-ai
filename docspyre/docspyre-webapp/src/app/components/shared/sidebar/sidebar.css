@@ -75,10 +75,10 @@
 }
 
 .nav-link--logout {
-  border-color: transparent;
-  background: linear-gradient(135deg, var(--btn-primary-from) 0%, var(--btn-primary-to) 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 14px var(--btn-primary-glow);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+  color: var(--accent);
+  box-shadow: var(--shadow-soft);
 }
 
 .nav-link__label {
@@ -369,18 +369,19 @@
     margin-top: 0.35rem;
     padding: 0.7rem 0.85rem;
     border-radius: 12px;
-    color: #ffffff;
-    background: linear-gradient(135deg, var(--btn-primary-from) 0%, var(--btn-primary-to) 100%);
-    box-shadow: 0 8px 20px var(--btn-primary-glow);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    box-shadow: var(--shadow-soft);
   }
 
   .nav-link--logout:hover {
-    background: linear-gradient(135deg, var(--btn-primary-from) 0%, var(--btn-primary-to) 100%);
-    color: #ffffff;
+    background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+    color: var(--accent);
   }
 
   .nav-link--logout i {
-    color: #ffffff;
+    color: var(--accent);
   }
 
   .sidebar-backdrop {

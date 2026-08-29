@@ -1,146 +1,111 @@
-import { prisma } from '../../db/prisma';
-import { encrypt, decrypt } from '../../utils/encryption';
+import { db, eq, and, providerConfigs } from '@docspyre/database';
+import { encrypt, decrypt } from '../../core/utils/encryption';
+import { logger } from '../../core/utils/logger';
+import { ApiError } from '../../core/utils/api-error';
+import { requireRow } from '../../core/utils/rows';
 
-export interface CreateConfigInput {
+/** Returns null on failure so corrupted rows don't crash listing. */
+const safeDecrypt = (ciphertext: string): string | null => {
+  try {
+    return decrypt(ciphertext);
+  } catch {
+    return null;
+  }
+};
+
+interface PublicProviderConfig {
+  id: string;
+  providerId: string;
+  providerName: string;
+  model: string;
+  active: boolean;
+  systemPrompt: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface CreateConfigInput {
   providerId: string;
   providerName: string;
   model: string;
   apiKey: string;
   systemPrompt?: string;
-  active?: boolean;
 }
 
-export interface UpdateConfigInput {
-  providerId?: string;
-  providerName?: string;
+interface UpdateConfigInput {
   model?: string;
   apiKey?: string;
   systemPrompt?: string;
   active?: boolean;
 }
 
+const toPublic = (row: typeof providerConfigs.$inferSelect): PublicProviderConfig => ({
+  id: row.id,
+  providerId: row.providerId,
+  providerName: row.providerName,
+  model: row.model,
+  active: row.active,
+  systemPrompt: row.encryptedPrompt ? safeDecrypt(row.encryptedPrompt) : null,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+});
+
 export const configurationService = {
-  /**
-   * Retrieves all configurations for a user and decrypts keys & prompts.
-   */
-  async listConfigs(userId: string) {
-    const configs = await prisma.providerConfig.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'asc' },
-    });
-
-    return configs.map((config) => {
-      let apiKey = '';
-      let systemPrompt = '';
-
-      try {
-        apiKey = decrypt(config.encryptedKey);
-      } catch (err) {
-        console.error(`Failed to decrypt API Key for config ${config.id}:`, err);
-      }
-
-      if (config.encryptedPrompt) {
-        try {
-          systemPrompt = decrypt(config.encryptedPrompt);
-        } catch (err) {
-          console.error(`Failed to decrypt System Prompt for config ${config.id}:`, err);
-        }
-      }
-
-      return {
-        id: config.id,
-        providerId: config.providerId,
-        providerName: config.providerName,
-        model: config.model,
-        apiKey,
-        systemPrompt: systemPrompt || undefined,
-        active: config.active,
-      };
-    });
+  async listConfigs(userId: string): Promise<PublicProviderConfig[]> {
+    const rows = await db.select().from(providerConfigs).where(eq(providerConfigs.userId, userId));
+    return rows.map(toPublic);
   },
 
-  /**
-   * Encrypts credentials and saves configuration to the database.
-   */
-  async createConfig(userId: string, input: CreateConfigInput) {
-    const encryptedKey = encrypt(input.apiKey);
-    const encryptedPrompt = input.systemPrompt ? encrypt(input.systemPrompt) : null;
-
-    const config = await prisma.providerConfig.create({
-      data: {
-        userId,
-        providerId: input.providerId,
-        providerName: input.providerName,
-        model: input.model,
-        encryptedKey,
-        encryptedPrompt,
-        active: input.active ?? true,
-      },
-    });
-
-    return {
-      id: config.id,
-      providerId: config.providerId,
-      providerName: config.providerName,
-      model: config.model,
-      apiKey: input.apiKey,
-      systemPrompt: input.systemPrompt,
-      active: config.active,
-    };
+  async createConfig(userId: string, input: CreateConfigInput): Promise<PublicProviderConfig> {
+    const row = requireRow(
+      await db
+        .insert(providerConfigs)
+        .values({
+          userId,
+          providerId: input.providerId,
+          providerName: input.providerName,
+          model: input.model,
+          encryptedKey: encrypt(input.apiKey),
+          encryptedPrompt: input.systemPrompt ? encrypt(input.systemPrompt) : null,
+        })
+        .returning(),
+      'provider config insert',
+    );
+    return toPublic(row);
   },
 
-  /**
-   * Updates an existing configuration securely. Validates userId ownership.
-   */
-  async updateConfig(userId: string, id: string, input: UpdateConfigInput) {
-    const existing = await prisma.providerConfig.findUnique({
-      where: { id },
-    });
+  async updateConfig(userId: string, id: string, input: UpdateConfigInput): Promise<PublicProviderConfig> {
+    const [existing] = await db
+      .select()
+      .from(providerConfigs)
+      .where(and(eq(providerConfigs.id, id), eq(providerConfigs.userId, userId)))
+      .limit(1);
+    if (!existing) throw ApiError.notFound('Configuration not found');
 
-    if (!existing || existing.userId !== userId) {
-      throw new Error('Configuration not found or unauthorized');
-    }
+    const updates: Record<string, unknown> = {};
+    if (input.model !== undefined) updates.model = input.model;
+    if (input.apiKey !== undefined) updates.encryptedKey = encrypt(input.apiKey);
+    if (input.systemPrompt !== undefined) updates.encryptedPrompt = input.systemPrompt ? encrypt(input.systemPrompt) : null;
+    if (input.active !== undefined) updates.active = input.active;
 
-    const data: any = {};
-    if (input.providerId) data.providerId = input.providerId;
-    if (input.providerName) data.providerName = input.providerName;
-    if (input.model) data.model = input.model;
-    if (input.apiKey) data.encryptedKey = encrypt(input.apiKey);
-    if (input.systemPrompt !== undefined) {
-      data.encryptedPrompt = input.systemPrompt ? encrypt(input.systemPrompt) : null;
-    }
-    if (input.active !== undefined) data.active = input.active;
-
-    const updated = await prisma.providerConfig.update({
-      where: { id },
-      data,
-    });
-
-    return {
-      id: updated.id,
-      providerId: updated.providerId,
-      providerName: updated.providerName,
-      model: updated.model,
-      apiKey: input.apiKey || decrypt(updated.encryptedKey),
-      systemPrompt: input.systemPrompt !== undefined ? input.systemPrompt : (updated.encryptedPrompt ? decrypt(updated.encryptedPrompt) : undefined),
-      active: updated.active,
-    };
+    const row = requireRow(
+      await db
+        .update(providerConfigs)
+        .set(updates)
+        .where(eq(providerConfigs.id, id))
+        .returning(),
+      'provider config update',
+    );
+    return toPublic(row);
   },
 
-  /**
-   * Deletes a configuration from the database securely. Validates userId ownership.
-   */
-  async deleteConfig(userId: string, id: string) {
-    const existing = await prisma.providerConfig.findUnique({
-      where: { id },
-    });
-
-    if (!existing || existing.userId !== userId) {
-      throw new Error('Configuration not found or unauthorized');
-    }
-
-    await prisma.providerConfig.delete({
-      where: { id },
-    });
+  async deleteConfig(userId: string, id: string): Promise<void> {
+    const [existing] = await db
+      .select()
+      .from(providerConfigs)
+      .where(and(eq(providerConfigs.id, id), eq(providerConfigs.userId, userId)))
+      .limit(1);
+    if (!existing) throw ApiError.notFound('Configuration not found');
+    await db.delete(providerConfigs).where(eq(providerConfigs.id, id));
   },
 };

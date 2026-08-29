@@ -132,14 +132,14 @@
   gap: 0.5rem;
   padding: 0.65rem 1rem;
   border-radius: 0.7rem;
-  border: none;
-  background: var(--accent);
-  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+  color: var(--accent);
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent);
+  box-shadow: var(--shadow-soft);
 }
 .sd__share:disabled { opacity: 0.6; cursor: progress; }
 

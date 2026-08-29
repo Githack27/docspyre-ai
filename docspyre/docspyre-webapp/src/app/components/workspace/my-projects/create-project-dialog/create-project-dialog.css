@@ -212,8 +212,8 @@
   border: 1px solid transparent;
   transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
-.btn--solid { background: var(--accent); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent); }
-.btn--solid:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 25%, transparent); }
+.btn--solid { background: color-mix(in srgb, var(--accent) 15%, var(--surface)); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: var(--shadow-soft); }
+.btn--solid:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
 .btn--solid:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn--ghost { background: var(--surface); color: var(--text-strong); border-color: var(--border-soft); }
 .btn--ghost:hover { border-color: var(--accent); color: var(--accent); }

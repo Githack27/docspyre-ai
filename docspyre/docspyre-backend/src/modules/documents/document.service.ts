@@ -1,12 +1,16 @@
-import { prisma } from '../../db/prisma';
-import { DocumentKind, type Prisma } from '@docspyre/database';
-import { ApiError } from '../../utils/api-error';
+import {
+  db, eq, and, isNull, isNotNull, lte, inArray, desc,
+  documents, workspaceFiles, documentShares, workspaceMembers,
+} from '@docspyre/database';
+import type { InferSelectModel } from '@docspyre/database';
+import { ApiError } from '../../core/utils/api-error';
 import { kindFromMime } from './document.kind';
 import { removeFile, saveBuffer } from './document.storage';
 import type { PublicDocument } from './document.types';
-import { ingestionQueue } from '../ChatDocument/queue.service';
+import { requireRow } from '../../core/utils/rows';
+import { ingestionQueue } from '../chat-document/ingestion/queue.service';
 
-type DocumentRow = Prisma.DocumentGetPayload<Record<string, never>>;
+type DocumentRow = InferSelectModel<typeof documents>;
 
 interface CreateDocumentInput {
   originalName: string;
@@ -29,144 +33,197 @@ const toPublic = (d: DocumentRow): PublicDocument => ({
 });
 
 export const documentService = {
-  /** Stores an uploaded file on disk and records its metadata. */
   async create(ownerId: string, input: CreateDocumentInput): Promise<PublicDocument> {
     const storageKey = await saveBuffer(input.originalName, input.buffer);
-    const doc = await prisma.document.create({
-      data: {
-        ownerId,
-        name: input.originalName,
-        storageKey,
-        mimeType: input.mimeType || 'application/octet-stream',
-        kind: kindFromMime(input.mimeType),
-        sizeBytes: input.buffer.length,
-      },
-    });
+    const doc = requireRow(
+      await db
+        .insert(documents)
+        .values({
+          ownerId,
+          name: input.originalName,
+          storageKey,
+          mimeType: input.mimeType || 'application/octet-stream',
+          kind: kindFromMime(input.mimeType),
+          sizeBytes: input.buffer.length,
+        })
+        .returning(),
+      'document insert',
+    );
 
-    // Enqueue document ingestion asynchronously
     ingestionQueue.enqueue({
       documentId: doc.id,
+      ownerId: doc.ownerId,
       name: doc.name,
       mimeType: doc.mimeType,
-      storageKey: doc.storageKey
+      storageKey: doc.storageKey,
     });
 
     return toPublic(doc);
   },
 
-  /** Active (non-trashed) documents for a user, optionally filtered by kind. */
-  async list(ownerId: string, kind?: DocumentKind): Promise<PublicDocument[]> {
-    const docs = await prisma.document.findMany({
-      where: {
-        ownerId,
-        deletedAt: null,
-        workspaceFiles: {
-          none: {
-            deletedAt: null
-          }
-        },
-        ...(kind ? { kind } : {})
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return docs.map(toPublic);
+  async list(ownerId: string, kind?: string): Promise<PublicDocument[]> {
+    // Get document IDs that are linked to workspaces (to exclude them)
+    const linkedIds = await db
+      .select({ documentId: workspaceFiles.documentId })
+      .from(workspaceFiles)
+      .where(and(isNull(workspaceFiles.deletedAt), isNotNull(workspaceFiles.documentId)));
+
+    const linkedDocIds = linkedIds
+      .map((r) => r.documentId)
+      .filter((id): id is string => id !== null);
+
+    let query = db
+      .select()
+      .from(documents)
+      .where(
+        and(
+          eq(documents.ownerId, ownerId),
+          isNull(documents.deletedAt),
+          ...(kind ? [eq(documents.kind, kind as any)] : []),
+          ...(linkedDocIds.length ? [/* exclude linked */ ] : []),
+        ),
+      )
+      .orderBy(desc(documents.createdAt));
+
+    const rows = await query;
+
+    // Filter out linked documents in application layer for simplicity
+    const filtered = linkedDocIds.length
+      ? rows.filter((d) => !linkedDocIds.includes(d.id))
+      : rows;
+
+    return filtered.map(toPublic);
   },
 
-  /** Trashed documents for a user, newest deletions first. */
   async listTrash(ownerId: string): Promise<PublicDocument[]> {
-    const docs = await prisma.document.findMany({
-      where: { ownerId, deletedAt: { not: null } },
-      orderBy: { deletedAt: 'desc' },
-    });
-    return docs.map(toPublic);
+    const rows = await db
+      .select()
+      .from(documents)
+      .where(and(eq(documents.ownerId, ownerId), isNotNull(documents.deletedAt)))
+      .orderBy(desc(documents.deletedAt));
+    return rows.map(toPublic);
   },
 
-  /** Fetches an owned document row (for streaming/linking). */
   async getOwned(
     ownerId: string,
     id: string,
     opts: { includeTrashed?: boolean } = {},
   ): Promise<DocumentRow> {
-    const doc = await prisma.document.findFirst({
-      where: { id, ownerId, ...(opts.includeTrashed ? {} : { deletedAt: null }) },
-    });
+    const conditions = [eq(documents.id, id), eq(documents.ownerId, ownerId)];
+    if (!opts.includeTrashed) {
+      conditions.push(isNull(documents.deletedAt));
+    }
+
+    const [doc] = await db
+      .select()
+      .from(documents)
+      .where(and(...conditions))
+      .limit(1);
+
     if (!doc) throw ApiError.notFound('Document not found');
     return doc;
   },
 
-  /**
-   * Fetches a document the user is allowed to read: they own it, it was shared
-   * with them directly, or it lives in a workspace they belong to.
-   */
   async getAccessible(userId: string, id: string): Promise<DocumentRow> {
-    const doc = await prisma.document.findFirst({ where: { id, deletedAt: null } });
+    const [doc] = await db
+      .select()
+      .from(documents)
+      .where(and(eq(documents.id, id), isNull(documents.deletedAt)))
+      .limit(1);
+
     if (!doc) throw ApiError.notFound('Document not found');
     if (doc.ownerId === userId) return doc;
 
-    const share = await prisma.documentShare.findFirst({
-      where: { documentId: id, sharedWithId: userId },
-    });
+    // Check direct share
+    const [share] = await db
+      .select()
+      .from(documentShares)
+      .where(and(eq(documentShares.documentId, id), eq(documentShares.sharedWithId, userId)))
+      .limit(1);
     if (share) return doc;
 
-    const viaWorkspace = await prisma.workspaceFile.findFirst({
-      where: { documentId: id, deletedAt: null, workspace: { members: { some: { userId } } } },
-    });
+    // Check workspace membership
+    const [viaWorkspace] = await db
+      .select()
+      .from(workspaceFiles)
+      .innerJoin(workspaceMembers, eq(workspaceFiles.workspaceId, workspaceMembers.workspaceId))
+      .where(
+        and(
+          eq(workspaceFiles.documentId, id),
+          isNull(workspaceFiles.deletedAt),
+          eq(workspaceMembers.userId, userId),
+        ),
+      )
+      .limit(1);
     if (viaWorkspace) return doc;
 
     throw ApiError.forbidden('You do not have access to this file');
   },
 
-  /** Moves a document to Trash (soft delete). */
   async softDelete(ownerId: string, id: string): Promise<void> {
     await documentService.getOwned(ownerId, id);
-    await prisma.document.update({ where: { id }, data: { deletedAt: new Date() } });
+    await db
+      .update(documents)
+      .set({ deletedAt: new Date() })
+      .where(eq(documents.id, id));
   },
 
-  /** Restores a trashed document. */
   async restore(ownerId: string, id: string): Promise<PublicDocument> {
     await documentService.getOwned(ownerId, id, { includeTrashed: true });
-    const doc = await prisma.document.update({ where: { id }, data: { deletedAt: null } });
+    const doc = requireRow(
+      await db
+        .update(documents)
+        .set({ deletedAt: null })
+        .where(eq(documents.id, id))
+        .returning(),
+      'document restore',
+    );
     return toPublic(doc);
   },
 
-  /** Permanently removes a document row and its file from disk. */
   async permanentDelete(ownerId: string, id: string): Promise<void> {
     const doc = await documentService.getOwned(ownerId, id, { includeTrashed: true });
-    await prisma.document.delete({ where: { id } });
+    await db.delete(documents).where(eq(documents.id, id));
     await removeFile(doc.storageKey);
   },
 
-  /** Deletes documents trashed longer than the retention window. */
   async purgeExpired(retentionDays: number): Promise<number> {
     const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
-    const expired = await prisma.document.findMany({
-      where: { deletedAt: { lte: cutoff } },
-      select: { id: true, storageKey: true },
-    });
+    const expired = await db
+      .select({ id: documents.id, storageKey: documents.storageKey })
+      .from(documents)
+      .where(lte(documents.deletedAt, cutoff));
+
     if (!expired.length) return 0;
-    await prisma.document.deleteMany({ where: { id: { in: expired.map((d) => d.id) } } });
+
+    await db.delete(documents).where(inArray(documents.id, expired.map((d) => d.id)));
     await Promise.all(expired.map((d) => removeFile(d.storageKey)));
     return expired.length;
   },
 
-  /** Re-triggers ingestion for a document (e.g. after migration creates the chunks table). */
   async reingest(userId: string, documentId: string): Promise<PublicDocument> {
     const doc = await documentService.getAccessible(userId, documentId);
 
-    await prisma.document.update({
-      where: { id: doc.id },
-      data: { ingestionStatus: 'QUEUED', ingestionError: null }
-    });
+    await db
+      .update(documents)
+      .set({ ingestionStatus: 'QUEUED', ingestionError: null })
+      .where(eq(documents.id, doc.id));
 
+    // Re-ingestion runs as the document owner so their provider config drives
+    // summarisation, even when a collaborator triggered it.
     ingestionQueue.enqueue({
       documentId: doc.id,
+      ownerId: doc.ownerId,
       name: doc.name,
       mimeType: doc.mimeType,
-      storageKey: doc.storageKey
+      storageKey: doc.storageKey,
     });
 
-    return toPublic(
-      await prisma.document.findUniqueOrThrow({ where: { id: doc.id } })
+    const updated = requireRow(
+      await db.select().from(documents).where(eq(documents.id, doc.id)).limit(1),
+      'document reload after reingest',
     );
+
+    return toPublic(updated);
   },
 };

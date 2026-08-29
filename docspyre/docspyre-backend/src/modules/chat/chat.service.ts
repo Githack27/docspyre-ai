@@ -1,279 +1,182 @@
-import { prisma } from '../../db/prisma';
-import { ApiError } from '../../utils/api-error';
-import type { CreateSessionInput, AddMessageInput } from './chat.validation';
-import type { PublicChatMessage, PublicChatSession, PublicChatSessionDetail } from './chat.types';
+import {
+  db, eq, and, isNull, desc,
+  chatSessions, chatMessages, workspaceMembers, documents, workspaceFiles,
+} from '@docspyre/database';
+import { ApiError } from '../../core/utils/api-error';
+import { requireRow } from '../../core/utils/rows';
 
-const toSession = (s: any): PublicChatSession => ({
-  id: s.id,
-  title: s.title,
-  userId: s.userId,
-  workspaceId: s.workspaceId,
-  documentId: s.documentId,
-  workspaceFileId: s.workspaceFileId,
-  createdAt: s.createdAt,
-  updatedAt: s.updatedAt,
-});
+export interface PublicChatSession {
+  id: string;
+  title: string;
+  documentId: string | null;
+  workspaceId: string | null;
+  workspaceFileId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-const toMessage = (m: any): PublicChatMessage => ({
-  id: m.id,
-  sessionId: m.sessionId,
-  senderId: m.senderId,
-  role: m.role as 'user' | 'assistant' | 'system',
-  content: m.content,
-  createdAt: m.createdAt,
-});
+export interface PublicChatMessage {
+  id: string;
+  role: string;
+  content: string;
+  senderId: string | null;
+  createdAt: Date;
+}
 
-const generateSimulatedResponse = (docName: string, query: string): string => {
-  const q = query.toLowerCase();
-  if (q.includes('summary') || q.includes('summarize') || q.includes('overview')) {
-    return `Here is a summary of the document **"${docName}"**:\n\n1. **Core Content**: The file contains structural documentation, metadata schemas, and configuration standards.\n2. **Key Metrics**: Data analysis confirms all parameters reside within acceptable thresholds.\n3. **Next Steps**: Recommended actions include reviewing validation results and aligning components with specifications.\n\nWhat other details about **"${docName}"** can I fetch for you?`;
-  }
-  if (q.includes('hello') || q.includes('hi') || q.includes('hey')) {
-    return `Hello! I have analyzed the document **"${docName}"** and loaded its context. Ask me any questions, and I'll help you extract the relevant insights!`;
-  }
-  if (q.includes('author') || q.includes('who wrote')) {
-    return `The creator details are not explicitly highlighted in the document text, but the system logs indicate it was uploaded as part of your workspace repository.`;
-  }
-  return `Analyzing **"${docName}"** for your query: *"Ref: ${query}"*\n\nBased on the document context:\n- The document outlines standard operating procedures matching these terms.\n- Ensure integrations are secure and adhere to the project's styling and schema conventions.\n- There are no warning flags related to your search parameter inside the document body.\n\nLet me know if you need clarification on specific sections!`;
-};
+export interface PublicChatSessionDetail extends PublicChatSession {
+  messages: PublicChatMessage[];
+}
+
+interface CreateSessionInput {
+  title: string;
+  documentId?: string;
+  workspaceId?: string;
+  workspaceFileId?: string;
+}
 
 export const chatService = {
-  /** Creates a chat session for a document (private or workspace). */
   async createSession(userId: string, input: CreateSessionInput): Promise<PublicChatSession> {
-    // If a workspace is specified, verify membership
+    // Validate access
     if (input.workspaceId) {
-      const membership = await prisma.workspaceMember.findFirst({
-        where: { workspaceId: input.workspaceId, userId },
-      });
-      if (!membership) throw ApiError.forbidden('You are not a member of this project');
-    } else if (input.documentId) {
-      // If private chat, verify the document is NOT linked to any project
-      const linked = await prisma.workspaceFile.findFirst({
-        where: { documentId: input.documentId, deletedAt: null },
-      });
-      if (linked) {
-        throw ApiError.badRequest('This document is linked to a project. Private chats are disabled.');
-      }
+      const [membership] = await db
+        .select()
+        .from(workspaceMembers)
+        .where(and(eq(workspaceMembers.workspaceId, input.workspaceId), eq(workspaceMembers.userId, userId)))
+        .limit(1);
+      if (!membership) throw ApiError.forbidden('You are not a member of this workspace');
     }
 
-    const session = await prisma.chatSession.create({
-      data: {
-        title: input.title,
-        userId,
-        workspaceId: input.workspaceId ?? null,
-        documentId: input.documentId ?? null,
-        workspaceFileId: input.workspaceFileId ?? null,
-      },
-    });
-
-    return toSession(session);
-  },
-
-  /** Lists chat sessions. Enforces membership for workspace chats, owner-only for private chats. */
-  async listSessions(
-    userId: string,
-    filters: { documentId?: string; workspaceId?: string }
-  ): Promise<PublicChatSession[]> {
-    const whereClause: any = { deletedAt: null };
-
-    if (filters.workspaceId) {
-      // Verify workspace membership
-      const membership = await prisma.workspaceMember.findFirst({
-        where: { workspaceId: filters.workspaceId, userId },
-      });
-      if (!membership) throw ApiError.forbidden('You are not a member of this project');
-      whereClause.workspaceId = filters.workspaceId;
-    } else if (filters.documentId) {
-      // Check if document is linked to any project
-      const linked = await prisma.workspaceFile.findFirst({
-        where: { documentId: filters.documentId, deletedAt: null },
-      });
-      if (linked) {
-        return [];
-      }
-      whereClause.documentId = filters.documentId;
-      whereClause.userId = userId;
-      whereClause.workspaceId = null;
-    } else {
-      // Return all private chats for this user, excluding those linked to projects
-      whereClause.userId = userId;
-      whereClause.workspaceId = null;
-      whereClause.document = {
-        workspaceFiles: {
-          none: {
-            deletedAt: null
-          }
-        }
-      };
+    if (input.documentId && !input.workspaceId) {
+      const [doc] = await db
+        .select()
+        .from(documents)
+        .where(and(eq(documents.id, input.documentId), eq(documents.ownerId, userId), isNull(documents.deletedAt)))
+        .limit(1);
+      if (!doc) throw ApiError.notFound('Document not found');
     }
 
-    const sessions = await prisma.chatSession.findMany({
-      where: whereClause,
-      orderBy: { updatedAt: 'desc' },
-    });
-
-    return sessions.map(toSession);
-  },
-
-  /** Gets chat session details with message history. */
-  async getSessionDetail(userId: string, sessionId: string): Promise<PublicChatSessionDetail> {
-    const session = await prisma.chatSession.findUnique({
-      where: { id: sessionId },
-      include: {
-        messages: {
-          orderBy: { createdAt: 'asc' },
-        },
-      },
-    });
-
-    if (!session || session.deletedAt) {
-      throw ApiError.notFound('Chat session not found');
-    }
-
-    // Verify access
-    if (session.workspaceId) {
-      const membership = await prisma.workspaceMember.findFirst({
-        where: { workspaceId: session.workspaceId, userId },
-      });
-      if (!membership) throw ApiError.forbidden('You do not have access to this project chat');
-    } else {
-      if (session.userId !== userId) {
-        throw ApiError.forbidden('You do not have access to this private chat');
-      }
-      if (session.documentId) {
-        const linked = await prisma.workspaceFile.findFirst({
-          where: { documentId: session.documentId, deletedAt: null },
-        });
-        if (linked) {
-          throw ApiError.forbidden('This document has been linked to a project. Private chats are disabled.');
-        }
-      }
-    }
+    const session = requireRow(
+      await db
+        .insert(chatSessions)
+        .values({
+          title: input.title,
+          userId,
+          documentId: input.documentId ?? null,
+          workspaceId: input.workspaceId ?? null,
+          workspaceFileId: input.workspaceFileId ?? null,
+        })
+        .returning(),
+      'chat session insert',
+    );
 
     return {
-      ...toSession(session),
-      messages: session.messages.map(toMessage),
+      id: session.id,
+      title: session.title,
+      documentId: session.documentId,
+      workspaceId: session.workspaceId,
+      workspaceFileId: session.workspaceFileId,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
     };
   },
 
-  /** Renames a chat session. */
-  async renameSession(userId: string, sessionId: string, title: string): Promise<PublicChatSession> {
-    const session = await prisma.chatSession.findUnique({
-      where: { id: sessionId },
-    });
+  async listSessions(userId: string, filters?: { workspaceId?: string; documentId?: string }): Promise<PublicChatSession[]> {
+    const conditions = [eq(chatSessions.userId, userId), isNull(chatSessions.deletedAt)];
+    if (filters?.workspaceId) conditions.push(eq(chatSessions.workspaceId, filters.workspaceId));
+    if (filters?.documentId) conditions.push(eq(chatSessions.documentId, filters.documentId));
 
-    if (!session || session.deletedAt) {
-      throw ApiError.notFound('Chat session not found');
-    }
+    const rows = await db
+      .select()
+      .from(chatSessions)
+      .where(and(...conditions))
+      .orderBy(desc(chatSessions.updatedAt));
 
-    // Enforce owner-only or workspace member/owner update
-    if (session.workspaceId) {
-      const membership = await prisma.workspaceMember.findFirst({
-        where: { workspaceId: session.workspaceId, userId },
-      });
-      if (!membership) throw ApiError.forbidden('You do not have permission to rename this chat');
-    } else {
-      if (session.userId !== userId) {
-        throw ApiError.forbidden('You cannot rename someone else\'s private chat');
-      }
-    }
-
-    const updated = await prisma.chatSession.update({
-      where: { id: sessionId },
-      data: { title },
-    });
-
-    return toSession(updated);
+    return rows.map((s) => ({
+      id: s.id,
+      title: s.title,
+      documentId: s.documentId,
+      workspaceId: s.workspaceId,
+      workspaceFileId: s.workspaceFileId,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    }));
   },
 
-  /** Soft-deletes a chat session. */
+  async getSessionDetail(userId: string, sessionId: string): Promise<PublicChatSessionDetail> {
+    const [session] = await db
+      .select()
+      .from(chatSessions)
+      .where(and(eq(chatSessions.id, sessionId), eq(chatSessions.userId, userId), isNull(chatSessions.deletedAt)))
+      .limit(1);
+    if (!session) throw ApiError.notFound('Chat session not found');
+
+    const messages = await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.sessionId, sessionId))
+      .orderBy(chatMessages.createdAt);
+
+    return {
+      id: session.id,
+      title: session.title,
+      documentId: session.documentId,
+      workspaceId: session.workspaceId,
+      workspaceFileId: session.workspaceFileId,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+      messages: messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        senderId: m.senderId,
+        createdAt: m.createdAt,
+      })),
+    };
+  },
+
+  async renameSession(userId: string, sessionId: string, title: string): Promise<void> {
+    const [session] = await db.select().from(chatSessions).where(and(eq(chatSessions.id, sessionId), eq(chatSessions.userId, userId))).limit(1);
+    if (!session) throw ApiError.notFound('Chat session not found');
+    await db.update(chatSessions).set({ title }).where(eq(chatSessions.id, sessionId));
+  },
+
   async deleteSession(userId: string, sessionId: string): Promise<void> {
-    const session = await prisma.chatSession.findUnique({
-      where: { id: sessionId },
-    });
-
-    if (!session || session.deletedAt) {
-      throw ApiError.notFound('Chat session not found');
-    }
-
-    if (session.workspaceId) {
-      const membership = await prisma.workspaceMember.findFirst({
-        where: { workspaceId: session.workspaceId, userId },
-      });
-      if (!membership) throw ApiError.forbidden('You do not have permission to delete this chat');
-    } else {
-      if (session.userId !== userId) {
-        throw ApiError.forbidden('You cannot delete someone else\'s private chat');
-      }
-    }
-
-    await prisma.chatSession.update({
-      where: { id: sessionId },
-      data: { deletedAt: new Date() },
-    });
+    const [session] = await db.select().from(chatSessions).where(and(eq(chatSessions.id, sessionId), eq(chatSessions.userId, userId))).limit(1);
+    if (!session) throw ApiError.notFound('Chat session not found');
+    await db.update(chatSessions).set({ deletedAt: new Date() }).where(eq(chatSessions.id, sessionId));
   },
 
-  /** Adds a message and triggers simulated AI response. */
-  async addMessage(userId: string, sessionId: string, input: AddMessageInput): Promise<PublicChatMessage> {
-    const session = await prisma.chatSession.findUnique({
-      where: { id: sessionId },
-    });
+  async addMessage(userId: string, sessionId: string, content: string): Promise<{ userMsg: PublicChatMessage; assistantMsg: PublicChatMessage }> {
+    const [session] = await db.select().from(chatSessions).where(and(eq(chatSessions.id, sessionId), eq(chatSessions.userId, userId), isNull(chatSessions.deletedAt))).limit(1);
+    if (!session) throw ApiError.notFound('Chat session not found');
 
-    if (!session || session.deletedAt) {
-      throw ApiError.notFound('Chat session not found');
-    }
+    const userMsg = requireRow(
+      await db
+        .insert(chatMessages)
+        .values({ sessionId, senderId: userId, role: 'user', content })
+        .returning(),
+      'chat message insert',
+    );
+    await db.update(chatSessions).set({ updatedAt: new Date() }).where(eq(chatSessions.id, sessionId));
 
-    // Verify access
-    if (session.workspaceId) {
-      const membership = await prisma.workspaceMember.findFirst({
-        where: { workspaceId: session.workspaceId, userId },
-      });
-      if (!membership) throw ApiError.forbidden('You do not have access to this chat session');
-    } else {
-      if (session.userId !== userId) {
-        throw ApiError.forbidden('You do not have access to this private chat session');
-      }
-    }
+    // Non-streaming fallback path. The agent pipeline is used by the streaming
+    // endpoint; this exists so the plain POST still returns something coherent.
+    const assistantMsg = requireRow(
+      await db
+        .insert(chatMessages)
+        .values({
+          sessionId,
+          senderId: null,
+          role: 'assistant',
+          content: `I've received your message. Use the streaming endpoint for a grounded answer.`,
+        })
+        .returning(),
+      'assistant message insert',
+    );
 
-    // Resolve document name for context
-    let docName = 'Selected Document';
-    if (session.documentId) {
-      const doc = await prisma.document.findUnique({ where: { id: session.documentId } });
-      if (doc) docName = doc.name;
-    } else if (session.workspaceFileId) {
-      const file = await prisma.workspaceFile.findUnique({ where: { id: session.workspaceFileId } });
-      if (file) docName = file.name;
-    }
-
-    // 1. Save user message
-    const userMsg = await prisma.chatMessage.create({
-      data: {
-        sessionId,
-        senderId: userId,
-        role: 'user',
-        content: input.content,
-      },
-    });
-
-    // 2. Generate simulated AI response
-    const aiContent = generateSimulatedResponse(docName, input.content);
-
-    // 3. Save assistant message
-    await prisma.chatMessage.create({
-      data: {
-        sessionId,
-        senderId: null,
-        role: 'assistant',
-        content: aiContent,
-      },
-    });
-
-    // 4. Update session timestamp
-    await prisma.chatSession.update({
-      where: { id: sessionId },
-      data: { updatedAt: new Date() },
-    });
-
-    return toMessage(userMsg);
+    return {
+      userMsg: { id: userMsg.id, role: userMsg.role, content: userMsg.content, senderId: userMsg.senderId, createdAt: userMsg.createdAt },
+      assistantMsg: { id: assistantMsg.id, role: assistantMsg.role, content: assistantMsg.content, senderId: assistantMsg.senderId, createdAt: assistantMsg.createdAt },
+    };
   },
 };

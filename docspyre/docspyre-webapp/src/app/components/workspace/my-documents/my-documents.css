@@ -78,7 +78,7 @@
   border-color: color-mix(in srgb, var(--c, var(--accent)) 45%, transparent);
   background: color-mix(in srgb, var(--c, var(--accent)) 12%, var(--surface));
 }
-.chip.is-active .chip__count { background: var(--c, var(--accent)); color: #fff; }
+.chip.is-active .chip__count { background: color-mix(in srgb, var(--c, var(--accent)) 15%, var(--surface)); color: var(--c, var(--accent)); border: 1px solid color-mix(in srgb, var(--c, var(--accent)) 30%, transparent); }
 
 /* Gallery */
 .gallery {

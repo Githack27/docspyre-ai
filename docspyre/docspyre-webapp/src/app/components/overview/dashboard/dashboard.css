@@ -69,7 +69,7 @@
   transition: box-shadow 0.2s ease, background 0.2s ease;
 }
 .action:hover { background: color-mix(in srgb, var(--c) 16%, var(--surface)); }
-.action__icon { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; flex: none; border-radius: 0.7rem; font-size: 1.15rem; color: #fff; background: var(--c); }
+.action__icon { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; flex: none; border-radius: 0.7rem; font-size: 1.15rem; color: var(--c); background: color-mix(in srgb, var(--c) 15%, var(--surface)); border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); }
 .action__text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .action__label { font-weight: 700; font-size: 0.92rem; }
 .action__hint { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); }

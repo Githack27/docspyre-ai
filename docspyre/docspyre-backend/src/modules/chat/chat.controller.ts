@@ -1,18 +1,18 @@
 import type { Request, Response } from 'express';
 import { chatService } from './chat.service';
-import { asyncHandler } from '../../utils/async-handler';
+import { asyncHandler } from '../../core/utils/async-handler';
+import { ApiError } from '../../core/utils/api-error';
 
 export const chatController = {
+  list: asyncHandler(async (req: Request, res: Response) => {
+    const { workspaceId, documentId } = req.query as Record<string, string | undefined>;
+    const sessions = await chatService.listSessions(req.auth!.userId, { workspaceId, documentId });
+    res.status(200).json({ sessions });
+  }),
+
   create: asyncHandler(async (req: Request, res: Response) => {
     const session = await chatService.createSession(req.auth!.userId, req.body);
     res.status(201).json({ session });
-  }),
-
-  list: asyncHandler(async (req: Request, res: Response) => {
-    const documentId = req.query.documentId as string | undefined;
-    const workspaceId = req.query.workspaceId as string | undefined;
-    const sessions = await chatService.listSessions(req.auth!.userId, { documentId, workspaceId });
-    res.status(200).json({ sessions });
   }),
 
   get: asyncHandler(async (req: Request, res: Response) => {
@@ -21,17 +21,21 @@ export const chatController = {
   }),
 
   rename: asyncHandler(async (req: Request, res: Response) => {
-    const session = await chatService.renameSession(req.auth!.userId, req.params.sessionId!, req.body.title);
-    res.status(200).json({ session });
+    const { title } = req.body;
+    if (!title || typeof title !== 'string') throw ApiError.badRequest('Title is required');
+    await chatService.renameSession(req.auth!.userId, req.params.sessionId!, title);
+    res.status(204).send();
   }),
 
-  delete: asyncHandler(async (req: Request, res: Response) => {
+  remove: asyncHandler(async (req: Request, res: Response) => {
     await chatService.deleteSession(req.auth!.userId, req.params.sessionId!);
     res.status(204).send();
   }),
 
   addMessage: asyncHandler(async (req: Request, res: Response) => {
-    const message = await chatService.addMessage(req.auth!.userId, req.params.sessionId!, req.body);
-    res.status(201).json({ message });
+    const { content } = req.body;
+    if (!content || typeof content !== 'string') throw ApiError.badRequest('Message content is required');
+    const result = await chatService.addMessage(req.auth!.userId, req.params.sessionId!, content);
+    res.status(201).json(result);
   }),
 };

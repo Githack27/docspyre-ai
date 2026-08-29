@@ -1,9 +1,8 @@
 import type { Request, Response } from 'express';
 import { workspaceService } from './workspace.service';
-import { asyncHandler } from '../../utils/async-handler';
-import { ApiError } from '../../utils/api-error';
+import { asyncHandler } from '../../core/utils/async-handler';
+import { ApiError } from '../../core/utils/api-error';
 
-/** Thin HTTP layer over the workspace service. */
 export const workspaceController = {
   list: asyncHandler(async (req: Request, res: Response) => {
     const workspaces = await workspaceService.listForUser(req.auth!.userId);
@@ -26,11 +25,7 @@ export const workspaceController = {
   }),
 
   addFile: asyncHandler(async (req: Request, res: Response) => {
-    const file = await workspaceService.addFile(
-      req.params.workspaceId!,
-      req.auth!.userId,
-      req.body,
-    );
+    const file = await workspaceService.addFile(req.params.workspaceId!, req.auth!.userId, req.body);
     res.status(201).json({ file });
   }),
 
@@ -52,11 +47,7 @@ export const workspaceController = {
   }),
 
   attachDocument: asyncHandler(async (req: Request, res: Response) => {
-    const file = await workspaceService.linkDocument(
-      req.params.workspaceId!,
-      req.auth!.userId,
-      req.body.documentId,
-    );
+    const file = await workspaceService.linkDocument(req.params.workspaceId!, req.auth!.userId, req.body.documentId);
     res.status(201).json({ file });
   }),
 

@@ -34,7 +34,7 @@
 .tab:hover { color: var(--text-strong); }
 .tab.is-active { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
 .tab__count { font-size: 0.7rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: var(--surface-muted); }
-.tab.is-active .tab__count { background: var(--accent); color: #fff; }
+.tab.is-active .tab__count { background: color-mix(in srgb, var(--accent) 15%, var(--surface)); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
 
 .cards {
   display: grid;

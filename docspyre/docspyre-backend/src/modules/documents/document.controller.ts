@@ -1,20 +1,17 @@
 import type { Request, Response } from 'express';
-import { DocumentKind } from '@docspyre/database';
 import { documentService } from './document.service';
 import { storageExists, streamFile } from './document.storage';
-import { asyncHandler } from '../../utils/async-handler';
-import { ApiError } from '../../utils/api-error';
+import { asyncHandler } from '../../core/utils/async-handler';
+import { ApiError } from '../../core/utils/api-error';
 
-/** Resolves an optional ?kind= query into a valid DocumentKind. */
-const parseKind = (raw: unknown): DocumentKind | undefined => {
+const VALID_KINDS = ['IMAGE', 'VIDEO', 'AUDIO', 'PDF', 'DOCUMENT', 'OTHER'];
+
+const parseKind = (raw: unknown): string | undefined => {
   if (typeof raw !== 'string') return undefined;
   const upper = raw.toUpperCase();
-  return (Object.values(DocumentKind) as string[]).includes(upper)
-    ? (upper as DocumentKind)
-    : undefined;
+  return VALID_KINDS.includes(upper) ? upper : undefined;
 };
 
-/** Thin HTTP layer over the document service. */
 export const documentController = {
   list: asyncHandler(async (req: Request, res: Response) => {
     const documents = await documentService.list(req.auth!.userId, parseKind(req.query.kind));

@@ -78,7 +78,7 @@
 }
 
 .vbtn--danger:hover { border-color: var(--secondary-color); color: var(--secondary-color); }
-.vbtn--solid { background: var(--accent); color: #fff; border-color: transparent; font-family: var(--font-mono); }
+.vbtn--solid { background: color-mix(in srgb, var(--accent) 15%, var(--surface)); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); font-family: var(--font-mono); }
 
 .viewer__stage {
   flex: 1;

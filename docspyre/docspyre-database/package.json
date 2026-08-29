@@ -1,40 +1,38 @@
 {
   "name": "@docspyre/database",
-  "version": "1.0.0",
-  "description": "Docspyre data layer: Prisma schema, migrations, seed data and a shared, configured PrismaClient.",
+  "version": "2.0.0",
+  "description": "Docspyre data layer: Drizzle ORM schema, migrations, and configured database client.",
   "license": "UNLICENSED",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "prisma:generate": "prisma generate",
-    "prisma:format": "prisma format",
-    "prisma:validate": "prisma validate",
-    "migrate:dev": "prisma migrate dev",
-    "migrate:deploy": "prisma migrate deploy",
-    "migrate:reset": "prisma migrate reset",
-    "db:seed": "tsx prisma/seed.ts",
-    "studio": "prisma studio"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "db:migrate": "tsx src/migrate.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:pull": "drizzle-kit introspect",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.3.1"
+    "drizzle-orm": "^0.35.3",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
-    "prisma": "^6.3.1",
-    "tsx": "^4.19.2",
-    "typescript": "~5.9.2",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.17.19",
+    "@types/pg": "^8.11.10",
     "bcryptjs": "^2.4.3",
-    "@types/bcryptjs": "^2.4.6"
+    "dotenv": "^16.4.7",
+    "drizzle-kit": "0.26.2",
+    "tsx": "^4.19.2",
+    "typescript": "~5.9.2"
   }
 }

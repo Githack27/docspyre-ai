@@ -7,10 +7,10 @@
 }
 
 :root {
-  --primary-color: #22C7A9;
+  --primary-color: #38F2A1;
   --secondary-color: #ff4e85;
   --highlight-text-color: #8a2be2;
-  --dark-bg-color: #061417;
+  --dark-bg-color: #10262B;
   --light-bg-color: #f2f2f2;
 
   --app-bg: #ffffff;
@@ -41,10 +41,10 @@
 }
 
 .dark {
-  --app-bg: #10262B;
-  --surface: #10262B;
-  --surface-muted: #10262B;
-  --surface-hover: #10262B;
+  --app-bg: var(--dark-bg-color);
+  --surface: var(--dark-bg-color);
+  --surface-muted: var(--dark-bg-color);
+  --surface-hover: var(--dark-bg-color);
   --text-strong: #f2f2f2;
   --text-muted: #b6abd6;
   --border-color: #f2f2f2;
