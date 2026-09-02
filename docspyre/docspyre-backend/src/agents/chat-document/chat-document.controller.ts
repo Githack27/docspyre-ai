@@ -10,10 +10,6 @@ const frame = (payload: unknown): string => `data: ${JSON.stringify(payload)}\n\
 
 /**
  * Translates agent events into SSE frames.
- *
- * `token` and `done` match the existing client contract exactly. The additional
- * frames carry no `token` or `done` key, so clients that only look for those two
- * ignore them.
  */
 const toFrame = (event: AgentStreamEvent): string | null => {
   switch (event.type) {
@@ -35,9 +31,6 @@ const toFrame = (event: AgentStreamEvent): string | null => {
 export const chatDocumentController = {
   /**
    * Streams an agent turn over Server-Sent Events.
-   *
-   * Once headers are flushed an error cannot be expressed as an HTTP status, so
-   * failures after that point are delivered as a terminal SSE frame instead.
    */
   streamMessage: asyncHandler(async (req: Request, res: Response) => {
     const { sessionId } = req.params;
@@ -82,6 +75,8 @@ export const chatDocumentController = {
             route: result.route,
             sql: result.sql,
             servedFromCache: result.servedFromCache,
+            totalTokens: result.totalTokens,
+            newTitle: result.newTitle,
           }),
         );
       }
@@ -90,11 +85,11 @@ export const chatDocumentController = {
       logger.error('Chat stream failed', { sessionId, error: message });
 
       if (!clientGone && !res.writableEnded) {
-        // The status line is already sent; report the failure in-band.
         res.write(
           frame({
             done: true,
             error: error instanceof ApiError ? message : 'The request could not be completed.',
+            isLimitReached: message.includes('2,000,000') || message.includes('Context usage limit'),
             citations: [],
             claimVerification: { status: 'unverified', claims: [] },
           }),
@@ -103,5 +98,19 @@ export const chatDocumentController = {
     } finally {
       if (!res.writableEnded) res.end();
     }
+  }),
+
+  /**
+   * Continues an existing chat session into a new chained session, summarizing
+   * the full conversation and resetting the 2M token limit.
+   */
+  continueSession: asyncHandler(async (req: Request, res: Response) => {
+    const { sessionId } = req.params;
+    if (!sessionId) throw ApiError.badRequest('Session ID is required');
+
+    const userId = req.auth!.userId;
+    const result = await chatDocumentService.continueSession(userId, sessionId);
+
+    res.status(201).json(result);
   }),
 };

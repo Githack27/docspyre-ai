@@ -28,6 +28,9 @@ export interface AgentToolContext {
   documentName: string | null;
   storageKey: string | null;
 
+  /** Previous chained chat session ID if this is a continued session. */
+  previousSessionId?: string | null;
+
   /** Dataset catalogue, empty when the file is not tabular. */
   datasetSchemas: DatasetSchema[];
   datasetSources: DatasetSource[];
@@ -36,8 +39,10 @@ export interface AgentToolContext {
   artifacts: {
     chunks: RetrievedChunk[];
     retrievalMode: RetrievalMode | null;
+    webResults: Array<{ title: string; snippet: string; url: string }>;
     sql: string | null;
     sqlRowCount: number | null;
+    previousChatExcerpts: Array<{ role: string; content: string }>;
   };
 
   /** Append-only audit of tool usage for this turn. */
@@ -48,7 +53,15 @@ export const createToolContext = (
   input: Omit<AgentToolContext, 'artifacts' | 'toolCalls'>,
 ): AgentToolContext => ({
   ...input,
-  artifacts: { chunks: [], retrievalMode: null, sql: null, sqlRowCount: null },
+  previousSessionId: input.previousSessionId ?? null,
+  artifacts: {
+    chunks: [],
+    retrievalMode: null,
+    webResults: [],
+    sql: null,
+    sqlRowCount: null,
+    previousChatExcerpts: [],
+  },
   toolCalls: [],
 });
 

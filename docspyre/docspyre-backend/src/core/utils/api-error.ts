@@ -35,4 +35,8 @@ export class ApiError extends Error {
   static tooManyRequests(message = 'Too many requests'): ApiError {
     return new ApiError(429, 'RATE_LIMITED', message);
   }
+
+  static internal(message = 'Internal server error'): ApiError {
+    return new ApiError(500, 'INTERNAL_SERVER_ERROR', message);
+  }
 }

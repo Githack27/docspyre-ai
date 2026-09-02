@@ -11,6 +11,9 @@ export interface PublicChatSession {
   documentId: string | null;
   workspaceId: string | null;
   workspaceFileId: string | null;
+  totalTokens: number;
+  previousSessionId: string | null;
+  initialSummary: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +35,8 @@ interface CreateSessionInput {
   documentId?: string;
   workspaceId?: string;
   workspaceFileId?: string;
+  previousSessionId?: string;
+  initialSummary?: string;
 }
 
 export const chatService = {
@@ -64,6 +69,9 @@ export const chatService = {
           documentId: input.documentId ?? null,
           workspaceId: input.workspaceId ?? null,
           workspaceFileId: input.workspaceFileId ?? null,
+          previousSessionId: input.previousSessionId ?? null,
+          initialSummary: input.initialSummary ?? null,
+          totalTokens: 0,
         })
         .returning(),
       'chat session insert',
@@ -75,6 +83,9 @@ export const chatService = {
       documentId: session.documentId,
       workspaceId: session.workspaceId,
       workspaceFileId: session.workspaceFileId,
+      totalTokens: session.totalTokens ?? 0,
+      previousSessionId: session.previousSessionId ?? null,
+      initialSummary: session.initialSummary ?? null,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
     };
@@ -97,6 +108,9 @@ export const chatService = {
       documentId: s.documentId,
       workspaceId: s.workspaceId,
       workspaceFileId: s.workspaceFileId,
+      totalTokens: s.totalTokens ?? 0,
+      previousSessionId: s.previousSessionId ?? null,
+      initialSummary: s.initialSummary ?? null,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
     }));
@@ -122,6 +136,9 @@ export const chatService = {
       documentId: session.documentId,
       workspaceId: session.workspaceId,
       workspaceFileId: session.workspaceFileId,
+      totalTokens: session.totalTokens ?? 0,
+      previousSessionId: session.previousSessionId ?? null,
+      initialSummary: session.initialSummary ?? null,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
       messages: messages.map((m) => ({

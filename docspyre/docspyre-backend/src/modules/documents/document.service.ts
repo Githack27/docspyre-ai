@@ -8,7 +8,7 @@ import { kindFromMime } from './document.kind';
 import { removeFile, saveBuffer } from './document.storage';
 import type { PublicDocument } from './document.types';
 import { requireRow } from '../../core/utils/rows';
-import { ingestionQueue } from '../chat-document/ingestion/queue.service';
+import { ingestionQueue } from '../../agents/chat-document/ingestion/queue.service';
 
 type DocumentRow = InferSelectModel<typeof documents>;
 

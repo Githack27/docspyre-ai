@@ -375,4 +375,273 @@
   .chat-msg { max-width: 90%; }
 }
 
+/* --- Context Tracker UI (Inline, Right Aligned) ---------------------------- */
+.context-tracker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.35rem 0.85rem;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.context-tracker.is-warning {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: color-mix(in srgb, var(--surface) 88%, rgba(245, 158, 11, 0.08));
+}
+
+.context-tracker.is-limit {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: color-mix(in srgb, var(--surface) 85%, rgba(239, 68, 68, 0.12));
+  animation: pulse-border 2s infinite ease-in-out;
+}
+
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+}
+
+.context-tracker__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 140px;
+}
+
+.context-tracker__info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+}
+
+.context-tracker__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.context-tracker__numbers {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-strong);
+}
+
+.context-tracker__pct {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  margin-left: 0.2rem;
+}
+
+.context-tracker__bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border-soft);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.context-tracker__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #06b6d4 100%);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.context-tracker.is-warning .context-tracker__fill {
+  background: linear-gradient(90deg, #f59e0b 0%, #ea580c 100%);
+}
+
+.context-tracker.is-limit .context-tracker__fill {
+  background: #ef4444;
+}
+
+.context-tracker__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.context-tracker__btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  transform: translateY(-1px);
+}
+
+.context-tracker__btn--limit {
+  background: #ef4444;
+  border-color: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+}
+
+.context-tracker__btn--limit:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+/* --- Sources & Citations Chips ---------------------------------------------- */
+.chat-msg__citations {
+  margin-top: 0.75rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-soft) 85%, transparent);
+}
+
+.citations-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.citations-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.citation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.citation-chip--doc {
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  border: 1px solid var(--border-soft);
+  color: var(--text-strong);
+}
+
+.citation-chip--doc i {
+  color: var(--accent-violet);
+  font-size: 0.8rem;
+}
+
+.citation-chip--web {
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  color: #0891b2;
+  cursor: pointer;
+}
+
+.citation-chip--web:hover {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: #06b6d4;
+  color: #0e7490;
+  transform: translateY(-1px);
+}
+
+.citation-chip--web i.bi-globe2 {
+  color: #0891b2;
+}
+
+.citation-chip--web .citation-ext {
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+
+.citation-marker {
+  font-family: var(--font-mono);
+  font-weight: 800;
+}
+
+.citation-title {
+  max-width: 180px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* --- Context Limit Banner --------------------------------------------------- */
+.limit-reached-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(245, 158, 11, 0.08) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.1);
+}
+
+.limit-reached-banner__text {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--text-strong);
+  font-size: 0.82rem;
+}
+
+.limit-reached-banner__text i {
+  color: #ef4444;
+  font-size: 1.15rem;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.limit-reached-banner__text strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #ef4444;
+  margin-bottom: 0.15rem;
+}
+
+.limit-reached-banner__text p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.limit-reached-banner__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.6rem;
+  background: #ef4444;
+  border: 1px solid #dc2626;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.limit-reached-banner__btn:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+
 

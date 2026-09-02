@@ -10,6 +10,10 @@ export interface Citation {
   page: number;
   bbox: number[];
   section_path: string[];
+  type?: 'document' | 'web';
+  url?: string;
+  title?: string;
+  marker?: string;
 }
 
 export type ClaimVerdict = 'supported' | 'unsupported' | 'contradicted';
@@ -30,7 +34,7 @@ export interface ClaimVerification {
 }
 
 /** Where the answer text came from; drives cache eligibility. */
-export type AnswerSource = 'model' | 'dataset' | 'summary' | 'smalltalk' | 'degraded';
+export type AnswerSource = 'model' | 'dataset' | 'summary' | 'smalltalk' | 'degraded' | 'web_search';
 
 export interface TokenUsage {
   promptTokens: number | null;
@@ -112,6 +116,12 @@ export const AgentState = Annotation.Root({
     default: () => ({ promptTokens: null, completionTokens: null }),
   }),
 
+  /** Web search results gathered when document retrieval yielded 0 chunks. */
+  webResults: Annotation<Array<{ title: string; snippet: string; url: string }>>({
+    reducer: (_prev, next) => next,
+    default: () => [],
+  }),
+
   /** Set when a branch failed in a way the user should be told about. */
   error: Annotation<string | null>({
     reducer: (_prev, next) => next,
@@ -131,4 +141,23 @@ export const citationsFrom = (chunks: RetrievedChunk[]): Citation[] =>
     page: chunk.page,
     bbox: chunk.bbox ?? [],
     section_path: chunk.section_path ?? [],
+    type: 'document',
+    marker: `[${index + 1}]`,
+  }));
+
+/** Builds client citation objects from web search results. */
+export const webCitationsFrom = (
+  results: Array<{ title: string; snippet: string; url: string }>,
+): Citation[] =>
+  results.map((item, index) => ({
+    index: index + 1,
+    chunk_id: `web-${index + 1}`,
+    document_id: '',
+    page: 1,
+    bbox: [],
+    section_path: ['Web Search'],
+    type: 'web',
+    url: item.url,
+    title: item.title,
+    marker: `[W${index + 1}]`,
   }));

@@ -1,7 +1,8 @@
-import { db, eq, documents, chatMessages, chatSessions, workspaceFiles } from '@docspyre/database';
+import { db, eq, documents, chatMessages, chatSessions, conversationSummaries, workspaceFiles } from '@docspyre/database';
 import { env } from '../../core/config';
 import { logger } from '../../core/utils/logger';
-import { chatService } from '../chat/chat.service';
+import { ApiError } from '../../core/utils/api-error';
+import { chatService } from '../../modules/chat/chat.service';
 import { providerResolverService, type ResolvedProvider } from './llm/provider-resolver.service';
 import { describeModel } from './llm/model.factory';
 import { datasetService } from './data/dataset.service';
@@ -12,6 +13,8 @@ import type { AgentRuntime, AgentStreamEvent } from './agent/runtime';
 import type { AnswerSource, Citation, ClaimVerification } from './agent/state';
 import { agentRunRepository, type AgentRunScope } from './persistence/agent-run.repository';
 
+export const CONTEXT_USAGE_LIMIT_TOKENS = 2_000_000;
+
 export interface TurnResult {
   answer: string;
   route: string;
@@ -19,6 +22,8 @@ export interface TurnResult {
   verification: ClaimVerification | null;
   sql: string | null;
   servedFromCache: boolean;
+  totalTokens: number;
+  newTitle: string | null;
 }
 
 interface ScopeResolution extends AgentRunScope {
@@ -86,10 +91,9 @@ const replay = async (
 
 export const chatDocumentService = {
   /**
-   * Runs one chat turn: authorise, persist the question, answer it (from cache
-   * or by running the agent), persist the result, then compact history.
-   *
-   * `emit` receives streaming events; the caller is responsible for transport.
+   * Runs one chat turn: enforce 2M context limit, authorise, persist the question,
+   * answer it (from cache or by running the agent graph with web-search fallback),
+   * track token usage, auto-generate title if needed, and compact history.
    */
   async runTurn(input: {
     userId: string;
@@ -99,9 +103,21 @@ export const chatDocumentService = {
   }): Promise<TurnResult> {
     const startedAt = Date.now();
 
-    // Authorises the caller against the session and gives us prior messages.
+    // Authorises the caller against the session and gives us prior messages & token count.
     const session = await chatService.getSessionDetail(input.userId, input.sessionId);
-    const provider: ResolvedProvider | null = await providerResolverService.resolve(input.userId);
+
+    // ── Context Usage Restriction (2M Tokens Cap) ───────────────────────────
+    const currentTokens = session.totalTokens || 0;
+    if (currentTokens >= CONTEXT_USAGE_LIMIT_TOKENS) {
+      throw ApiError.badRequest(
+        'Context usage limit of 2,000,000 tokens has been reached for this chat session. A new session must be started.',
+      );
+    }
+
+    const provider: ResolvedProvider | null = await providerResolverService.resolve(
+      input.userId,
+      session.workspaceId,
+    );
     const scope = await resolveScope(session);
 
     // Persist the question first so it survives any downstream failure.
@@ -134,6 +150,14 @@ export const chatDocumentService = {
         await replay(cached.answer, input.emit);
 
         const messageId = await this.persistAnswer(input.sessionId, cached.answer);
+
+        const cachedTokens = Math.ceil((input.content.length + cached.answer.length) / 4);
+        const newTotalTokens = currentTokens + cachedTokens;
+
+        await db
+          .update(chatSessions)
+          .set({ totalTokens: newTotalTokens, updatedAt: new Date() })
+          .where(eq(chatSessions.id, input.sessionId));
 
         const runId = await agentRunRepository.record({
           sessionId: input.sessionId,
@@ -169,6 +193,8 @@ export const chatDocumentService = {
           verification: cached.verification,
           sql: cached.sql,
           servedFromCache: true,
+          totalTokens: newTotalTokens,
+          newTitle: null,
         };
       }
     }
@@ -190,6 +216,7 @@ export const chatDocumentService = {
       workspaceId: scope.workspaceId,
       documentName: scope.documentName,
       storageKey: scope.storageKey,
+      previousSessionId: session.previousSessionId,
       datasetSchemas,
       datasetSources,
     });
@@ -245,6 +272,44 @@ export const chatDocumentService = {
 
     const messageId = await this.persistAnswer(input.sessionId, answer);
 
+    // ── Session Title Auto-Generation ───────────────────────────────────────
+    let newTitle: string | null = null;
+    const isGenericTitle =
+      !session.title ||
+      session.title.startsWith('Chat on ') ||
+      session.title === 'New Chat Session' ||
+      session.title === 'Untitled' ||
+      session.title === 'Document Discussion';
+
+    // Auto-generate if title is still default and session has only 1-2 turns
+    if (isGenericTitle && session.messages.length <= 2) {
+      try {
+        newTitle = await conversationSummaryService.autoGenerateTitle(
+          input.content,
+          answer,
+          scope.documentName,
+          provider,
+        );
+      } catch (titleErr) {
+        logger.debug('Session title auto-generation failed', { error: titleErr });
+      }
+    }
+
+    // ── Token Usage & Context Tracking Update ───────────────────────────────
+    const turnTokens =
+      (promptTokens || 0) + (completionTokens || 0) ||
+      Math.ceil((input.content.length + answer.length) / 4);
+    const newTotalTokens = currentTokens + turnTokens;
+
+    await db
+      .update(chatSessions)
+      .set({
+        totalTokens: newTotalTokens,
+        ...(newTitle ? { title: newTitle } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(chatSessions.id, input.sessionId));
+
     const runId = await agentRunRepository.record({
       sessionId: input.sessionId,
       userId: input.userId,
@@ -272,7 +337,7 @@ export const chatDocumentService = {
 
     if (runId && messageId) await agentRunRepository.linkMessage(runId, messageId);
 
-    // Runs after the answer is delivered so it never adds perceived latency.
+    // Compact history in the background
     void conversationSummaryService.maybeCompact(input.sessionId, provider);
 
     return {
@@ -282,6 +347,94 @@ export const chatDocumentService = {
       verification,
       sql: ctx.artifacts.sql,
       servedFromCache: false,
+      totalTokens: newTotalTokens,
+      newTitle,
+    };
+  },
+
+  /**
+   * Chains into a new chat session when the context limit is reached (or on user request).
+   * Summarizes the entire prior session as a comprehensive prose paragraph,
+   * creates a new session wired to the same document/workspace, sets previousSessionId,
+   * and seeds initialSummary so the new chat has immediate context.
+   */
+  async continueSession(
+    userId: string,
+    sessionId: string,
+  ): Promise<{
+    session: {
+      id: string;
+      title: string;
+      documentId: string | null;
+      workspaceId: string | null;
+      workspaceFileId: string | null;
+      previousSessionId: string | null;
+      initialSummary: string | null;
+      totalTokens: number;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  }> {
+    const oldSession = await chatService.getSessionDetail(userId, sessionId);
+    const provider = await providerResolverService.resolve(userId, oldSession.workspaceId);
+    const scope = await resolveScope(oldSession);
+
+    // 1. Synthesize full conversation summary prose paragraph
+    const proseSummary = await conversationSummaryService.generateFullSessionSummary(
+      sessionId,
+      provider,
+      scope.documentName,
+    );
+
+    // 2. Derive new title
+    const baseTitle = oldSession.title.replace(/^Part \d+:\s*/, '');
+    const newTitle = `Part 2: ${baseTitle}`;
+
+    // 3. Create chained session with reset token count
+    const [newSession] = await db
+      .insert(chatSessions)
+      .values({
+        title: newTitle,
+        userId,
+        documentId: oldSession.documentId,
+        workspaceId: oldSession.workspaceId,
+        workspaceFileId: oldSession.workspaceFileId,
+        previousSessionId: oldSession.id,
+        initialSummary: proseSummary,
+        totalTokens: 0,
+      })
+      .returning();
+
+    if (!newSession) {
+      throw ApiError.internal('Failed to create chained session');
+    }
+
+    // 4. Pre-seed conversation_summaries with the prose summary
+    try {
+      await db.insert(conversationSummaries).values({
+        sessionId: newSession.id,
+        summary: proseSummary,
+        messageCount: 0,
+        tokenCount: Math.ceil(proseSummary.length / 4),
+        model: provider ? describeModel(provider) : 'summary-v1',
+      });
+    } catch {
+      // Non-fatal
+    }
+
+    return {
+      session: {
+        id: newSession.id,
+        title: newSession.title,
+        documentId: newSession.documentId,
+        workspaceId: newSession.workspaceId,
+        workspaceFileId: newSession.workspaceFileId,
+        previousSessionId: newSession.previousSessionId,
+        initialSummary: newSession.initialSummary,
+        totalTokens: newSession.totalTokens,
+        createdAt: newSession.createdAt,
+        updatedAt: newSession.updatedAt,
+      },
     };
   },
 

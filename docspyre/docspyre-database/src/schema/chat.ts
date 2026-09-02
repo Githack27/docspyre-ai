@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, index, integer } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
 import { users } from './users';
 import { workspaces } from './workspaces';
@@ -13,6 +13,9 @@ export const chatSessions = pgTable(
     workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
     documentId: uuid('document_id').references(() => documents.id, { onDelete: 'set null' }),
     workspaceFileId: uuid('workspace_file_id').references(() => workspaceFiles.id, { onDelete: 'set null' }),
+    totalTokens: integer('total_tokens').notNull().default(0),
+    previousSessionId: uuid('previous_session_id'),
+    initialSummary: text('initial_summary'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().$defaultFn(() => new Date()),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().$defaultFn(() => new Date()).$onUpdate(() => new Date()),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -22,6 +25,7 @@ export const chatSessions = pgTable(
     workspaceIdIdx: index('chat_sessions_workspace_id_idx').on(table.workspaceId),
     documentIdIdx: index('chat_sessions_document_id_idx').on(table.documentId),
     workspaceFileIdIdx: index('chat_sessions_workspace_file_id_idx').on(table.workspaceFileId),
+    previousSessionIdIdx: index('chat_sessions_previous_session_id_idx').on(table.previousSessionId),
     deletedAtIdx: index('chat_sessions_deleted_at_idx').on(table.deletedAt),
   }),
 );

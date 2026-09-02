@@ -176,6 +176,55 @@
             </p>
           </div>
         </div>
+
+        <!-- Inline Context Tracker (Right Aligned) -->
+        <div class="context-tracker" [class.is-warning]="tokenPercentage() >= 75 && !isLimitReached()" [class.is-limit]="isLimitReached()">
+          <div class="context-tracker__metrics">
+            <div class="context-tracker__info">
+              <span class="context-tracker__label">
+                <i class="bi bi-speedometer2"></i> Context Usage
+              </span>
+              <span class="context-tracker__numbers">
+                <strong>{{ formatTokens(sessionTokens()) }}</strong> / 2.0M
+                <span class="context-tracker__pct">({{ tokenPercentage() }}%)</span>
+              </span>
+            </div>
+            <div class="context-tracker__bar">
+              <div class="context-tracker__fill" [style.width.%]="tokenPercentage()"></div>
+            </div>
+          </div>
+
+          @if (isLimitReached()) {
+            <button
+              type="button"
+              class="context-tracker__btn context-tracker__btn--limit"
+              (click)="continueToNewSession()"
+              [disabled]="continuingSession()"
+              title="2M Limit Reached: Start new chat with summarized context"
+            >
+              @if (continuingSession()) {
+                <i class="bi bi-arrow-repeat spin"></i> Auto-Chaining...
+              } @else {
+                <i class="bi bi-arrow-right-circle-fill"></i> New Session (Summarized)
+              }
+            </button>
+          } @else if (activeSessionId()) {
+            <button
+              type="button"
+              class="context-tracker__btn"
+              (click)="continueToNewSession()"
+              [disabled]="continuingSession()"
+              title="Start a new chat carrying over the full conversation summary"
+            >
+              @if (continuingSession()) {
+                <i class="bi bi-arrow-repeat spin"></i>
+              } @else {
+                <i class="bi bi-arrow-clockwise"></i>
+              }
+              <span>Continue in New Chat</span>
+            </button>
+          }
+        </div>
       </header>
 
       <!-- Sidebar + Chat Split Pane -->
@@ -270,6 +319,40 @@
                           {{ msg.content }}
                         } @else {
                           <div class="md" [innerHTML]="msg.content | markdown"></div>
+
+                          <!-- Sources & Citations list -->
+                          @if (msg.citations && msg.citations.length) {
+                            <div class="chat-msg__citations">
+                              <span class="citations-label">Sources:</span>
+                              <div class="citations-list">
+                                @for (cite of msg.citations; track cite.index) {
+                                  @if (cite.type === 'web') {
+                                    <a
+                                      [href]="cite.url"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      class="citation-chip citation-chip--web"
+                                      [title]="cite.url || cite.title"
+                                    >
+                                      <i class="bi bi-globe2"></i>
+                                      <strong class="citation-marker">{{ cite.marker || ('[W' + cite.index + ']') }}</strong>
+                                      <span class="citation-title">{{ cite.title || 'Web Search Result' }}</span>
+                                      <i class="bi bi-box-arrow-up-right citation-ext"></i>
+                                    </a>
+                                  } @else {
+                                    <span
+                                      class="citation-chip citation-chip--doc"
+                                      [title]="cite.section_path?.join(' > ') || ('Page ' + cite.page)"
+                                    >
+                                      <i class="bi bi-file-earmark-text-fill"></i>
+                                      <strong class="citation-marker">{{ cite.marker || ('[' + cite.index + ']') }}</strong>
+                                      <span class="citation-page">Page {{ cite.page }}</span>
+                                    </span>
+                                  }
+                                }
+                              </div>
+                            </div>
+                          }
                         }
                       </div>
                     </div>
@@ -279,26 +362,50 @@
                 <div class="chat-win__empty">
                   <i class="bi bi-robot"></i>
                   <h2>How can I help you with this document?</h2>
-                  <p>Ask a question, ask to summarize specific sections, or query values in tables.</p>
+                  <p>Ask a question, request a summary, analyze structured data, or search the web if details aren't found in the file.</p>
                 </div>
               }
             </div>
 
             <!-- Input area -->
             <div class="chat-win__footer">
+              @if (isLimitReached()) {
+                <div class="limit-reached-banner">
+                  <div class="limit-reached-banner__text">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div>
+                      <strong>Context Limit Reached (2,000,000 Tokens)</strong>
+                      <p>This chat has reached its 2M token limit. Move to a new chat where this session is summarized as a whole and memory is wired.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="limit-reached-banner__btn"
+                    (click)="continueToNewSession()"
+                    [disabled]="continuingSession()"
+                  >
+                    @if (continuingSession()) {
+                      <i class="bi bi-arrow-repeat spin"></i> Creating New Chat...
+                    } @else {
+                      <i class="bi bi-arrow-right-circle-fill"></i> Continue in New Chat
+                    }
+                  </button>
+                </div>
+              }
+
               <div class="chat-win__input-container">
                 <textarea
                   class="chat-win__input"
-                  placeholder="Type your message about this document... (Enter to send, Shift+Enter for new line)"
+                  [placeholder]="isLimitReached() ? 'Context limit of 2M tokens reached. Click \'Continue in New Chat\' to proceed.' : 'Type your message about this document... (Enter to send, Shift+Enter for new line)'"
                   [(ngModel)]="newMessage"
                   (keydown)="onKeydown($event)"
-                  [disabled]="sending()"
+                  [disabled]="sending() || isLimitReached()"
                   rows="1"
                 ></textarea>
                 <button
                   type="button"
                   class="chat-win__send-btn"
-                  [disabled]="!newMessage().trim() || sending()"
+                  [disabled]="!newMessage().trim() || sending() || isLimitReached()"
                   (click)="sendMessage()"
                 >
                   @if (sending()) {
@@ -308,7 +415,7 @@
                   }
                 </button>
               </div>
-              <p class="chat-win__hint">Pressing Enter sends the message. AI context is maintained for this chat window.</p>
+              <p class="chat-win__hint">Pressing Enter sends the message. 2M token context tracking is active for this session.</p>
             </div>
           }
         </main>

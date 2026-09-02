@@ -11,6 +11,8 @@ export interface ResolvedProvider {
   apiKey: string;
   /** Operator-supplied persona, prepended to the agent's own rules. */
   systemPrompt: string | null;
+  /** Workspace-specific tone/persona guidance. */
+  workspacePersona?: string | null;
   /** True when this came from env fallback rather than a user config. */
   isFallback: boolean;
 }
@@ -38,7 +40,7 @@ const safeDecrypt = (ciphertext: string): string | null => {
 };
 
 export const providerResolverService = {
-  async resolve(userId: string): Promise<ResolvedProvider | null> {
+  async resolve(userId: string, workspaceId?: string | null): Promise<ResolvedProvider | null> {
     const [config] = await db
       .select()
       .from(providerConfigs)

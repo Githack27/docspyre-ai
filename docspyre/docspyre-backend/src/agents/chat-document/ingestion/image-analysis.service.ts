@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { HumanMessage } from '@langchain/core/messages';
-import { storagePath } from '../../documents/document.storage';
+import { storagePath } from '../../../modules/documents/document.storage';
 import { logger } from '../../../core/utils/logger';
 import { createVisionModel, supportsVision } from '../llm/model.factory';
 import { messageText } from '../llm/output';

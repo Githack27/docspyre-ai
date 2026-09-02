@@ -57,6 +57,15 @@ export class ChatWithDocument {
   protected readonly uploading = signal<boolean>(false);
   protected readonly dragging = signal<boolean>(false);
 
+  // Context Usage & Token Limit (2M Token Cap)
+  protected readonly contextLimit = 2_000_000;
+  protected readonly sessionTokens = signal<number>(0);
+  protected readonly isLimitReached = computed(() => this.sessionTokens() >= this.contextLimit);
+  protected readonly tokenPercentage = computed(() =>
+    Math.min(100, Math.round((this.sessionTokens() / this.contextLimit) * 100)),
+  );
+  protected readonly continuingSession = signal<boolean>(false);
+
   // Editing Session Title state
   protected readonly editingSessionId = signal<string | null>(null);
   protected readonly editingSessionTitle = signal<string>('');
@@ -276,6 +285,7 @@ export class ChatWithDocument {
         this.activeSession.set(detail);
         this.activeSessionId.set(detail.id);
         this.messages.set(detail.messages);
+        this.sessionTokens.set(detail.totalTokens || 0);
         this.loadingChat.set(false);
 
         // Update URL
@@ -370,6 +380,11 @@ export class ChatWithDocument {
     const text = this.newMessage().trim();
     if (!text || this.sending()) return;
 
+    if (this.isLimitReached()) {
+      this.continueToNewSession();
+      return;
+    }
+
     const doc = this.selectedDoc();
     if (!doc) return;
 
@@ -398,6 +413,7 @@ export class ChatWithDocument {
         senderId: null,
         role: 'assistant',
         content: '',
+        citations: [],
         createdAt: new Date().toISOString(),
       };
       this.messages.update((list) => [...list, streamingAiMsg]);
@@ -406,6 +422,31 @@ export class ChatWithDocument {
       let receivedAnyToken = false;
 
       this.chatService.streamMessage(sessionId, text, (data) => {
+        if (data.totalTokens != null) {
+          this.sessionTokens.set(data.totalTokens);
+          this.sessions.update((list) =>
+            list.map((s) => (s.id === sessionId ? { ...s, totalTokens: data.totalTokens } : s))
+          );
+        }
+
+        if (data.sessionTitle) {
+          const updatedTitle = data.sessionTitle;
+          this.sessions.update((list) =>
+            list.map((s) => (s.id === sessionId ? { ...s, title: updatedTitle } : s))
+          );
+          this.activeSession.update((current) =>
+            current ? { ...current, title: updatedTitle } : null
+          );
+        }
+
+        if (data.citations && data.citations.length) {
+          this.messages.update((list) =>
+            list.map((m) =>
+              m.id === streamingMsgId ? { ...m, citations: data.citations } : m
+            )
+          );
+        }
+
         if (data.token) {
           receivedAnyToken = true;
           // Append token to the streaming message
@@ -419,12 +460,22 @@ export class ChatWithDocument {
           this.scrollToBottom();
         }
 
+        if (data.isLimitReached || (data.totalTokens != null && data.totalTokens >= this.contextLimit)) {
+          // Context limit reached! Auto-create new session and navigate to it
+          setTimeout(() => {
+            this.continueToNewSession();
+          }, 1200);
+        }
+
         if (data.done) {
           if (receivedAnyToken) {
             // Streaming succeeded — reload session to get persisted messages
             this.chatService.getDetail(sessionId).subscribe({
               next: (detail) => {
                 this.messages.set(detail.messages);
+                if (detail.totalTokens != null) {
+                  this.sessionTokens.set(detail.totalTokens);
+                }
                 this.sending.set(false);
                 this.scrollToBottom();
               },
@@ -439,6 +490,9 @@ export class ChatWithDocument {
                 this.chatService.getDetail(sessionId).subscribe({
                   next: (detail) => {
                     this.messages.set(detail.messages);
+                    if (detail.totalTokens != null) {
+                      this.sessionTokens.set(detail.totalTokens);
+                    }
                     this.sending.set(false);
                     this.scrollToBottom();
                   },
@@ -575,4 +629,30 @@ export class ChatWithDocument {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
+
+  protected continueToNewSession(): void {
+    const activeId = this.activeSessionId();
+    if (!activeId || this.continuingSession()) return;
+
+    this.continuingSession.set(true);
+    this.chatService.continueSession(activeId).subscribe({
+      next: (res) => {
+        this.continuingSession.set(false);
+        const newSession = res.session;
+        this.sessions.update((list) => [newSession, ...list]);
+        this.selectSession(newSession.id);
+      },
+      error: () => {
+        this.continuingSession.set(false);
+      },
+    });
+  }
+
+  protected formatTokens(tokens: number): string {
+    if (!tokens) return '0';
+    if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(2)}M`;
+    if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(1)}k`;
+    return tokens.toString();
+  }
 }
+

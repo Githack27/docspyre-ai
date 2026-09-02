@@ -3,7 +3,7 @@
 // the module can be reworked without touching call sites.
 
 export { chatDocumentController } from './chat-document.controller';
-export { chatDocumentService } from './chat-document.service';
+export { chatDocumentService, CONTEXT_USAGE_LIMIT_TOKENS } from './chat-document.service';
 export type { TurnResult } from './chat-document.service';
 
 // Ingestion is driven by the documents module.
@@ -18,3 +18,5 @@ export type { DatasetSchema } from './data/dataset.service';
 export { summarizerService } from './ingestion/summarizer.service';
 
 export type { Citation, ClaimVerification } from './agent/state';
+export { searchDuckDuckGo } from './agent/tools/web-search.tool';
+

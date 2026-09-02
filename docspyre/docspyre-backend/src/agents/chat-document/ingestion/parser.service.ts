@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { storagePath } from '../../documents/document.storage';
+import { storagePath } from '../../../modules/documents/document.storage';
 import { logger } from '../../../core/utils/logger';
 import { imageAnalysisService, isImage } from './image-analysis.service';
 import type { ResolvedProvider } from '../llm/provider-resolver.service';

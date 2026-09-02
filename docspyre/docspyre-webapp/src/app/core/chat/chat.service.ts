@@ -2,14 +2,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ChatSession, ChatSessionDetail, CreateChatSessionInput, ChatMessage } from './chat.models';
+import { ChatSession, ChatSessionDetail, CreateChatSessionInput, ChatMessage, ChatCitation, ContinueSessionResult } from './chat.models';
 import { AuthService } from '../auth/auth.service';
 
 export interface StreamToken {
   token?: string;
   done?: boolean;
-  citations?: any[];
+  citations?: ChatCitation[];
   claimVerification?: any;
+  totalTokens?: number;
+  sessionTitle?: string;
+  isLimitReached?: boolean;
+  error?: string;
+  route?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -47,6 +52,10 @@ export class ChatService {
 
   delete(sessionId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${sessionId}`);
+  }
+
+  continueSession(sessionId: string): Observable<ContinueSessionResult> {
+    return this.http.post<ContinueSessionResult>(`${this.base}/${sessionId}/continue`, {});
   }
 
   addMessage(sessionId: string, content: string): Observable<ChatMessage> {

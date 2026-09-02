@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { db, eq, datasetTables } from '@docspyre/database';
 import { logger } from '../../../core/utils/logger';
-import { storagePath, storageExists } from '../../documents/document.storage';
+import { storagePath, storageExists } from '../../../modules/documents/document.storage';
 import { duckdbService, type DatasetFormat, type DatasetSource } from './duckdb.service';
 import { createChatModel } from '../llm/model.factory';
 import { DATASET_DESCRIPTION_SYSTEM, buildDatasetDescriptionPrompt } from '../agent/prompts';

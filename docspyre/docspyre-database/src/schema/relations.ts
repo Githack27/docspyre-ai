@@ -89,6 +89,7 @@ export const chatSessionsRelations = relations(chatSessions, ({ one, many }) => 
   workspace: one(workspaces, { fields: [chatSessions.workspaceId], references: [workspaces.id] }),
   document: one(documents, { fields: [chatSessions.documentId], references: [documents.id] }),
   workspaceFile: one(workspaceFiles, { fields: [chatSessions.workspaceFileId], references: [workspaceFiles.id] }),
+  previousSession: one(chatSessions, { fields: [chatSessions.previousSessionId], references: [chatSessions.id], relationName: 'continuedFrom' }),
   messages: many(chatMessages),
   agentRuns: many(agentRuns),
   summary: one(conversationSummaries),
