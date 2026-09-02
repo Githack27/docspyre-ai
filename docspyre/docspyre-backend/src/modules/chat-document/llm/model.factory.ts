@@ -10,11 +10,51 @@ import type { ResolvedProvider } from './provider-resolver.service';
 const COHERE_OPENAI_BASE_URL = 'https://api.cohere.ai/compatibility/v1';
 
 const DEFAULT_MODELS: Record<ResolvedProvider['providerId'], string> = {
-  gemini: 'gemini-2.5-flash',
+  gemini: 'gemini-flash-latest',
   openai: 'gpt-4o-mini',
-  anthropic: 'claude-3-5-sonnet-20241022',
+  anthropic: 'claude-3-5-sonnet-latest',
   cohere: 'command-r-plus',
   ollama: 'llama3.2',
+};
+
+/**
+ * Providers whose models are multimodal. Gemini, OpenAI (4o family), Anthropic
+ * (Claude 3+) and Ollama (with a vision model) accept images. Cohere's chat
+ * models here do not, so image analysis is unavailable on Cohere.
+ */
+const VISION_CAPABLE: ReadonlySet<ResolvedProvider['providerId']> = new Set([
+  'gemini',
+  'openai',
+  'anthropic',
+  'ollama',
+]);
+
+/**
+ * Fallback vision model used ONLY when the user has not configured a model for
+ * the provider. When the user has chosen a model, that choice is respected —
+ * modern Gemini/OpenAI/Anthropic chat models are all multimodal.
+ */
+const VISION_FALLBACK: Partial<Record<ResolvedProvider['providerId'], string>> = {
+  gemini: 'gemini-flash-latest',
+  openai: 'gpt-4o',
+  anthropic: 'claude-3-5-sonnet-latest',
+  ollama: 'llava',
+};
+
+/** Whether a provider can analyse images at all. */
+export const supportsVision = (provider: ResolvedProvider): boolean =>
+  VISION_CAPABLE.has(provider.providerId);
+
+/**
+ * Builds a vision-capable chat model. Uses the user's configured model as-is;
+ * only substitutes a known multimodal model when none is configured.
+ */
+export const createVisionModel = (
+  provider: ResolvedProvider,
+  options: ModelOptions = {},
+): BaseChatModel => {
+  const model = provider.model?.trim() || VISION_FALLBACK[provider.providerId] || '';
+  return createChatModel({ ...provider, model }, options);
 };
 
 export interface ModelOptions {

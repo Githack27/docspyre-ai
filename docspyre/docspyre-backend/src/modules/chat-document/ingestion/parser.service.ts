@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { storagePath } from '../../documents/document.storage';
 import { logger } from '../../../core/utils/logger';
+import { imageAnalysisService, isImage } from './image-analysis.service';
+import type { ResolvedProvider } from '../llm/provider-resolver.service';
 
 export interface ParsedBlock {
   page: number;
@@ -9,6 +11,11 @@ export interface ParsedBlock {
   bbox: number[];
   type: 'heading' | 'text';
   text: string;
+}
+
+export interface ParseOptions {
+  /** Provider used for vision analysis of image uploads. */
+  provider?: ResolvedProvider | null;
 }
 
 /** Headings longer than this are almost certainly prose. */
@@ -116,9 +123,35 @@ const structurePage = (pageText: string, page: number): ParsedBlock[] => {
 
 export const parserService = {
   /** Converts a stored upload into structured text blocks. */
-  async parse(storageKey: string, mimeType: string, name: string): Promise<ParsedBlock[]> {
-    const buffer = await readFile(storagePath(storageKey));
+  async parse(
+    storageKey: string,
+    mimeType: string,
+    name: string,
+    options: ParseOptions = {},
+  ): Promise<ParsedBlock[]> {
     const mime = (mimeType || '').toLowerCase();
+
+    // Images have no extractable text; a vision model turns them into a
+    // description that is then chunked and indexed like any other document.
+    if (isImage(mimeType, name)) {
+      const description = await imageAnalysisService.describe({
+        storageKey,
+        mimeType,
+        name,
+        provider: options.provider ?? null,
+      });
+
+      if (description) return structurePage(description, 1);
+
+      // No vision model available: index the filename so the doc is at least
+      // discoverable, and surface the limitation at answer time.
+      return structurePage(
+        `Image file: ${name}. No visual analysis was available for this image, so its contents could not be read.`,
+        1,
+      );
+    }
+
+    const buffer = await readFile(storagePath(storageKey));
 
     if (mime === 'application/pdf' || name.toLowerCase().endsWith('.pdf')) {
       return this.parsePdf(buffer);

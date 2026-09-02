@@ -64,7 +64,7 @@ export const providerResolverService = {
     if (env.GEMINI_API_KEY) {
       return {
         providerId: 'gemini',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.6-flash',
         apiKey: env.GEMINI_API_KEY,
         systemPrompt: null,
         isFallback: true,

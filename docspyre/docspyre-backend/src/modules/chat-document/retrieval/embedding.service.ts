@@ -10,7 +10,7 @@ import type { ResolvedProvider } from '../llm/provider-resolver.service';
  * only meaningful within one id, so the retriever compares this before scoring.
  */
 export const EMBEDDING_MODELS = {
-  google: { id: 'google:text-embedding-004', dim: 768 },
+  google: { id: 'google:gemini-embedding-001', dim: 3072 },
   openai: { id: 'openai:text-embedding-3-small', dim: 1536 },
   ollama: { id: 'ollama:nomic-embed-text', dim: 768 },
   local: { id: 'local:hash-768', dim: 768 },
@@ -88,7 +88,7 @@ const candidatesFor = (provider: ResolvedProvider | null): EmbeddingModel[] => {
       wrap(
         EMBEDDING_MODELS.google.id,
         EMBEDDING_MODELS.google.dim,
-        new GoogleGenerativeAIEmbeddings({ model: 'text-embedding-004', apiKey: provider.apiKey }),
+        new GoogleGenerativeAIEmbeddings({ model: 'gemini-embedding-001', apiKey: provider.apiKey }),
       ),
     );
   }
@@ -108,7 +108,7 @@ const candidatesFor = (provider: ResolvedProvider | null): EmbeddingModel[] => {
       wrap(
         EMBEDDING_MODELS.google.id,
         EMBEDDING_MODELS.google.dim,
-        new GoogleGenerativeAIEmbeddings({ model: 'text-embedding-004', apiKey: env.GEMINI_API_KEY }),
+        new GoogleGenerativeAIEmbeddings({ model: 'gemini-embedding-001', apiKey: env.GEMINI_API_KEY }),
       ),
     );
   }

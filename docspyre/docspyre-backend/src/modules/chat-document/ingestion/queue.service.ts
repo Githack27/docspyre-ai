@@ -50,7 +50,7 @@ const process = async (job: IngestionJob): Promise<void> => {
     provider,
   });
 
-  const blocks = await parserService.parse(job.storageKey, job.mimeType, job.name);
+  const blocks = await parserService.parse(job.storageKey, job.mimeType, job.name, { provider });
   const pageCount = blocks.reduce((max, block) => Math.max(max, block.page), 0) || null;
 
   await setStatus(job.documentId, { ingestionStatus: 'INDEXING', pageCount });
