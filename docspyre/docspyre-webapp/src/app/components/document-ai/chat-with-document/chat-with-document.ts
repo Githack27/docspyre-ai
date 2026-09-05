@@ -10,6 +10,7 @@ import { WorkspaceService } from '../../../core/workspace/workspace.service';
 import { ProjectSummary, ProjectDetail, ProjectFile } from '../../../core/workspace/workspace.models';
 import { DocumentCard } from '../../shared/ui/document-card/document-card';
 import { MarkdownPipe } from '../../../core/markdown/markdown-pipe';
+import { ConfirmationService } from '../../../core/confirmation/confirmation.service';
 
 @Component({
   selector: 'app-chat-with-document',
@@ -23,6 +24,7 @@ export class ChatWithDocument {
   private readonly chatService = inject(ChatService);
   private readonly documentService = inject(DocumentService);
   private readonly workspaceService = inject(WorkspaceService);
+  private readonly confirmationService = inject(ConfirmationService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly kindFromMime = kindFromMime;
@@ -286,6 +288,11 @@ export class ChatWithDocument {
         this.activeSessionId.set(detail.id);
         this.messages.set(detail.messages);
         this.sessionTokens.set(detail.totalTokens || 0);
+        if (detail.title) {
+          this.sessions.update((list) =>
+            list.map((s) => (s.id === sessionId ? { ...s, title: detail.title } : s))
+          );
+        }
         this.loadingChat.set(false);
 
         // Update URL
@@ -354,9 +361,17 @@ export class ChatWithDocument {
 
   // --- Delete Session --------------------------------------------------------
 
-  protected deleteSession(session: ChatSession, event: Event): void {
+  protected async deleteSession(session: ChatSession, event: Event): Promise<void> {
     event.stopPropagation();
-    if (!confirm(`Are you sure you want to delete "${session.title}"?`)) return;
+    const confirmed = await this.confirmationService.confirm({
+      title: 'Delete Chat Session',
+      message: `Are you sure you want to delete "${session.title}"?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'bi-trash3-fill',
+    });
+    if (!confirmed) return;
 
     this.chatService.delete(session.id).subscribe({
       next: () => {
@@ -429,8 +444,8 @@ export class ChatWithDocument {
           );
         }
 
-        if (data.sessionTitle) {
-          const updatedTitle = data.sessionTitle;
+        const updatedTitle = data.sessionTitle || data.newTitle;
+        if (updatedTitle) {
           this.sessions.update((list) =>
             list.map((s) => (s.id === sessionId ? { ...s, title: updatedTitle } : s))
           );
@@ -460,6 +475,18 @@ export class ChatWithDocument {
           this.scrollToBottom();
         }
 
+        if (data.error && !receivedAnyToken) {
+          this.messages.update((list) =>
+            list.map((m) =>
+              m.id === streamingMsgId
+                ? { ...m, content: data.error! }
+                : m
+            )
+          );
+          this.sending.set(false);
+          return;
+        }
+
         if (data.isLimitReached || (data.totalTokens != null && data.totalTokens >= this.contextLimit)) {
           // Context limit reached! Auto-create new session and navigate to it
           setTimeout(() => {
@@ -469,12 +496,20 @@ export class ChatWithDocument {
 
         if (data.done) {
           if (receivedAnyToken) {
-            // Streaming succeeded — reload session to get persisted messages
+            // Streaming succeeded — reload session to get persisted messages & title
             this.chatService.getDetail(sessionId).subscribe({
               next: (detail) => {
                 this.messages.set(detail.messages);
                 if (detail.totalTokens != null) {
                   this.sessionTokens.set(detail.totalTokens);
+                }
+                if (detail.title) {
+                  this.sessions.update((list) =>
+                    list.map((s) => (s.id === sessionId ? { ...s, title: detail.title } : s))
+                  );
+                  this.activeSession.update((current) =>
+                    current ? { ...current, title: detail.title } : null
+                  );
                 }
                 this.sending.set(false);
                 this.scrollToBottom();
@@ -482,8 +517,8 @@ export class ChatWithDocument {
               error: () => this.sending.set(false),
             });
           } else {
-            // Stream produced no tokens (failed or provider unavailable).
-            // Fall back to the non-streaming endpoint.
+            // Stream produced no tokens.
+            // Fall back to the non-streaming agent endpoint.
             this.messages.update((list) => list.filter((m) => m.id !== streamingMsgId));
             this.chatService.addMessage(sessionId, text).subscribe({
               next: () => {
@@ -493,15 +528,33 @@ export class ChatWithDocument {
                     if (detail.totalTokens != null) {
                       this.sessionTokens.set(detail.totalTokens);
                     }
+                    if (detail.title) {
+                      this.sessions.update((list) =>
+                        list.map((s) => (s.id === sessionId ? { ...s, title: detail.title } : s))
+                      );
+                      this.activeSession.update((current) =>
+                        current ? { ...current, title: detail.title } : null
+                      );
+                    }
                     this.sending.set(false);
                     this.scrollToBottom();
                   },
                   error: () => this.sending.set(false),
                 });
               },
-              error: () => {
-                // Even fallback failed — just keep the user message visible
-                this.messages.update((list) => list.filter((m) => m.id !== streamingMsgId));
+              error: (err) => {
+                const errMsg = err?.error?.error?.message || 'An error occurred while generating a response. Please try again.';
+                this.messages.update((list) => [
+                  ...list,
+                  {
+                    id: 'err-' + Date.now(),
+                    sessionId,
+                    senderId: null,
+                    role: 'assistant',
+                    content: errMsg,
+                    createdAt: new Date().toISOString(),
+                  },
+                ]);
                 this.sending.set(false);
               },
             });

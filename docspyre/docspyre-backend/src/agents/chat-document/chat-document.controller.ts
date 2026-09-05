@@ -77,6 +77,7 @@ export const chatDocumentController = {
             servedFromCache: result.servedFromCache,
             totalTokens: result.totalTokens,
             newTitle: result.newTitle,
+            sessionTitle: result.sessionTitle || result.newTitle,
           }),
         );
       }

@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { chatService } from './chat.service';
+import { chatDocumentService } from '../../agents/chat-document/chat-document.service';
 import { asyncHandler } from '../../core/utils/async-handler';
 import { ApiError } from '../../core/utils/api-error';
 
@@ -35,7 +36,18 @@ export const chatController = {
   addMessage: asyncHandler(async (req: Request, res: Response) => {
     const { content } = req.body;
     if (!content || typeof content !== 'string') throw ApiError.badRequest('Message content is required');
-    const result = await chatService.addMessage(req.auth!.userId, req.params.sessionId!, content);
-    res.status(201).json(result);
+    const result = await chatDocumentService.runTurn({
+      userId: req.auth!.userId,
+      sessionId: req.params.sessionId!,
+      content,
+      emit: () => {},
+    });
+    res.status(201).json({
+      answer: result.answer,
+      citations: result.citations,
+      totalTokens: result.totalTokens,
+      newTitle: result.newTitle,
+      sessionTitle: result.sessionTitle,
+    });
   }),
 };

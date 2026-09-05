@@ -1,0 +1,54 @@
+@if (confirmationService.isOpen()) {
+  <div
+    class="confirm-backdrop"
+    (click)="confirmationService.handleCancel()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="confirmationService.options().title"
+  >
+    <div
+      class="confirm-dialog"
+      [attr.data-type]="confirmationService.options().type || 'danger'"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="confirm-dialog__head">
+        <div class="confirm-dialog__icon-badge">
+          <i class="bi {{ confirmationService.options().icon || defaultIcon(confirmationService.options().type) }}"></i>
+        </div>
+        <div class="confirm-dialog__title-area">
+          <h3 class="confirm-dialog__title">{{ confirmationService.options().title }}</h3>
+        </div>
+        <button
+          type="button"
+          class="confirm-dialog__close"
+          (click)="confirmationService.handleCancel()"
+          aria-label="Close"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </header>
+
+      <div class="confirm-dialog__body">
+        <p class="confirm-dialog__message">{{ confirmationService.options().message }}</p>
+      </div>
+
+      <footer class="confirm-dialog__foot">
+        <button
+          type="button"
+          class="confirm-btn confirm-btn--cancel"
+          (click)="confirmationService.handleCancel()"
+        >
+          {{ confirmationService.options().cancelText || 'Cancel' }}
+        </button>
+        <button
+          type="button"
+          class="confirm-btn confirm-btn--action"
+          [attr.data-action-type]="confirmationService.options().type || 'danger'"
+          (click)="confirmationService.handleConfirm()"
+        >
+          {{ confirmationService.options().confirmText || 'Confirm' }}
+        </button>
+      </footer>
+    </div>
+  </div>
+}

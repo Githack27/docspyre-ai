@@ -186,34 +186,40 @@ export const conversationSummaryService = {
             role: 'user',
             content: buildTitlePrompt({
               userMessage: cleanUser,
-              assistantResponse: isShortGreeting ? assistantResponse : null,
+              assistantResponse: assistantResponse ? assistantResponse.slice(0, 300) : null,
               documentName,
             }),
           },
         ]);
 
-        let title = messageText(response).replace(/["'`.#]/g, '').trim();
-        // Keep to 3-6 words
+        let title = messageText(response).replace(/^title:\s*/i, '').replace(/["'`.#]/g, '').trim();
         const words = title.split(/\s+/).filter(Boolean);
-        if (words.length >= 2) {
-          title = words.slice(0, 6).join(' ');
-          return title;
+        if (words.length >= 1) {
+          return words.slice(0, 6).join(' ');
         }
-      } catch {
-        // Fall through to heuristic
+      } catch (err) {
+        logger.debug('LLM title auto-generation failed, falling back to heuristic', { error: err });
       }
     }
 
     // Heuristic fallback
-    if (!isShortGreeting && cleanUser.length >= 10) {
-      const words = cleanUser.split(/\s+/).filter((w) => w.length > 2);
-      if (words.length >= 3) {
-        return words.slice(0, 5).join(' ');
+    if (!isShortGreeting && cleanUser.length >= 5) {
+      const cleaned = cleanUser
+        .replace(/^(what\s+is\s+the|what\s+is|what\s+are|tell\s+me\s+about|can\s+you\s+explain|how\s+does|how\s+to|explain)\s+/i, '')
+        .replace(/[?!,.:;"]/g, '')
+        .trim();
+      const words = (cleaned || cleanUser).replace(/[?!,.:;"]/g, '').trim().split(/\s+/).filter(Boolean);
+      if (words.length >= 2) {
+        return words
+          .slice(0, 5)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+          .join(' ');
       }
     }
 
     if (documentName) {
-      return `Discussion on ${documentName.replace(/\.[^/.]+$/, '')}`;
+      const docBase = documentName.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ');
+      return `${docBase} Overview`;
     }
 
     return 'Document Discussion';

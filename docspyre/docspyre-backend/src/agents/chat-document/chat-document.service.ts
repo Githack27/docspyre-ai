@@ -24,6 +24,7 @@ export interface TurnResult {
   servedFromCache: boolean;
   totalTokens: number;
   newTitle: string | null;
+  sessionTitle?: string | null;
 }
 
 interface ScopeResolution extends AgentRunScope {
@@ -279,13 +280,17 @@ export const chatDocumentService = {
       session.title.startsWith('Chat on ') ||
       session.title === 'New Chat Session' ||
       session.title === 'Untitled' ||
-      session.title === 'Document Discussion';
+      session.title === 'Document Discussion' ||
+      session.title.startsWith('Discussion on ');
 
-    // Auto-generate if title is still default and session has only 1-2 turns
-    if (isGenericTitle && session.messages.length <= 2) {
+    // Auto-generate if title is still generic/default
+    if (isGenericTitle) {
       try {
+        const firstUserMsg =
+          session.messages.find((m) => m.role === 'user')?.content || input.content;
+
         newTitle = await conversationSummaryService.autoGenerateTitle(
-          input.content,
+          firstUserMsg,
           answer,
           scope.documentName,
           provider,
@@ -294,6 +299,8 @@ export const chatDocumentService = {
         logger.debug('Session title auto-generation failed', { error: titleErr });
       }
     }
+
+    const sessionTitle = newTitle || (!isGenericTitle ? session.title : null);
 
     // ── Token Usage & Context Tracking Update ───────────────────────────────
     const turnTokens =
@@ -349,6 +356,7 @@ export const chatDocumentService = {
       servedFromCache: false,
       totalTokens: newTotalTokens,
       newTitle,
+      sessionTitle,
     };
   },
 

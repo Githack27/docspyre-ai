@@ -50,3 +50,4 @@ bootstrap().catch((err) => {
   logger.error('Bootstrap failed', { error: err instanceof Error ? err.message : String(err) });
   process.exit(1);
 });
+

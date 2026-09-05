@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ChatSession, ChatSessionDetail, CreateChatSessionInput, ChatMessage, ChatCitation, ContinueSessionResult } from './chat.models';
 import { AuthService } from '../auth/auth.service';
@@ -12,6 +12,7 @@ export interface StreamToken {
   claimVerification?: any;
   totalTokens?: number;
   sessionTitle?: string;
+  newTitle?: string;
   isLimitReached?: boolean;
   error?: string;
   route?: string;
@@ -58,32 +59,63 @@ export class ChatService {
     return this.http.post<ContinueSessionResult>(`${this.base}/${sessionId}/continue`, {});
   }
 
-  addMessage(sessionId: string, content: string): Observable<ChatMessage> {
-    return this.http
-      .post<{ message: ChatMessage }>(`${this.base}/${sessionId}/messages`, { content })
-      .pipe(map((res) => res.message));
+  addMessage(sessionId: string, content: string): Observable<{
+    answer: string;
+    citations?: ChatCitation[];
+    totalTokens?: number;
+    newTitle?: string;
+    sessionTitle?: string;
+  }> {
+    return this.http.post<{
+      answer: string;
+      citations?: ChatCitation[];
+      totalTokens?: number;
+      newTitle?: string;
+      sessionTitle?: string;
+    }>(`${this.base}/${sessionId}/messages`, { content });
   }
 
   /**
    * Streams a message via SSE using the RAG pipeline.
-   * Returns an observable that emits tokens as they arrive, then completes with citations.
+   * Handles 401 automatic token refresh so streaming never fails when access tokens expire.
    */
   streamMessage(sessionId: string, content: string, onToken: (data: StreamToken) => void): AbortController {
     const controller = new AbortController();
-    const token = this.auth.getAccessToken();
 
-    fetch(`${this.base}/${sessionId}/messages/stream`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ content }),
-      signal: controller.signal,
-    })
-      .then(async (response) => {
+    const executeStream = async (isRetry = false): Promise<void> => {
+      const token = this.auth.getAccessToken();
+
+      try {
+        const response = await fetch(`${this.base}/${sessionId}/messages/stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ content }),
+          signal: controller.signal,
+        });
+
+        // If 401 Unauthorized, automatically refresh access token and retry once
+        if (response.status === 401 && !isRetry) {
+          try {
+            await firstValueFrom(this.auth.refresh());
+            return executeStream(true);
+          } catch {
+            onToken({ error: 'Session expired. Please log in again.', done: true });
+            return;
+          }
+        }
+
         if (!response.ok || !response.body) {
-          onToken({ done: true });
+          let errorMsg = `Server returned status ${response.status}`;
+          try {
+            const errJson = await response.json();
+            if (errJson?.error?.message) errorMsg = errJson.error.message;
+          } catch {
+            // Ignore json parse error
+          }
+          onToken({ error: errorMsg, done: true });
           return;
         }
 
@@ -127,11 +159,15 @@ export class ChatService {
         if (!sentDone) {
           onToken({ done: true });
         }
-      })
-      .catch(() => {
-        onToken({ done: true });
-      });
+      } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return;
+        }
+        onToken({ error: err instanceof Error ? err.message : 'Streaming connection failed', done: true });
+      }
+    };
 
+    void executeStream();
     return controller;
   }
 }
