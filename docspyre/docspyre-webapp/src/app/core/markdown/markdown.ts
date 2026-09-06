@@ -28,6 +28,13 @@ function renderInline(escaped: string): string {
     return `\u0000CODE${codeSpans.length - 1}\u0000`;
   });
 
+  // Images: ![alt](url). Supports http(s), data URLs, and relative paths starting with /
+  out = out.replace(
+    /!\[([^\]]*)\]\(((?:https?:\/\/|\/|data:image\/)[^\s)]+)\)/g,
+    (_m, alt: string, src: string) =>
+      `<figure class="md-figure"><img src="${src}" alt="${alt}" class="md-img" loading="lazy" />${alt ? `<figcaption class="md-figcaption">${alt}</figcaption>` : ''}</figure>`,
+  );
+
   // Links: [text](url). Only http(s) and mailto are allowed.
   out = out.replace(
     /\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g,

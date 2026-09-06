@@ -6,6 +6,7 @@ import { documentRoutes } from '../modules/documents';
 import { shareRoutes } from '../modules/shares';
 import { chatRoutes } from '../modules/chat';
 import { configurationRoutes } from '../modules/configuration';
+import { summarizerRoutes } from '../agents/summarizer';
 
 const router: Router = Router();
 
@@ -20,5 +21,6 @@ router.use('/documents', documentRoutes);
 router.use('/shares', shareRoutes);
 router.use('/chats', chatRoutes);
 router.use('/configuration', configurationRoutes);
+router.use('/summarizer', summarizerRoutes);
 
 export { router as apiRouter };

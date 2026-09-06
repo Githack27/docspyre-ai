@@ -43,7 +43,9 @@ export const DOCUMENT_AI_ROUTES: Routes = [
       {
         path: 'summarizer',
         loadComponent: () =>
-          import('../../components/document-ai/summarizer/summarizer').then((m) => m.Summarizer),
+          import('../../components/document-ai/chat-with-document/chat-with-document').then(
+            (m) => m.ChatWithDocument,
+          ),
       },
       {
         path: 'resume-builder',

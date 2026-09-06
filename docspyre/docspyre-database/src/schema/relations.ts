@@ -6,7 +6,13 @@ import { documents, workspaceFiles, documentShares, documentChunks } from './doc
 import { auditLogs } from './audit';
 import { chatSessions, chatMessages } from './chat';
 import { providerConfigs } from './configuration';
-import { agentRuns, documentSummaries, conversationSummaries } from './agent';
+import {
+  agentRuns,
+  documentSummaries,
+  conversationSummaries,
+  documentNotes,
+  summarizerMemory,
+} from './agent';
 import { datasetTables, datasetQueries } from './datasets';
 
 // ─── User Relations ───────────────────────────────────────────────────────────
@@ -58,6 +64,7 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
   datasetTables: many(datasetTables),
   datasetQueries: many(datasetQueries),
   agentRuns: many(agentRuns),
+  notes: many(documentNotes),
 }));
 
 export const workspaceFilesRelations = relations(workspaceFiles, ({ one }) => ({
@@ -140,3 +147,15 @@ export const datasetTablesRelations = relations(datasetTables, ({ one }) => ({
 export const datasetQueriesRelations = relations(datasetQueries, ({ one }) => ({
   document: one(documents, { fields: [datasetQueries.documentId], references: [documents.id] }),
 }));
+
+export const documentNotesRelations = relations(documentNotes, ({ one }) => ({
+  document: one(documents, { fields: [documentNotes.documentId], references: [documents.id] }),
+  user: one(users, { fields: [documentNotes.userId], references: [users.id] }),
+  workspace: one(workspaces, { fields: [documentNotes.workspaceId], references: [workspaces.id] }),
+}));
+
+export const summarizerMemoryRelations = relations(summarizerMemory, ({ one }) => ({
+  document: one(documents, { fields: [summarizerMemory.documentId], references: [documents.id] }),
+  user: one(users, { fields: [summarizerMemory.userId], references: [users.id] }),
+}));
+

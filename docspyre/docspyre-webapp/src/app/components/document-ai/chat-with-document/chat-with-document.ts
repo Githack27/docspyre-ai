@@ -1,5 +1,5 @@
-import { Component, PLATFORM_ID, computed, inject, signal, effect } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Component, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { isPlatformBrowser, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../../core/chat/chat.service';
@@ -11,10 +11,12 @@ import { ProjectSummary, ProjectDetail, ProjectFile } from '../../../core/worksp
 import { DocumentCard } from '../../shared/ui/document-card/document-card';
 import { MarkdownPipe } from '../../../core/markdown/markdown-pipe';
 import { ConfirmationService } from '../../../core/confirmation/confirmation.service';
+import { SummarizerService } from '../../../core/summarizer/summarizer.service';
+import type { DocumentNote, SummarizerFormat } from '../../../core/summarizer/summarizer.models';
 
 @Component({
   selector: 'app-chat-with-document',
-  imports: [FormsModule, DocumentCard, MarkdownPipe],
+  imports: [FormsModule, DocumentCard, MarkdownPipe, DatePipe],
   templateUrl: './chat-with-document.html',
   styleUrl: './chat-with-document.css',
 })
@@ -22,12 +24,16 @@ export class ChatWithDocument {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly chatService = inject(ChatService);
+  private readonly summarizerService = inject(SummarizerService);
   private readonly documentService = inject(DocumentService);
   private readonly workspaceService = inject(WorkspaceService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly kindFromMime = kindFromMime;
+
+  // Active View Mode: 'chat' | 'summarizer'
+  protected readonly activeMode = signal<'chat' | 'summarizer'>('chat');
 
   // Navigation / Selection State
   protected readonly selectedTab = signal<'my-documents' | 'projects'>('my-documents');
@@ -72,6 +78,20 @@ export class ChatWithDocument {
   protected readonly editingSessionId = signal<string | null>(null);
   protected readonly editingSessionTitle = signal<string>('');
 
+  // Summarizer & Notes State
+  protected readonly summarizerFormat = signal<SummarizerFormat>('manual');
+  protected readonly summarizerCustomFocus = signal<string>('');
+  protected readonly summarizerIncludeImages = signal<boolean>(true);
+  protected readonly summarizerGenerating = signal<boolean>(false);
+  protected readonly summarizerPhase = signal<string>('');
+  protected readonly summarizerStatusMessage = signal<string>('');
+  protected readonly summarizerStreamingContent = signal<string>('');
+  protected readonly activeNote = signal<DocumentNote | null>(null);
+  protected readonly savedNotes = signal<DocumentNote[]>([]);
+  protected readonly loadingSavedNotes = signal<boolean>(false);
+  protected readonly copiedSuccess = signal<boolean>(false);
+  private summarizerAbortController: AbortController | null = null;
+
   constructor() {
     if (this.isBrowser) {
       this.loadInitialData();
@@ -100,11 +120,22 @@ export class ChatWithDocument {
   }
 
   private handleRouteParams(): void {
+    if (this.router.url.includes('summarizer') || this.route.snapshot.queryParams['tab'] === 'summarizer') {
+      this.activeMode.set('summarizer');
+    }
+
     this.route.queryParams.subscribe((params) => {
       const sessionId = params['sessionId'];
       const documentId = params['documentId'];
       const projectId = params['projectId'];
       const fileId = params['fileId'];
+      const tab = params['tab'];
+
+      if (tab === 'summarizer') {
+        this.activeMode.set('summarizer');
+      } else if (tab === 'chat') {
+        this.activeMode.set('chat');
+      }
 
       if (sessionId) {
         this.loadSessionDirectly(sessionId);
@@ -238,6 +269,7 @@ export class ChatWithDocument {
   }): void {
     this.selectedDoc.set(doc);
     this.loadChatSessions(doc.id, doc.workspaceId);
+    this.loadSavedNotes(doc.id);
   }
 
   protected deselectDoc(): void {
@@ -246,6 +278,9 @@ export class ChatWithDocument {
     this.activeSessionId.set(null);
     this.messages.set([]);
     this.sessions.set([]);
+    this.activeNote.set(null);
+    this.savedNotes.set([]);
+    this.summarizerStreamingContent.set('');
     // Clear query params
     this.router.navigate([], { queryParams: {} });
   }
@@ -707,5 +742,152 @@ export class ChatWithDocument {
     if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(1)}k`;
     return tokens.toString();
   }
+
+  // --- Summarizer Operations -------------------------------------------------
+
+  protected setMode(mode: 'chat' | 'summarizer'): void {
+    this.activeMode.set(mode);
+    const doc = this.selectedDoc();
+    if (mode === 'summarizer' && doc && !this.savedNotes().length) {
+      this.loadSavedNotes(doc.id);
+    }
+  }
+
+  protected loadSavedNotes(docId: string): void {
+    this.loadingSavedNotes.set(true);
+    this.summarizerService.listNotes(docId).subscribe({
+      next: (notes) => {
+        this.savedNotes.set(notes);
+        this.loadingSavedNotes.set(false);
+        if (notes.length && !this.activeNote() && !this.summarizerGenerating()) {
+          this.selectNote(notes[0].id);
+        }
+      },
+      error: () => this.loadingSavedNotes.set(false),
+    });
+  }
+
+  protected selectNote(noteId: string): void {
+    this.summarizerService.getNote(noteId).subscribe({
+      next: (note) => {
+        this.activeNote.set(note);
+        this.summarizerStreamingContent.set('');
+      },
+    });
+  }
+
+  protected startNewNote(): void {
+    this.activeNote.set(null);
+    this.summarizerStreamingContent.set('');
+    this.summarizerStatusMessage.set('');
+    this.summarizerPhase.set('');
+  }
+
+  protected generateManualAndNotes(): void {
+    const doc = this.selectedDoc();
+    if (!doc || this.summarizerGenerating()) return;
+
+    this.summarizerGenerating.set(true);
+    this.summarizerStreamingContent.set('');
+    this.summarizerPhase.set('init');
+    this.summarizerStatusMessage.set('Initializing document knowledge engine & DB memory...');
+    this.activeNote.set(null);
+
+    this.summarizerAbortController = this.summarizerService.streamGenerate(
+      {
+        documentId: doc.id,
+        workspaceId: doc.workspaceId,
+        format: this.summarizerFormat(),
+        customFocus: this.summarizerCustomFocus(),
+        includeImages: this.summarizerIncludeImages(),
+      },
+      (event) => {
+        if (event.type === 'status') {
+          if (event.phase) this.summarizerPhase.set(event.phase);
+          if (event.message) this.summarizerStatusMessage.set(event.message);
+        } else if (event.type === 'token' && event.token) {
+          this.summarizerStreamingContent.update((prev) => prev + event.token);
+          this.scrollToNotesBottom();
+        } else if (event.type === 'visual' && event.image) {
+          this.summarizerStatusMessage.set(`Generated AI illustration: ${event.image.caption}`);
+        } else if (event.type === 'done' && event.note) {
+          this.activeNote.set(event.note);
+          this.savedNotes.update((list) => [
+            event.note!,
+            ...list.filter((n) => n.id !== event.note!.id),
+          ]);
+          this.summarizerGenerating.set(false);
+          this.summarizerStreamingContent.set('');
+          this.summarizerPhase.set('completed');
+          this.summarizerStatusMessage.set('Manual generation completed.');
+        } else if (event.type === 'error') {
+          this.summarizerStatusMessage.set(event.message || 'Generation failed.');
+          this.summarizerGenerating.set(false);
+        }
+      },
+    );
+  }
+
+  protected cancelGeneration(): void {
+    if (this.summarizerAbortController) {
+      this.summarizerAbortController.abort();
+      this.summarizerAbortController = null;
+    }
+    this.summarizerGenerating.set(false);
+    this.summarizerStatusMessage.set('Generation stopped.');
+  }
+
+  protected exportPdf(): void {
+    const note = this.activeNote();
+    if (!note) return;
+    const contentEl = document.querySelector('.manual-rendered-body');
+    const renderedHtml = contentEl?.innerHTML || '';
+    this.summarizerService.exportToPdf(note, renderedHtml);
+  }
+
+  protected copyMarkdown(): void {
+    const content = this.activeNote()?.content || this.summarizerStreamingContent();
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+      this.copiedSuccess.set(true);
+      setTimeout(() => this.copiedSuccess.set(false), 2000);
+    });
+  }
+
+  protected async deleteNote(note: DocumentNote, event: Event): Promise<void> {
+    event.stopPropagation();
+    const confirmed = await this.confirmationService.confirm({
+      title: 'Delete Manual & Notes',
+      message: `Are you sure you want to delete "${note.title}"?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+      icon: 'bi-trash3-fill',
+    });
+    if (!confirmed) return;
+
+    this.summarizerService.deleteNote(note.id).subscribe({
+      next: () => {
+        this.savedNotes.update((list) => list.filter((n) => n.id !== note.id));
+        if (this.activeNote()?.id === note.id) {
+          const remaining = this.savedNotes();
+          if (remaining.length) {
+            this.selectNote(remaining[0].id);
+          } else {
+            this.activeNote.set(null);
+          }
+        }
+      },
+    });
+  }
+
+  private scrollToNotesBottom(): void {
+    if (!this.isBrowser) return;
+    setTimeout(() => {
+      const el = document.querySelector('.manual-scroll-pane');
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 80);
+  }
 }
+
 

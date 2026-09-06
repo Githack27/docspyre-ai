@@ -62,14 +62,22 @@
               [sizeBytes]="doc.sizeBytes"
               (open)="selectDoc({ id: doc.id, name: doc.name, kind: doc.kind, sizeBytes: doc.sizeBytes, workspaceId: null, workspaceFileId: null })"
             >
-              <span actions>
+              <span actions class="card-actions-group">
                 <button
                   type="button"
                   class="tile__act"
-                  (click)="selectDoc({ id: doc.id, name: doc.name, kind: doc.kind, sizeBytes: doc.sizeBytes, workspaceId: null, workspaceFileId: null })"
+                  (click)="selectDoc({ id: doc.id, name: doc.name, kind: doc.kind, sizeBytes: doc.sizeBytes, workspaceId: null, workspaceFileId: null }); setMode('chat')"
                   title="Start Chatting"
                 >
                   <i class="bi bi-chat-dots-fill text-emerald-500"></i>
+                </button>
+                <button
+                  type="button"
+                  class="tile__act"
+                  (click)="selectDoc({ id: doc.id, name: doc.name, kind: doc.kind, sizeBytes: doc.sizeBytes, workspaceId: null, workspaceFileId: null }); setMode('summarizer')"
+                  title="Summarize & Generate Notes"
+                >
+                  <i class="bi bi-journal-richtext text-violet-500"></i>
                 </button>
               </span>
             </app-document-card>
@@ -129,14 +137,22 @@
                 [sizeBytes]="file.sizeBytes"
                 (open)="selectDoc({ id: file.documentId || file.id, name: file.name, kind: kindFromMime(file.kind), sizeBytes: file.sizeBytes || 0, workspaceId: activeProject()!.id, workspaceFileId: file.id })"
               >
-                <span actions>
+                <span actions class="card-actions-group">
                   <button
                     type="button"
                     class="tile__act"
-                    (click)="selectDoc({ id: file.documentId || file.id, name: file.name, kind: kindFromMime(file.kind), sizeBytes: file.sizeBytes || 0, workspaceId: activeProject()!.id, workspaceFileId: file.id })"
+                    (click)="selectDoc({ id: file.documentId || file.id, name: file.name, kind: kindFromMime(file.kind), sizeBytes: file.sizeBytes || 0, workspaceId: activeProject()!.id, workspaceFileId: file.id }); setMode('chat')"
                     title="Start Chatting"
                   >
                     <i class="bi bi-chat-dots-fill text-emerald-500"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="tile__act"
+                    (click)="selectDoc({ id: file.documentId || file.id, name: file.name, kind: kindFromMime(file.kind), sizeBytes: file.sizeBytes || 0, workspaceId: activeProject()!.id, workspaceFileId: file.id }); setMode('summarizer')"
+                    title="Summarize & Generate Notes"
+                  >
+                    <i class="bi bi-journal-richtext text-violet-500"></i>
                   </button>
                 </span>
               </app-document-card>
@@ -177,58 +193,120 @@
           </div>
         </div>
 
-        <!-- Inline Context Tracker (Right Aligned) -->
-        <div class="context-tracker" [class.is-warning]="tokenPercentage() >= 75 && !isLimitReached()" [class.is-limit]="isLimitReached()">
-          <div class="context-tracker__metrics">
-            <div class="context-tracker__info">
-              <span class="context-tracker__label">
-                <i class="bi bi-speedometer2"></i> Context Usage
-              </span>
-              <span class="context-tracker__numbers">
-                <strong>{{ formatTokens(sessionTokens()) }}</strong> / 2.0M
-                <span class="context-tracker__pct">({{ tokenPercentage() }}%)</span>
-              </span>
-            </div>
-            <div class="context-tracker__bar">
-              <div class="context-tracker__fill" [style.width.%]="tokenPercentage()"></div>
-            </div>
-          </div>
+        <!-- Mode Tab Switcher: Chat vs Summarizer -->
+        <nav class="mode-nav">
+          <button
+            type="button"
+            class="mode-nav__btn"
+            [class.is-active]="activeMode() === 'chat'"
+            (click)="setMode('chat')"
+          >
+            <i class="bi bi-chat-dots-fill"></i>
+            <span>Chat</span>
+          </button>
+          <button
+            type="button"
+            class="mode-nav__btn"
+            [class.is-active]="activeMode() === 'summarizer'"
+            (click)="setMode('summarizer')"
+          >
+            <i class="bi bi-journal-richtext"></i>
+            <span>Summarizer &amp; Notes</span>
+            @if (savedNotes().length) {
+              <span class="mode-nav__pill">{{ savedNotes().length }}</span>
+            }
+          </button>
+        </nav>
 
-          @if (isLimitReached()) {
+        <!-- Right Header Action Area -->
+        @if (activeMode() === 'chat') {
+          <!-- Inline Context Tracker (Right Aligned) -->
+          <div class="context-tracker" [class.is-warning]="tokenPercentage() >= 75 && !isLimitReached()" [class.is-limit]="isLimitReached()">
+            <div class="context-tracker__metrics">
+              <div class="context-tracker__info">
+                <span class="context-tracker__label">
+                  <i class="bi bi-speedometer2"></i> Context Usage
+                </span>
+                <span class="context-tracker__numbers">
+                  <strong>{{ formatTokens(sessionTokens()) }}</strong> / 2.0M
+                  <span class="context-tracker__pct">({{ tokenPercentage() }}%)</span>
+                </span>
+              </div>
+              <div class="context-tracker__bar">
+                <div class="context-tracker__fill" [style.width.%]="tokenPercentage()"></div>
+              </div>
+            </div>
+
+            @if (isLimitReached()) {
+              <button
+                type="button"
+                class="context-tracker__btn context-tracker__btn--limit"
+                (click)="continueToNewSession()"
+                [disabled]="continuingSession()"
+                title="2M Limit Reached: Start new chat with summarized context"
+              >
+                @if (continuingSession()) {
+                  <i class="bi bi-arrow-repeat spin"></i> Auto-Chaining...
+                } @else {
+                  <i class="bi bi-arrow-right-circle-fill"></i> New Session (Summarized)
+                }
+              </button>
+            } @else if (activeSessionId()) {
+              <button
+                type="button"
+                class="context-tracker__btn"
+                (click)="continueToNewSession()"
+                [disabled]="continuingSession()"
+                title="Start a new chat carrying over the full conversation summary"
+              >
+                @if (continuingSession()) {
+                  <i class="bi bi-arrow-repeat spin"></i>
+                } @else {
+                  <i class="bi bi-arrow-clockwise"></i>
+                }
+                <span>Continue in New Chat</span>
+              </button>
+            }
+          </div>
+        } @else {
+          <!-- Summarizer Header Actions -->
+          <div class="sum-header-actions">
+            @if (activeNote()) {
+              <button
+                type="button"
+                class="sum-head-btn sum-head-btn--pdf"
+                (click)="exportPdf()"
+                title="Export complete manual and notes to PDF"
+              >
+                <i class="bi bi-file-earmark-pdf-fill"></i>
+                <span>Export PDF</span>
+              </button>
+              <button
+                type="button"
+                class="sum-head-btn sum-head-btn--ghost"
+                (click)="copyMarkdown()"
+                title="Copy markdown text"
+              >
+                <i class="bi" [class.bi-clipboard]="!copiedSuccess()" [class.bi-check-lg]="copiedSuccess()"></i>
+                <span>{{ copiedSuccess() ? 'Copied' : 'Copy' }}</span>
+              </button>
+            }
             <button
               type="button"
-              class="context-tracker__btn context-tracker__btn--limit"
-              (click)="continueToNewSession()"
-              [disabled]="continuingSession()"
-              title="2M Limit Reached: Start new chat with summarized context"
+              class="sum-head-btn sum-head-btn--accent"
+              (click)="startNewNote()"
+              [disabled]="summarizerGenerating()"
             >
-              @if (continuingSession()) {
-                <i class="bi bi-arrow-repeat spin"></i> Auto-Chaining...
-              } @else {
-                <i class="bi bi-arrow-right-circle-fill"></i> New Session (Summarized)
-              }
+              <i class="bi bi-plus-lg"></i>
+              <span>New Manual</span>
             </button>
-          } @else if (activeSessionId()) {
-            <button
-              type="button"
-              class="context-tracker__btn"
-              (click)="continueToNewSession()"
-              [disabled]="continuingSession()"
-              title="Start a new chat carrying over the full conversation summary"
-            >
-              @if (continuingSession()) {
-                <i class="bi bi-arrow-repeat spin"></i>
-              } @else {
-                <i class="bi bi-arrow-clockwise"></i>
-              }
-              <span>Continue in New Chat</span>
-            </button>
-          }
-        </div>
+          </div>
+        }
       </header>
 
-      <!-- Sidebar + Chat Split Pane -->
-      <div class="chat-split">
+      <!-- Mode 1: Interactive Chat View -->
+      @if (activeMode() === 'chat') {
+        <div class="chat-split">
         <!-- ChatGPT-style Sidebar -->
         <aside class="chat-sidebar">
           <button type="button" class="new-chat-btn" (click)="createNewSession()">
@@ -419,7 +497,316 @@
             </div>
           }
         </main>
-      </div>
+        </div>
+      }
+
+      <!-- Mode 2: Summarizer & Notes Provider View -->
+      @else {
+        <div class="summarizer-split">
+          <!-- Left Sidebar: Settings & Saved Manuals -->
+          <aside class="sum-sidebar">
+            <div class="sum-sidebar__head">
+              <button
+                type="button"
+                class="sum-new-btn"
+                (click)="startNewNote()"
+                [disabled]="summarizerGenerating()"
+              >
+                <i class="bi bi-plus-circle-fill"></i>
+                <span>New Master Manual</span>
+              </button>
+            </div>
+
+            <!-- Manual Parameters Card -->
+            <div class="sum-params-card">
+              <div class="sum-params-card__header">
+                <i class="bi bi-sliders"></i>
+                <h4>Manual Specifications</h4>
+              </div>
+
+              <div class="sum-field">
+                <label class="sum-field__label">Style &amp; Depth</label>
+                <select
+                  class="sum-field__select"
+                  [(ngModel)]="summarizerFormat"
+                  [disabled]="summarizerGenerating()"
+                >
+                  <option value="manual">Comprehensive Reference Manual</option>
+                  <option value="executive">Executive Summary &amp; Overview</option>
+                  <option value="study_guide">Detailed Study Notes &amp; Glossary</option>
+                  <option value="bullet_notes">Concise Bullet Points &amp; Checklist</option>
+                </select>
+              </div>
+
+              <div class="sum-field">
+                <label class="sum-field__checkbox">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="summarizerIncludeImages"
+                    [disabled]="summarizerGenerating()"
+                  />
+                  <span>Generate AI Visual Diagrams</span>
+                </label>
+                <span class="sum-field__hint">Creates model illustrations and technical concept schematics</span>
+              </div>
+
+              <div class="sum-field">
+                <label class="sum-field__label">Custom Directives (Optional)</label>
+                <textarea
+                  class="sum-field__textarea"
+                  [(ngModel)]="summarizerCustomFocus"
+                  [disabled]="summarizerGenerating()"
+                  placeholder="e.g. Focus on technical architecture, summarize tables, emphasize key metrics..."
+                  rows="2"
+                ></textarea>
+              </div>
+
+              <button
+                type="button"
+                class="sum-generate-btn"
+                (click)="generateManualAndNotes()"
+                [disabled]="summarizerGenerating()"
+              >
+                @if (summarizerGenerating()) {
+                  <i class="bi bi-arrow-repeat spin"></i>
+                  <span>Synthesizing Manual...</span>
+                } @else {
+                  <i class="bi bi-stars"></i>
+                  <span>Generate Manual &amp; Notes</span>
+                }
+              </button>
+            </div>
+
+            <!-- Saved Notes History -->
+            <div class="sum-history">
+              <div class="sum-history__head">
+                <h4>
+                  Saved Manuals
+                  @if (savedNotes().length) {
+                    <span class="sum-badge-count">{{ savedNotes().length }}</span>
+                  }
+                </h4>
+              </div>
+
+              @if (loadingSavedNotes()) {
+                <div class="sum-skeleton"></div>
+              } @else if (savedNotes().length) {
+                <div class="sum-history__list">
+                  @for (note of savedNotes(); track note.id) {
+                    <div
+                      class="sum-history-item"
+                      [class.is-active]="activeNote()?.id === note.id"
+                      (click)="selectNote(note.id)"
+                    >
+                      <div class="sum-history-item__body">
+                        <span class="sum-history-item__format">{{ note.format }}</span>
+                        <h5 class="sum-history-item__title" [title]="note.title">{{ note.title }}</h5>
+                        <span class="sum-history-item__date">{{ note.createdAt | date:'mediumDate' }}</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="sum-history-item__del"
+                        (click)="deleteNote(note, $event)"
+                        title="Delete this manual"
+                      >
+                        <i class="bi bi-trash3"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="sum-empty-notes">
+                  <i class="bi bi-journal-x"></i>
+                  <p>No saved manuals for this document yet. Click Generate above to create your first guide.</p>
+                </div>
+              }
+            </div>
+          </aside>
+
+          <!-- Main Manual Viewport -->
+          <main class="sum-viewport">
+            <!-- 1. ACTIVE GENERATION / STREAMING VIEW -->
+            @if (summarizerGenerating()) {
+              <div class="sum-generating-view">
+                <div class="sum-progress-banner">
+                  <div class="sum-progress-banner__left">
+                    <span class="sum-pulse-icon">
+                      <i class="bi bi-cpu-fill"></i>
+                    </span>
+                    <div>
+                      <h3 class="sum-progress-title">Summarizer Agent In Progress</h3>
+                      <p class="sum-progress-msg">{{ summarizerStatusMessage() || 'Processing document...' }}</p>
+                    </div>
+                  </div>
+                  <button type="button" class="sum-stop-btn" (click)="cancelGeneration()">
+                    <i class="bi bi-stop-circle-fill"></i>
+                    <span>Stop</span>
+                  </button>
+                </div>
+
+                <!-- 5-Step Agent Workflow Stepper -->
+                <div class="sum-stepper">
+                  <div
+                    class="sum-step"
+                    [class.is-done]="summarizerPhase() !== 'init'"
+                    [class.is-current]="summarizerPhase() === 'init'"
+                  >
+                    <span class="sum-step__dot"><i class="bi bi-database-check"></i></span>
+                    <span class="sum-step__text">1. Context &amp; DB Memory</span>
+                  </div>
+                  <div
+                    class="sum-step"
+                    [class.is-done]="summarizerPhase() === 'drafting' || summarizerPhase() === 'illustrating' || summarizerPhase() === 'finalizing' || summarizerPhase() === 'completed'"
+                    [class.is-current]="summarizerPhase() === 'planning'"
+                  >
+                    <span class="sum-step__dot"><i class="bi bi-card-checklist"></i></span>
+                    <span class="sum-step__text">2. Structure Outline</span>
+                  </div>
+                  <div
+                    class="sum-step"
+                    [class.is-done]="summarizerPhase() === 'illustrating' || summarizerPhase() === 'finalizing' || summarizerPhase() === 'completed'"
+                    [class.is-current]="summarizerPhase() === 'drafting'"
+                  >
+                    <span class="sum-step__dot"><i class="bi bi-file-earmark-text"></i></span>
+                    <span class="sum-step__text">3. Draft Manual &amp; Tables</span>
+                  </div>
+                  <div
+                    class="sum-step"
+                    [class.is-done]="summarizerPhase() === 'finalizing' || summarizerPhase() === 'completed'"
+                    [class.is-current]="summarizerPhase() === 'illustrating'"
+                  >
+                    <span class="sum-step__dot"><i class="bi bi-image"></i></span>
+                    <span class="sum-step__text">4. AI Concept Visuals</span>
+                  </div>
+                  <div
+                    class="sum-step"
+                    [class.is-done]="summarizerPhase() === 'completed'"
+                    [class.is-current]="summarizerPhase() === 'finalizing'"
+                  >
+                    <span class="sum-step__dot"><i class="bi bi-cloud-arrow-up"></i></span>
+                    <span class="sum-step__text">5. DB Persistence</span>
+                  </div>
+                </div>
+
+                <!-- Live Stream Preview -->
+                @if (summarizerStreamingContent()) {
+                  <div class="sum-live-preview">
+                    <div class="sum-live-preview__head">
+                      <span class="live-dot"></span>
+                      <span>Live Markdown Output</span>
+                    </div>
+                    <div
+                      class="manual-scroll-pane manual-rendered-body"
+                      [innerHTML]="summarizerStreamingContent() | markdown"
+                    ></div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- 2. SAVED / COMPLETED MANUAL VIEW -->
+            @else if (activeNote()) {
+              <div class="manual-container">
+                <!-- Publication Header Card -->
+                <header class="manual-header">
+                  <div class="manual-header__top">
+                    <div class="manual-tags">
+                      <span class="tag tag--format">{{ activeNote()!.format.toUpperCase() }} GUIDE</span>
+                      <span class="tag tag--date"><i class="bi bi-calendar3"></i> {{ activeNote()!.createdAt | date:'mediumDate' }}</span>
+                      @if (activeNote()!.images?.length) {
+                        <span class="tag tag--visuals"><i class="bi bi-images"></i> {{ activeNote()!.images!.length }} AI Diagrams</span>
+                      }
+                    </div>
+                    <div class="manual-actions">
+                      <button
+                        type="button"
+                        class="man-btn man-btn--pdf"
+                        (click)="exportPdf()"
+                        title="Export document as PDF"
+                      >
+                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                        <span>Export PDF</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="man-btn man-btn--copy"
+                        (click)="copyMarkdown()"
+                        title="Copy Markdown text"
+                      >
+                        <i class="bi" [class.bi-clipboard]="!copiedSuccess()" [class.bi-check-lg]="copiedSuccess()"></i>
+                        <span>{{ copiedSuccess() ? 'Copied!' : 'Copy Markdown' }}</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="man-btn man-btn--regen"
+                        (click)="startNewNote()"
+                        title="Create another version"
+                      >
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>New Version</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <h1 class="manual-title">{{ activeNote()!.title }}</h1>
+                  @if (activeNote()!.subtitle) {
+                    <p class="manual-subtitle">{{ activeNote()!.subtitle }}</p>
+                  }
+                </header>
+
+                <!-- Publication Body -->
+                <div class="manual-scroll-pane manual-rendered-body" [innerHTML]="activeNote()!.content | markdown"></div>
+              </div>
+            }
+
+            <!-- 3. EMPTY STATE / WELCOME CARD -->
+            @else {
+              <div class="sum-welcome-card">
+                <div class="sum-welcome-card__icon">
+                  <i class="bi bi-journal-richtext"></i>
+                  <span class="pulse-ring"></span>
+                </div>
+                <h2 class="sum-welcome-card__title">Document Summarizer &amp; Master Notes Provider</h2>
+                <p class="sum-welcome-card__desc">
+                  Generate publication-ready reference manuals, executive summaries, and structured study notes
+                  powered by LangGraph, complete with titles, subtitles, markdown tables, callouts, and AI visual schematics.
+                </p>
+
+                <div class="sum-capabilities-grid">
+                  <div class="cap-card">
+                    <div class="cap-card__icon"><i class="bi bi-layout-text-window"></i></div>
+                    <h3>Complete Manual</h3>
+                    <p>Hierarchical modules, procedures, and deep-dive technical outlines.</p>
+                  </div>
+                  <div class="cap-card">
+                    <div class="cap-card__icon"><i class="bi bi-table"></i></div>
+                    <h3>Data Tables</h3>
+                    <p>Comparative metrics, system properties, and terminology glossaries.</p>
+                  </div>
+                  <div class="cap-card">
+                    <div class="cap-card__icon"><i class="bi bi-diagram-3-fill"></i></div>
+                    <h3>AI Visual Diagrams</h3>
+                    <p>Model image generation creating technical concept schematics.</p>
+                  </div>
+                  <div class="cap-card">
+                    <div class="cap-card__icon"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+                    <h3>One-Click PDF Export</h3>
+                    <p>High-resolution, vector-crisp PDF document export with custom styling.</p>
+                  </div>
+                </div>
+
+                <div class="sum-welcome-actions">
+                  <button type="button" class="sum-primary-cta" (click)="generateManualAndNotes()">
+                    <i class="bi bi-stars"></i>
+                    <span>Generate Master Manual Now</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </main>
+        </div>
+      }
     </div>
   }
 </section>
+
