@@ -122,6 +122,20 @@
             </h2>
             
             <form class="config-form" (submit)="$event.preventDefault(); connectProvider()">
+              <!-- API Key Input -->
+              <div class="form-group">
+                <label for="apiKey">API Key</label>
+                <input 
+                  type="password" 
+                  id="apiKey"
+                  name="apiKey"
+                  [(ngModel)]="apiKey" 
+                  placeholder="Enter API key"
+                  class="form-control"
+                  required
+                />
+              </div>
+
               <!-- Model Selection -->
               <div class="form-group">
                 <label for="modelSelect">Select Model</label>
@@ -131,7 +145,7 @@
                   [(ngModel)]="selectedModel" 
                   class="form-control"
                 >
-                  @for (model of selectedProvider()?.models; track model) {
+                  @for (model of effectiveModels; track model) {
                     <option [value]="model">{{ model }}</option>
                   }
                   <option value="custom">Custom Model...</option>
@@ -153,20 +167,6 @@
                   />
                 </div>
               }
-
-              <!-- API Key Input -->
-              <div class="form-group">
-                <label for="apiKey">API Key</label>
-                <input 
-                  type="password" 
-                  id="apiKey"
-                  name="apiKey"
-                  [(ngModel)]="apiKey" 
-                  placeholder="Enter API key"
-                  class="form-control"
-                  required
-                />
-              </div>
 
               <!-- Optional System Prompt -->
               <div class="form-group">

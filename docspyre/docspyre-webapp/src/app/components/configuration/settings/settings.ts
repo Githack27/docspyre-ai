@@ -7,6 +7,7 @@ export interface AvailableProvider {
   id: string;
   name: string;
   models: string[];
+  proModels?: string[];
 }
 
 @Component({
@@ -27,7 +28,14 @@ export class Settings implements OnInit {
 
   // Static list of available providers
   readonly availableProviders: AvailableProvider[] = [
-    { id: 'openai', name: 'OpenAI', models: ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'] },
+    {
+      id: 'openai',
+      name: 'OpenAI',
+      // Standard tier models (sk-... keys)
+      models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+      // Pro tier models (sk-proj-... keys)
+      proModels: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4.5', 'o1', 'o1-mini', 'o3-mini'],
+    },
     { id: 'anthropic', name: 'Anthropic', models: ['claude-3-5-sonnet', 'claude-3-opus', 'claude-3-haiku'] },
     { id: 'gemini', name: 'Google Gemini', models: ['gemini-1.5-pro', 'gemini-1.5-flash'] },
     { id: 'ollama', name: 'Ollama / Local', models: ['llama3', 'mistral', 'phi3'] },
@@ -45,6 +53,22 @@ export class Settings implements OnInit {
   readonly selectedProvider = computed(() => {
     return this.availableProviders.find(p => p.id === this.selectedProviderId());
   });
+
+  // Returns true when the entered OpenAI key looks like a project/pro key (sk-proj-...)
+  get isOpenAiProKey(): boolean {
+    return this.apiKey.trim().startsWith('sk-proj-');
+  }
+
+  // Returns the correct model list for the selected provider, applying pro/standard
+  // tier filtering for OpenAI based on the entered API key.
+  get effectiveModels(): string[] {
+    const provider = this.selectedProvider();
+    if (!provider) return [];
+    if (provider.id === 'openai' && provider.proModels) {
+      return this.isOpenAiProKey ? provider.proModels : provider.models;
+    }
+    return provider.models;
+  }
 
   ngOnInit(): void {
     this.loadProviders();
