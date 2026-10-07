@@ -23,4 +23,14 @@ export const configurationController = {
     await configurationService.deleteConfig(req.auth!.userId, req.params.id!);
     res.status(204).send();
   }),
+
+  validateKey: asyncHandler(async (req: Request, res: Response) => {
+    const { providerId, apiKey } = req.body as { providerId?: string; apiKey?: string };
+    if (!providerId || !apiKey) {
+      throw ApiError.badRequest('providerId and apiKey are required');
+    }
+    const result = await configurationService.validateKey(providerId, apiKey);
+    // Always return 200 — let the frontend check result.valid
+    res.status(200).json(result);
+  }),
 };

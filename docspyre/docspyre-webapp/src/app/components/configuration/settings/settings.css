@@ -660,3 +660,116 @@ textarea.form-control {
     margin-top: 1.5rem;
   }
 }
+
+/* ── API key validation UI ─────────────────────────────────────────── */
+
+.api-key-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-control--error {
+  border-color: #f87171 !important;
+}
+
+.form-control--success {
+  border-color: #22c7a9 !important;
+}
+
+.key-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.key-status--validating {
+  color: #94a3b8;
+}
+
+.key-status--ok {
+  color: #22c7a9;
+}
+
+.key-status--error {
+  color: #f87171;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Model label row with tier badge ───────────────────────────────── */
+
+.model-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.model-label-row label {
+  margin-bottom: 0;
+}
+
+.tier-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+.tier-badge--pro {
+  background: rgba(34, 199, 169, 0.15);
+  color: #22c7a9;
+}
+
+/* ── Check API button row ──────────────────────────────────────────── */
+
+.api-key-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.api-key-row .form-control {
+  flex: 1;
+}
+
+.btn-check-api {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 1rem;
+  height: 2.5rem;
+  white-space: nowrap;
+  border-radius: 8px;
+  border: 1px solid #22c7a9;
+  background: transparent;
+  color: #22c7a9;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-check-api:hover:not(:disabled) {
+  background: rgba(34, 199, 169, 0.12);
+}
+
+.btn-check-api:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

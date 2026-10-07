@@ -13,6 +13,13 @@ export interface ConnectedProvider {
   active: boolean;
 }
 
+export interface ValidateKeyResult {
+  valid: boolean;
+  tier: string;
+  models: string[];
+  error?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ConfigurationService {
   private readonly http = inject(HttpClient);
@@ -32,5 +39,9 @@ export class ConfigurationService {
 
   deleteConfig(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  validateKey(providerId: string, apiKey: string): Observable<ValidateKeyResult> {
+    return this.http.post<ValidateKeyResult>(`${this.baseUrl}/validate-key`, { providerId, apiKey });
   }
 }
