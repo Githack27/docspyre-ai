@@ -7,6 +7,7 @@ router.use(authenticate);
 
 router.get('/', configurationController.list);
 router.post('/', configurationController.create);
+router.post('/validate-key', configurationController.validateKey);
 router.put('/:id', configurationController.update);
 router.delete('/:id', configurationController.remove);
 

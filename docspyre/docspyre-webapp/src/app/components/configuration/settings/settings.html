@@ -125,30 +125,74 @@
               <!-- API Key Input -->
               <div class="form-group">
                 <label for="apiKey">API Key</label>
-                <input 
-                  type="password" 
-                  id="apiKey"
-                  name="apiKey"
-                  [(ngModel)]="apiKey" 
-                  placeholder="Enter API key"
-                  class="form-control"
-                  required
-                />
+                <div class="api-key-wrapper">
+                  <div class="api-key-row">
+                    <input 
+                      type="password" 
+                      id="apiKey"
+                      name="apiKey"
+                      [(ngModel)]="apiKey"
+                      placeholder="Enter API key"
+                      class="form-control"
+                      [class.form-control--error]="keyValidationError()"
+                      [class.form-control--success]="detectedTier() && !keyValidationError()"
+                      required
+                    />
+                    @if (selectedProvider()?.supportsValidation) {
+                      <button
+                        type="button"
+                        class="btn-check-api"
+                        (click)="checkApiKey()"
+                        [disabled]="keyValidating()"
+                        aria-label="Check API key"
+                      >
+                        @if (keyValidating()) {
+                          <i class="bi bi-arrow-repeat spin"></i>
+                        } @else {
+                          <i class="bi bi-send"></i>
+                        }
+                        {{ keyValidating() ? 'Checking...' : 'Check API' }}
+                      </button>
+                    }
+                  </div>
+                  @if (detectedTier() && !keyValidationError()) {
+                    <span class="key-status key-status--ok">
+                      <i class="bi bi-check-circle-fill"></i>
+                      Valid key · {{ detectedTier() === 'pro' ? 'Pro' : 'Standard' }} tier detected
+                    </span>
+                  } @else if (keyValidationError()) {
+                    <span class="key-status key-status--error">
+                      <i class="bi bi-x-circle-fill"></i> {{ keyValidationError() }}
+                    </span>
+                  }
+                </div>
               </div>
 
               <!-- Model Selection -->
               <div class="form-group">
-                <label for="modelSelect">Select Model</label>
+                <div class="model-label-row">
+                  <label for="modelSelect">Select Model</label>
+                  @if (detectedTier() && !keyValidationError() && selectedProvider()?.supportsValidation) {
+                    <span class="tier-badge" [class.tier-badge--pro]="detectedTier() === 'pro'">
+                      {{ detectedTier() === 'pro' ? '✦ Pro models' : 'Standard models' }}
+                    </span>
+                  }
+                </div>
                 <select 
                   id="modelSelect"
                   name="modelSelect"
-                  [(ngModel)]="selectedModel" 
+                  [(ngModel)]="selectedModel"
                   class="form-control"
+                  [disabled]="keyValidating()"
                 >
-                  @for (model of effectiveModels; track model) {
-                    <option [value]="model">{{ model }}</option>
+                  @if (keyValidating()) {
+                    <option value="">Loading models...</option>
+                  } @else {
+                    @for (model of effectiveModels; track model) {
+                      <option [value]="model">{{ model }}</option>
+                    }
+                    <option value="custom">Custom Model...</option>
                   }
-                  <option value="custom">Custom Model...</option>
                 </select>
               </div>
 
