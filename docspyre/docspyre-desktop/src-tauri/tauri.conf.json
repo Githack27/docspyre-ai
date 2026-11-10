@@ -1,39 +1,56 @@
 {
+  "$schema": "https://schema.tauri.app/config/2",
   "productName": "DocSpyre",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "identifier": "ai.docspyre.desktop",
   "build": {
-    "beforeDevCommand": "npm --prefix ../docspyre-webapp start",
-    "devUrl": "http://localhost:4200",
-    "beforeBuildCommand": "npm --prefix ../docspyre-webapp run build -- --configuration desktop",
-    "frontendDist": "../../docspyre-webapp/dist/docspyre-webapp/browser"
+    "beforeDevCommand": { "script": "npm run prepare:dev", "wait": true },
+    "beforeBuildCommand": "npm run build:app",
+    "devUrl": "http://127.0.0.1:4200",
+    "frontendDist": "../frontend/dist/docspyre-desktop/browser",
+    "additionalWatchFolders": ["../backend/src"]
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "DocSpyre",
-        "width": 1280,
-        "height": 800,
-        "minWidth": 960,
-        "minHeight": 600,
-        "resizable": true,
-        "fullscreen": false,
-        "center": true
+        "create": false,
+        "visible": false,
+        "width": 1440,
+        "height": 960,
+        "minWidth": 1024,
+        "minHeight": 720
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; frame-src 'none'",
+      "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src ipc: http://ipc.localhost http://127.0.0.1:4200 ws://127.0.0.1:4200; object-src 'none'; base-uri 'self'; frame-src 'none'",
+      "capabilities": ["main", "startup"]
     }
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis", "app", "dmg", "deb", "appimage"],
+    "category": "Business",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "shortDescription": "DocSpyre Desktop",
+    "externalBin": ["binaries/docspyre-node"],
+    "resources": {
+      "resources/backend/": "backend/"
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false
+      }
+    }
   }
 }

@@ -1,0 +1,30 @@
+[[permission]]
+identifier = "allow-startup-ready"
+description = "Begin managed services after the embedded startup loader is visible."
+commands.allow = ["startup_ready"]
+
+[[permission]]
+identifier = "allow-backend-status"
+description = "Read backend startup and configuration status."
+commands.allow = ["backend_status"]
+
+[[permission]]
+identifier = "allow-api-request"
+description = "Send application API requests to the managed local backend."
+commands.allow = ["api_request"]
+
+[[permission]]
+identifier = "allow-frontend-ready"
+description = "Confirm the main frontend has mounted and can use native IPC."
+commands.allow = ["frontend_ready"]
+
+[[permission]]
+identifier = "allow-frontend-log"
+description = "Record bounded, redacted frontend diagnostics in local logs."
+commands.allow = ["frontend_log"]
+
+[[permission]]
+identifier = "allow-api-stream"
+description = "Stream application API responses from the managed local backend, and stop a stream."
+commands.allow = ["api_stream", "api_stream_cancel"]
+

@@ -1,0 +1,35 @@
+{
+  "name": "docspyre-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DocSpyre Desktop Application Workspace",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "npm": ">=11"
+  },
+  "scripts": {
+    "dev": "tauri dev --no-dev-server-wait",
+    "build": "tauri build",
+    "build:debug": "tauri build --debug",
+    "prepare:dev": "node scripts/prepare.mjs --dev",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "build:app": "node scripts/prepare.mjs",
+    "build:frontend": "npm run build --workspace frontend",
+    "build:backend": "npm run build --workspace backend",
+    "db:migrate": "npm run db:migrate --workspace backend",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  },
+  "overrides": {
+    "express": "^4.21.2",
+    "@types/express": "^4.17.21",
+    "@types/express-serve-static-core": "4.19.6"
+  }
+}
