@@ -1,20 +1,35 @@
 {
   "name": "docspyre-desktop",
-  "version": "0.0.0",
-  "description": "Tauri desktop shell for the DocSpyre Angular webapp",
+  "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "description": "DocSpyre Desktop Application Workspace",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "npm": ">=11"
+  },
   "scripts": {
-    "dev": "tauri dev",
+    "dev": "tauri dev --no-dev-server-wait",
     "build": "tauri build",
     "build:debug": "tauri build --debug",
-    "icon": "tauri icon",
+    "prepare:dev": "node scripts/prepare.mjs --dev",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "build:app": "node scripts/prepare.mjs",
+    "build:frontend": "npm run build --workspace frontend",
+    "build:backend": "npm run build --workspace backend",
+    "db:migrate": "npm run db:migrate --workspace backend",
     "tauri": "tauri"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2"
+    "@tauri-apps/cli": "^2.0.0"
   },
-  "dependencies": {
-    "@tauri-apps/api": "^2"
+  "overrides": {
+    "express": "^4.21.2",
+    "@types/express": "^4.17.21",
+    "@types/express-serve-static-core": "4.19.6"
   }
 }

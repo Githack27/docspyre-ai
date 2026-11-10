@@ -1,0 +1,183 @@
+name: docspyre-stack
+
+services:
+  docspyre-litellm-db:
+    container_name: docspyre-litellm-db
+    labels:
+      ai.docspyre.desktop.runtime: '${DOCSPYRE_RUNTIME_ID:?Private desktop runtime identity is required}'
+    image: ${POSTGRESQL_IMAGE:?Managed PostgreSQL image is required}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Generated LiteLLM PostgreSQL username is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Generated LiteLLM PostgreSQL password is required}
+      POSTGRES_DB: litellm
+    volumes:
+      - docspyre-litellm-db-data:/var/lib/postgresql/data
+    networks:
+      - docspyre-litellm-private
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready --username="$${POSTGRES_USER}" --dbname="$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  docspyre-litellm:
+    container_name: docspyre-litellm
+    labels:
+      ai.docspyre.desktop.runtime: '${DOCSPYRE_RUNTIME_ID:?Private desktop runtime identity is required}'
+    image: ${LITELLM_IMAGE:?Managed LiteLLM image is required}
+    pull_policy: always
+    restart: unless-stopped
+    command: [--config, /app/docspyre-config.yaml, --host, 0.0.0.0, --port, '4000']
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:?Generated LiteLLM master key is required}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:?Persisted LiteLLM encryption key is required}
+      DATABASE_URL: postgresql://${POSTGRES_USER:?Generated LiteLLM PostgreSQL username is required}:${POSTGRES_PASSWORD:?Generated LiteLLM PostgreSQL password is required}@docspyre-litellm-db:5432/litellm
+      STORE_MODEL_IN_DB: 'True'
+    volumes:
+      - type: bind
+        source: ./litellm.yaml
+        target: /app/docspyre-config.yaml
+        read_only: true
+    networks:
+      - docspyre-litellm-private
+      - docspyre-gateway
+    ports:
+      - target: 4000
+        published: '${LITELLM_PORT:?Allocated LiteLLM host port is required}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+    depends_on:
+      docspyre-litellm-db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, 'import json,urllib.request; h=json.load(urllib.request.urlopen("http://127.0.0.1:4000/health/readiness",timeout=5)); assert h.get("status")=="healthy" and h.get("db")=="connected"']
+      interval: 10s
+      timeout: 8s
+      retries: 30
+      start_period: 90s
+
+  docspyre-milvus:
+    container_name: docspyre-milvus
+    labels:
+      ai.docspyre.desktop.runtime: '${DOCSPYRE_RUNTIME_ID:?Private desktop runtime identity is required}'
+    image: ${MILVUS_IMAGE:?Managed Milvus image is required}
+    restart: unless-stopped
+    command: [milvus, run, standalone]
+    environment:
+      ETCD_USE_EMBED: 'true'
+      ETCD_DATA_DIR: /var/lib/milvus/etcd
+      ETCD_CONFIG_PATH: /milvus/configs/embedEtcd.yaml
+      COMMON_STORAGETYPE: local
+      DEPLOY_MODE: STANDALONE
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - type: volume
+        source: docspyre-milvus-embedded-data
+        target: /var/lib/milvus
+        volume:
+          nocopy: false
+      - type: bind
+        source: ./milvus.user.yaml
+        target: /milvus/configs/user.yaml
+        read_only: true
+      - type: bind
+        source: ./milvus.embed-etcd.yaml
+        target: /milvus/configs/embedEtcd.yaml
+        read_only: true
+    networks:
+      - docspyre-vector
+    ports:
+      - target: 19530
+        published: '${MILVUS_PORT:?Allocated Milvus host port is required}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, --max-time, '8', http://127.0.0.1:9091/healthz]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+
+  docspyre-ollama:
+    container_name: docspyre-ollama
+    labels:
+      ai.docspyre.desktop.runtime: '${DOCSPYRE_RUNTIME_ID:?Private desktop runtime identity is required}'
+    image: ${OLLAMA_IMAGE:?Managed Ollama image is required}
+    restart: unless-stopped
+    volumes:
+      - type: volume
+        source: docspyre-ollama-data
+        target: /root/.ollama
+        volume:
+          nocopy: false
+    networks:
+      - docspyre-gateway
+    ports:
+      - target: 11434
+        published: '${OLLAMA_PORT:?Allocated Ollama host port is required}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test: [CMD-SHELL, 'ollama list >/dev/null 2>&1 || exit 1']
+      interval: 10s
+      timeout: 8s
+      retries: 30
+      start_period: 60s
+
+  docspyre-app-db:
+    container_name: docspyre-app-db
+    labels:
+      ai.docspyre.desktop.runtime: '${DOCSPYRE_RUNTIME_ID:?Private desktop runtime identity is required}'
+    image: ${POSTGRESQL_IMAGE:?Managed PostgreSQL image is required}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${APP_POSTGRES_USER:?Generated application PostgreSQL username is required}
+      POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD:?Generated application PostgreSQL password is required}
+      POSTGRES_DB: ${APP_POSTGRES_DB:?Application database name is required}
+    volumes:
+      - docspyre-app-db-data:/var/lib/postgresql/data
+    networks:
+      - docspyre-application
+    ports:
+      - target: 5432
+        published: '${APP_DATABASE_PORT:?Allocated application database host port is required}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready --username="$${POSTGRES_USER}" --dbname="$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+networks:
+  docspyre-litellm-private:
+    name: docspyre-litellm-private
+    external: true
+  docspyre-gateway:
+    name: docspyre-gateway
+    external: true
+  docspyre-vector:
+    name: docspyre-vector
+    external: true
+  docspyre-application:
+    name: docspyre-application
+    external: true
+
+volumes:
+  docspyre-litellm-db-data:
+    name: '${LITELLM_DATABASE_VOLUME:?Persisted LiteLLM database volume is required}'
+    external: true
+  docspyre-milvus-embedded-data:
+    name: docspyre-milvus-embedded-data
+    external: true
+  docspyre-ollama-data:
+    name: docspyre-ollama-data
+    external: true
+  docspyre-app-db-data:
+    name: docspyre-app-db-data
+    external: true
+

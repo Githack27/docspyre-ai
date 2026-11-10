@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Only the main local window can access the desktop backend bridge.",
+  "windows": ["main"],
+  "permissions": ["allow-backend-status", "allow-api-request", "allow-api-stream", "allow-frontend-ready", "allow-frontend-log"]
+}
+
