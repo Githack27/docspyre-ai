@@ -5,73 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DocSpyre</title>
   <script>
-    if (window.__DOCSPYRE_STARTUP_CONFIG__) {
-      try {
-        const theme = localStorage.getItem(window.__DOCSPYRE_STARTUP_CONFIG__.themeStorageKey);
-        document.documentElement.classList.toggle('dark', theme === 'dark' || (!theme && matchMedia('(prefers-color-scheme: dark)').matches));
-      } catch (_) {}
-    } else {
+    try {
+      const storageKey = (window.__DOCSPYRE_STARTUP_CONFIG__ && window.__DOCSPYRE_STARTUP_CONFIG__.themeStorageKey) || 'docspyre_theme';
+      const theme = localStorage.getItem(storageKey);
+      document.documentElement.classList.toggle('dark', theme === 'dark' || (!theme && matchMedia('(prefers-color-scheme: dark)').matches));
+    } catch (_) {
       document.documentElement.classList.add('dark');
     }
   </script>
   <style>
     :root {
       color-scheme: dark;
-      --bg-base: #070a12;
-      --bg-mesh: radial-gradient(circle at 50% -10%, #152238 0%, #090e1a 50%, #05070d 100%);
-      --panel-bg: rgba(13, 19, 33, 0.88);
-      --panel-border: rgba(255, 255, 255, 0.08);
-      --card-bg: rgba(18, 25, 42, 0.55);
-      --card-border: rgba(255, 255, 255, 0.05);
-      --card-hover: rgba(24, 34, 56, 0.65);
-      --card-active-bg: rgba(14, 30, 56, 0.65);
-      --card-active-border: rgba(56, 189, 248, 0.35);
-      --text-primary: #f8fafc;
-      --text-secondary: #8da2bb;
-      --text-muted: #53647b;
-      --cyan-accent: #22d3ee;
-      --cyan-glow: rgba(34, 211, 238, 0.25);
+      --bg-base: #0B1B1F;
+      --bg-mesh: radial-gradient(circle at 50% -15%, rgba(56, 242, 161, 0.12) 0%, rgba(16, 38, 43, 0.75) 45%, #0B1B1F 100%);
+      --panel-bg: rgba(16, 38, 43, 0.94);
+      --panel-border: rgba(56, 242, 161, 0.18);
+      --card-bg: rgba(11, 27, 31, 0.65);
+      --card-border: rgba(255, 255, 255, 0.06);
+      --card-hover: rgba(20, 48, 54, 0.85);
+      --card-active-bg: rgba(18, 46, 52, 0.85);
+      --card-active-border: rgba(56, 242, 161, 0.45);
+      --text-primary: #FFFFFF;
+      --text-secondary: #8EACB4;
+      --text-muted: #56737B;
+      --mint-accent: #38F2A1;
+      --mint-glow: rgba(56, 242, 161, 0.25);
+      --violet-accent: #8a2be2;
+      --coral-accent: #ff4e85;
       --status-pending-bg: rgba(255, 255, 255, 0.03);
       --status-pending-border: rgba(255, 255, 255, 0.06);
-      --status-pending-text: #64748b;
-      --status-running-bg: rgba(56, 189, 248, 0.09);
-      --status-running-border: rgba(56, 189, 248, 0.28);
-      --status-running-text: #38bdf8;
-      --status-complete-bg: rgba(52, 211, 153, 0.09);
-      --status-complete-border: rgba(52, 211, 153, 0.28);
-      --status-complete-text: #34d399;
-      --status-error-bg: rgba(248, 113, 113, 0.09);
-      --status-error-border: rgba(248, 113, 113, 0.28);
-      --status-error-text: #f87171;
+      --status-pending-text: #64828A;
+      --status-running-bg: rgba(56, 242, 161, 0.10);
+      --status-running-border: rgba(56, 242, 161, 0.35);
+      --status-running-text: #38F2A1;
+      --status-complete-bg: rgba(34, 199, 169, 0.10);
+      --status-complete-border: rgba(34, 199, 169, 0.32);
+      --status-complete-text: #38F2A1;
+      --status-error-bg: rgba(255, 78, 133, 0.10);
+      --status-error-border: rgba(255, 78, 133, 0.35);
+      --status-error-text: #ff4e85;
     }
     :root:not(.dark) {
       color-scheme: light;
-      --bg-base: #f0f4f9;
-      --bg-mesh: radial-gradient(circle at 50% -10%, #e2ecf9 0%, #f1f5f9 60%, #e8eef6 100%);
-      --panel-bg: rgba(255, 255, 255, 0.96);
-      --panel-border: rgba(0, 0, 0, 0.08);
-      --card-bg: rgba(245, 248, 252, 0.85);
-      --card-border: rgba(0, 0, 0, 0.05);
-      --card-hover: rgba(238, 243, 250, 0.95);
-      --card-active-bg: rgba(235, 244, 255, 0.95);
-      --card-active-border: rgba(2, 132, 199, 0.35);
-      --text-primary: #0f172a;
-      --text-secondary: #475569;
-      --text-muted: #94a3b8;
-      --cyan-accent: #0284c7;
-      --cyan-glow: rgba(2, 132, 199, 0.15);
-      --status-pending-bg: rgba(0, 0, 0, 0.03);
-      --status-pending-border: rgba(0, 0, 0, 0.06);
-      --status-pending-text: #64748b;
-      --status-running-bg: rgba(2, 132, 199, 0.08);
-      --status-running-border: rgba(2, 132, 199, 0.25);
-      --status-running-text: #0284c7;
-      --status-complete-bg: rgba(16, 185, 129, 0.08);
-      --status-complete-border: rgba(16, 185, 129, 0.25);
-      --status-complete-text: #059669;
-      --status-error-bg: rgba(239, 68, 68, 0.08);
-      --status-error-border: rgba(239, 68, 68, 0.25);
-      --status-error-text: #dc2626;
+      --bg-base: #F0F4F5;
+      --bg-mesh: radial-gradient(circle at 50% -15%, rgba(34, 199, 169, 0.15) 0%, rgba(240, 244, 245, 0.9) 55%, #E6ECEE 100%);
+      --panel-bg: rgba(255, 255, 255, 0.98);
+      --panel-border: rgba(16, 38, 43, 0.12);
+      --card-bg: rgba(244, 248, 249, 0.95);
+      --card-border: rgba(16, 38, 43, 0.07);
+      --card-hover: rgba(235, 244, 246, 0.98);
+      --card-active-bg: rgba(230, 247, 242, 0.98);
+      --card-active-border: rgba(34, 199, 169, 0.45);
+      --text-primary: #10262B;
+      --text-secondary: #436067;
+      --text-muted: #7E979E;
+      --mint-accent: #10B981;
+      --mint-glow: rgba(16, 185, 129, 0.20);
+      --violet-accent: #7c3aed;
+      --coral-accent: #e11d48;
+      --status-pending-bg: rgba(16, 38, 43, 0.03);
+      --status-pending-border: rgba(16, 38, 43, 0.07);
+      --status-pending-text: #708A91;
+      --status-running-bg: rgba(16, 185, 129, 0.09);
+      --status-running-border: rgba(16, 185, 129, 0.32);
+      --status-running-text: #059669;
+      --status-complete-bg: rgba(16, 185, 129, 0.10);
+      --status-complete-border: rgba(16, 185, 129, 0.30);
+      --status-complete-text: #047857;
+      --status-error-bg: rgba(225, 29, 72, 0.08);
+      --status-error-border: rgba(225, 29, 72, 0.30);
+      --status-error-text: #be123c;
     }
     * {
       box-sizing: border-box;
@@ -87,7 +90,7 @@
       background: var(--bg-base);
       background-image: var(--bg-mesh);
       color: var(--text-primary);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Segoe UI Variable Display", system-ui, sans-serif;
+      font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       user-select: none;
@@ -104,8 +107,8 @@
       display: flex;
       flex-direction: column;
       background: var(--panel-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       overflow: hidden;
       position: relative;
     }
@@ -115,12 +118,13 @@
       top: 0;
       left: 10%;
       right: 10%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.5), transparent);
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, var(--mint-accent), transparent);
       pointer-events: none;
+      opacity: 0.8;
     }
     header {
-      padding: 16px 24px 12px;
+      padding: 14px 24px 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -133,12 +137,12 @@
       min-width: 0;
     }
     .logo-tile {
-      width: 40px;
-      height: 40px;
-      border-radius: 11px;
-      background: linear-gradient(135deg, rgba(30, 42, 69, 0.7), rgba(15, 23, 42, 0.95));
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      box-shadow: 0 0 16px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(56, 242, 161, 0.15), rgba(16, 38, 43, 0.95));
+      border: 1px solid rgba(56, 242, 161, 0.35);
+      box-shadow: 0 0 16px rgba(56, 242, 161, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -162,7 +166,7 @@
       line-height: 1.2;
     }
     .app-subtitle {
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 400;
       color: var(--text-secondary);
       letter-spacing: -0.01em;
@@ -174,22 +178,22 @@
       gap: 7px;
       padding: 5px 12px;
       border-radius: 9999px;
-      background: rgba(6, 182, 212, 0.08);
-      border: 1px solid rgba(6, 182, 212, 0.22);
-      color: var(--cyan-accent);
+      background: rgba(56, 242, 161, 0.08);
+      border: 1px solid rgba(56, 242, 161, 0.28);
+      color: var(--mint-accent);
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
       letter-spacing: 0.01em;
-      box-shadow: 0 0 12px rgba(6, 182, 212, 0.08);
+      box-shadow: 0 0 12px rgba(56, 242, 161, 0.12);
       flex-shrink: 0;
     }
     .badge-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--cyan-accent);
-      box-shadow: 0 0 8px var(--cyan-accent);
-      animation: pulse-glow 2.4s ease-in-out infinite;
+      background: var(--mint-accent);
+      box-shadow: 0 0 8px var(--mint-accent);
+      animation: pulse-glow 2.2s ease-in-out infinite;
     }
     .services-wrapper {
       flex: 1;
@@ -200,13 +204,13 @@
       flex-direction: column;
       justify-content: center;
       scrollbar-width: thin;
-      scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+      scrollbar-color: rgba(56, 242, 161, 0.2) transparent;
     }
     .services-wrapper::-webkit-scrollbar {
       width: 4px;
     }
     .services-wrapper::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(56, 242, 161, 0.25);
       border-radius: 4px;
     }
     .services-list {
@@ -231,12 +235,12 @@
     }
     .service-card:hover {
       background: var(--card-hover);
-      border-color: rgba(255, 255, 255, 0.08);
+      border-color: rgba(56, 242, 161, 0.15);
     }
     .service-card[data-status="running"] {
       background: var(--card-active-bg);
       border-color: var(--card-active-border);
-      box-shadow: 0 0 18px rgba(56, 189, 248, 0.06);
+      box-shadow: 0 0 16px rgba(56, 242, 161, 0.12);
     }
     .service-card[data-status="error"] {
       border-color: var(--status-error-border);
@@ -250,12 +254,12 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      background: rgba(255, 255, 255, 0.035);
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.06);
       transition: transform 0.2s ease;
     }
     .service-card[data-status="running"] .service-icon-tile {
-      transform: scale(1.05);
+      transform: scale(1.06);
     }
     .service-details {
       flex: 1;
@@ -296,10 +300,10 @@
       color: var(--text-muted);
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 9.5px;
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(56, 242, 161, 0.06);
       padding: 0 4px;
       border-radius: 3px;
-      border: 1px solid rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(56, 242, 161, 0.12);
       flex-shrink: 0;
     }
     .status-pill {
@@ -320,174 +324,227 @@
       display: inline-block;
       flex-shrink: 0;
     }
+    /* Pending */
     .service-card[data-status="pending"] .status-pill {
       background: var(--status-pending-bg);
       border: 1px solid var(--status-pending-border);
       color: var(--status-pending-text);
     }
     .service-card[data-status="pending"] .status-dot {
-      background: #475569;
+      background: #56737B;
     }
+    /* Running */
     .service-card[data-status="running"] .status-pill {
       background: var(--status-running-bg);
       border: 1px solid var(--status-running-border);
       color: var(--status-running-text);
     }
     .service-card[data-status="running"] .status-dot {
-      background: #38bdf8;
-      box-shadow: 0 0 6px #38bdf8;
+      background: var(--mint-accent);
+      box-shadow: 0 0 6px var(--mint-accent);
       animation: pulse-dot 1.2s ease-in-out infinite;
     }
+    /* Complete */
     .service-card[data-status="complete"] .status-pill {
       background: var(--status-complete-bg);
       border: 1px solid var(--status-complete-border);
       color: var(--status-complete-text);
     }
     .service-card[data-status="complete"] .status-dot {
-      background: #34d399;
-      box-shadow: 0 0 6px rgba(52, 211, 153, 0.4);
+      background: var(--mint-accent);
+      box-shadow: 0 0 6px var(--mint-accent);
     }
+    /* Error */
     .service-card[data-status="error"] .status-pill {
       background: var(--status-error-bg);
       border: 1px solid var(--status-error-border);
       color: var(--status-error-text);
     }
     .service-card[data-status="error"] .status-dot {
-      background: #f87171;
-      box-shadow: 0 0 6px rgba(248, 113, 113, 0.4);
+      background: var(--coral-accent);
+      box-shadow: 0 0 6px var(--coral-accent);
+    }
+    /* Stopping */
+    .service-card[data-status="stopping"] .status-pill {
+      background: rgba(255, 78, 133, 0.09);
+      border: 1px solid rgba(255, 78, 133, 0.28);
+      color: var(--coral-accent);
+    }
+    .service-card[data-status="stopping"] .status-dot {
+      background: var(--coral-accent);
+      box-shadow: 0 0 6px var(--coral-accent);
+      animation: pulse-dot 1.2s ease-in-out infinite;
+    }
+    /* Stopped */
+    .service-card[data-status="stopped"] .status-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+    .service-card[data-status="stopped"] .status-dot {
+      background: #56737B;
+    }
+    .tier-badge.stopping {
+      background: rgba(255, 78, 133, 0.08);
+      border-color: rgba(255, 78, 133, 0.25);
+      color: var(--coral-accent);
+      box-shadow: 0 0 12px rgba(255, 78, 133, 0.1);
+    }
+    .tier-badge.stopping .badge-dot {
+      background: var(--coral-accent);
+      box-shadow: 0 0 8px var(--coral-accent);
+    }
+    .progress-fill.shutdown {
+      background: linear-gradient(90deg, #ff8a00 0%, #ff4e85 100%) !important;
+      box-shadow: 0 0 10px rgba(255, 78, 133, 0.6) !important;
+    }
+    .error-panel {
+      margin-top: 6px;
+      padding: 10px 14px;
+      border: 1px solid var(--status-error-border);
+      border-radius: 10px;
+      background: var(--status-error-bg);
+      color: var(--status-error-text);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .error-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .error-panel p {
+      margin: 0;
+    }
+    .error-panel code {
+      display: block;
+      margin-top: 4px;
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-family: ui-monospace, monospace;
+      user-select: all;
     }
     footer {
-      padding: 12px 24px 18px;
+      padding: 10px 24px 14px;
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      flex-shrink: 0;
+      gap: 5px;
+      border-top: 1px solid var(--panel-border);
+      background: rgba(11, 27, 31, 0.55);
     }
-    .progress-meta {
+    .progress-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 11.5px;
     }
-    .active-stage {
+    .status-summary {
       color: var(--text-secondary);
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 80%;
+      max-width: 82%;
     }
-    .percentage {
-      color: var(--cyan-accent);
-      font-weight: 600;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    .percent-label {
+      color: var(--mint-accent);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
     }
     .progress-track {
-      width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.06);
+      height: 4px;
       border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.08);
       overflow: hidden;
+      margin: 2px 0 3px;
       position: relative;
     }
-    .progress-bar {
+    .progress-fill {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #38bdf8, #22d3ee, #34d399);
       border-radius: 9999px;
+      background: linear-gradient(90deg, #38F2A1 0%, #22C7A9 50%, #8a2be2 100%);
+      box-shadow: 0 0 10px rgba(56, 242, 161, 0.55);
       transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 0 12px var(--cyan-glow);
     }
-    .footer-subrow {
+    .footer-meta {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 10.5px;
+      font-size: 10px;
       color: var(--text-muted);
     }
-    .elapsed-time {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    .host-tag {
+      letter-spacing: 0.01em;
     }
-    .error-banner {
-      background: rgba(239, 68, 68, 0.12);
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      border-radius: 10px;
-      padding: 12px 16px;
-      margin: 8px 24px 0;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-    .error-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #f87171;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .error-detail {
-      font-size: 11px;
-      color: var(--text-secondary);
-      line-height: 1.4;
+    .env-time {
+      font-variant-numeric: tabular-nums;
     }
     @keyframes pulse-glow {
-      0%, 100% { opacity: 0.6; transform: scale(0.95); }
-      50% { opacity: 1; transform: scale(1.1); }
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.92); }
     }
     @keyframes pulse-dot {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 1; }
+      0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 6px var(--mint-accent); }
+      50% { opacity: 0.35; transform: scale(0.75); box-shadow: 0 0 2px var(--mint-accent); }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
     }
   </style>
 </head>
 <body>
   <main>
-    <div class="panel">
+    <section class="panel" aria-labelledby="app-name">
       <header>
         <div class="brand-group">
           <div class="logo-tile">
-            <img id="logo" src="/images/docspyre-logo.png" alt="DocSpyre">
+            <img id="logo" alt="DocSpyre" src="/images/docspyre-logo.png">
           </div>
           <div class="brand-meta">
-            <span class="app-title" id="app-name">DocSpyre</span>
-            <span class="app-subtitle">Local Intelligence Platform</span>
+            <h1 id="app-name" class="app-title">DocSpyre</h1>
+            <p class="app-subtitle">Document Intelligence &amp; Agent Platform</p>
           </div>
         </div>
-        <div class="tier-badge">
+        <div id="tier-badge" class="tier-badge">
           <span class="badge-dot"></span>
-          <span>Desktop Runtime</span>
+          <span id="badge-text">Desktop AI Engine</span>
         </div>
       </header>
 
-      <div class="error-banner" id="error" hidden>
-        <div class="error-title">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Startup Alert
-        </div>
-        <div class="error-detail" id="message"></div>
-        <div class="error-detail" id="configuration" style="opacity: 0.7; font-family: monospace; font-size: 10px;"></div>
-      </div>
-
       <div class="services-wrapper">
-        <ul class="services-list" id="services"></ul>
+        <ol id="services" class="services-list" aria-label="DocSpyre Services"></ol>
+        <div id="error" class="error-panel" role="alert" hidden>
+          <div class="error-title-row">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Startup Interrupted</span>
+          </div>
+          <p id="message"></p>
+          <code id="configuration"></code>
+          <code id="logs"></code>
+        </div>
       </div>
 
       <footer>
-        <div class="progress-meta">
-          <span class="active-stage" id="active">Initializing platform services...</span>
-          <span class="percentage" id="percent">0%</span>
+        <div class="progress-row">
+          <span id="active" class="status-summary" role="status" aria-live="polite">Verifying local containers &amp; services...</span>
+          <span id="percent" class="percent-label">0%</span>
         </div>
-        <div class="progress-track" id="track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-          <div class="progress-bar" id="progress"></div>
+        <div class="progress-track" role="progressbar" aria-label="Startup progress" aria-valuemin="0" aria-valuemax="100" id="track">
+          <div id="progress" class="progress-fill"></div>
         </div>
-        <div class="footer-subrow">
-          <span id="logs"></span>
-          <span class="elapsed-time" id="elapsed">0:00</span>
+        <div class="footer-meta">
+          <span class="host-tag">DocSpyre Desktop Supervisor</span>
+          <span class="env-time">Local AI Container Stack &bull; <span id="elapsed">0:00</span></span>
         </div>
       </footer>
-    </div>
+    </section>
   </main>
 
   <script>
@@ -495,81 +552,81 @@
       const config = window.__DOCSPYRE_STARTUP_CONFIG__ || {
         applicationName: 'DocSpyre',
         themeStorageKey: 'docspyre_theme',
-        pollIntervalMs: 500,
+        pollIntervalMs: 800,
         statusCommand: 'backend_status',
         readyCommand: 'startup_ready',
         logoLight: '/images/docspyre-logo.png',
-        logoDark: '/images/docspyre-logo.png',
+        logoDark: '/images/docspyre-logo.png'
       };
 
       const elements = Object.fromEntries(
-        ['logo', 'elapsed', 'active', 'percent', 'track', 'progress', 'services', 'error', 'message', 'configuration', 'logs', 'app-name']
+        ['logo', 'elapsed', 'active', 'percent', 'track', 'progress', 'services', 'error', 'message', 'configuration', 'logs', 'app-name', 'tier-badge', 'badge-text']
           .map(id => [id, document.getElementById(id)])
       );
 
       const SERVICE_REGISTRY = {
         'docker': {
-          title: 'Docker Engine',
-          subtitle: 'Container Virtualization Daemon',
+          title: 'Docker Daemon',
+          subtitle: 'Container Runtime Virtualization',
           port: '',
-          iconBg: 'rgba(56, 189, 248, 0.08)',
-          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16a1 1 0 0 1 1 1c0 5-3.5 8-9 8s-9-3-9-8a1 1 0 0 1 1-1Z"/><path d="M7 11V8a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v3"/><path d="M11 11V6a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v5"/><path d="M15 11V8a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v3"/><circle cx="17.5" cy="14.5" r="0.9" fill="#38bdf8"/></svg>'
+          iconBg: 'rgba(56, 242, 161, 0.12)',
+          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38F2A1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16a1 1 0 0 1 1 1c0 5-3.5 8-9 8s-9-3-9-8a1 1 0 0 1 1-1Z"/><path d="M7 11V8a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v3"/><path d="M11 11V6a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v5"/><path d="M15 11V8a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v3"/><circle cx="17.5" cy="14.5" r="0.9" fill="#38F2A1"/></svg>'
         },
         'application-database': {
           title: 'PostgreSQL Database',
-          subtitle: 'Relational Storage Engine',
-          port: ':5432',
-          iconBg: 'rgba(167, 139, 250, 0.08)',
-          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>'
-        },
-        'litellm-database': {
-          title: 'LiteLLM Database',
-          subtitle: 'Proxy State & Metadata',
-          port: ':5432',
-          iconBg: 'rgba(129, 140, 248, 0.08)',
-          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v5c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5V6"/><path d="M5 11v5c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5v-5"/><path d="M12 11v5"/></svg>'
-        },
-        'litellm': {
-          title: 'LiteLLM AI Gateway',
-          subtitle: 'Multi-Model AI Proxy',
-          port: ':4000',
-          iconBg: 'rgba(244, 114, 182, 0.08)',
-          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f472b6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="9" cy="10" r="1.2" fill="#f472b6"/><circle cx="15" cy="10" r="1.2" fill="#f472b6"/><path d="M9 15h6"/><path d="M12 2v2"/><path d="M12 20v2"/></svg>'
+          subtitle: 'Relational Workspace Storage',
+          port: ':57001:5432',
+          iconBg: 'rgba(138, 43, 226, 0.12)',
+          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#a855f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>'
         },
         'milvus': {
           title: 'Milvus Vector Store',
-          subtitle: 'Vector Embeddings & Search',
-          port: ':19530',
-          iconBg: 'rgba(52, 211, 153, 0.08)',
-          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#34d399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>'
+          subtitle: 'Vector Embeddings & Search Index',
+          port: ':57003:19530',
+          iconBg: 'rgba(34, 199, 169, 0.12)',
+          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#22C7A9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>'
         },
         'ollama': {
-          title: 'Ollama Embeddings',
-          subtitle: 'Local Embedding Models',
-          port: ':11434',
-          iconBg: 'rgba(251, 146, 60, 0.08)',
-          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fb923c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.5" fill="#fb923c"/><circle cx="15" cy="10" r="1.5" fill="#fb923c"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/></svg>'
+          title: 'Ollama Embedding Engine',
+          subtitle: 'Local Neural Embedding Model',
+          port: ':57005:11434',
+          iconBg: 'rgba(255, 78, 133, 0.12)',
+          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ff4e85" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.5" fill="#ff4e85"/><circle cx="15" cy="10" r="1.5" fill="#ff4e85"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/></svg>'
+        },
+        'litellm-database': {
+          title: 'LiteLLM Database',
+          subtitle: 'AI Proxy State & Configurations',
+          port: ':5432 (Internal)',
+          iconBg: 'rgba(138, 43, 226, 0.12)',
+          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#8a2be2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v5c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5V6"/><path d="M5 11v5c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5v-5"/><path d="M12 11v5"/></svg>'
+        },
+        'litellm': {
+          title: 'LiteLLM AI Gateway',
+          subtitle: 'Multi-Model Inference Router',
+          port: ':57004:4000',
+          iconBg: 'rgba(255, 78, 133, 0.12)',
+          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ff4e85" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="9" cy="10" r="1.2" fill="#ff4e85"/><circle cx="15" cy="10" r="1.2" fill="#ff4e85"/><path d="M9 15h6"/><path d="M12 2v2"/><path d="M12 20v2"/></svg>'
         },
         'backend-startup': {
           title: 'DocSpyre Orchestrator',
-          subtitle: 'Core Runtime Daemon',
+          subtitle: 'Core Desktop Supervisor & Runtime',
           port: '',
-          iconBg: 'rgba(56, 189, 248, 0.08)',
-          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+          iconBg: 'rgba(56, 242, 161, 0.12)',
+          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38F2A1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
         },
         'backend-api': {
           title: 'DocSpyre API Service',
-          subtitle: 'Workspace AI Engine',
-          port: '',
-          iconBg: 'rgba(96, 165, 250, 0.08)',
-          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="3" rx="2"/><rect width="20" height="8" x="2" y="13" rx="2"/><line x1="6" x2="6.01" y1="7" y2="7"/><line x1="6" x2="6.01" y1="17" y2="17"/></svg>'
+          subtitle: 'Document Intelligence & Agents',
+          port: ':57000:8000',
+          iconBg: 'rgba(34, 199, 169, 0.12)',
+          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#22C7A9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="3" rx="2"/><rect width="20" height="8" x="2" y="13" rx="2"/><line x1="6" x2="6.01" y1="7" y2="7"/><line x1="6" x2="6.01" y1="17" y2="17"/></svg>'
         },
         'frontend-startup': {
-          title: 'DocSpyre Desktop UI',
-          subtitle: 'Angular Desktop Workspace',
+          title: 'Desktop Workspace UI',
+          subtitle: 'Angular Desktop Shell',
           port: ':4200',
-          iconBg: 'rgba(251, 191, 36, 0.08)',
-          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="3"/><line x1="2" x2="22" y1="9" y2="9"/><line x1="6" x2="6.01" y1="6.5" y2="6.5"/><line x1="9" x2="9.01" y1="6.5" y2="6.5"/><line x1="12" x2="12.01" y1="6.5" y2="6.5"/></svg>'
+          iconBg: 'rgba(56, 242, 161, 0.12)',
+          icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38F2A1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="3"/><line x1="2" x2="22" y1="9" y2="9"/><line x1="6" x2="6.01" y1="6.5" y2="6.5"/><line x1="9" x2="9.01" y1="6.5" y2="6.5"/><line x1="12" x2="12.01" y1="6.5" y2="6.5"/></svg>'
         }
       };
 
@@ -577,7 +634,9 @@
         pending: 'Pending',
         running: 'Checking',
         complete: 'Ready',
-        error: 'Failed'
+        error: 'Failed',
+        stopping: 'Stopping',
+        stopped: 'Stopped'
       };
 
       let stopped = false;
@@ -585,6 +644,13 @@
       let launchRequested = false;
 
       requestAnimationFrame(() => requestAnimationFrame(() => { painted = true; }));
+
+      function getInvoke() {
+        if (window.__TAURI__?.core?.invoke) return window.__TAURI__.core.invoke;
+        if (window.__TAURI__?.invoke) return window.__TAURI__.invoke;
+        if (window.__TAURI_INTERNALS__?.invoke) return window.__TAURI_INTERNALS__.invoke;
+        return null;
+      }
 
       function showError(message, path) {
         elements['app-name'].textContent = 'Startup Alert';
@@ -594,54 +660,35 @@
         elements.configuration.textContent = path || '';
       }
 
+      document.title = config.applicationName || 'DocSpyre';
+      if (elements.logo) {
+        elements.logo.alt = config.applicationName || 'DocSpyre';
+        elements.logo.src = document.documentElement.classList.contains('dark')
+          ? (config.logoDark || '/images/docspyre-logo.png')
+          : (config.logoLight || '/images/docspyre-logo.png');
+      }
+
       window.addEventListener('pagehide', () => { stopped = true; });
 
-      async function poll() {
-        try {
-          if (!window.__TAURI__ || !window.__TAURI__.core) {
-            setTimeout(poll, config.pollIntervalMs);
-            return;
-          }
+      // Shutdown hooks called by supervisor on app close
+      window.__DOCSPYRE_STARTUP_SHUTDOWN__ = () => {
+        stopped = true;
+        if (elements['tier-badge']) elements['tier-badge'].classList.add('stopping');
+        if (elements['badge-text']) elements['badge-text'].textContent = 'Stopping Services';
+        if (elements.progress) {
+          elements.progress.classList.add('shutdown');
+          elements.progress.style.width = '15%';
+        }
+        if (elements.percent) elements.percent.textContent = '15%';
+        if (elements.track) elements.track.setAttribute('aria-valuenow', '15');
+        if (elements.active) elements.active.textContent = 'Stopping all background services...';
+        if (elements.error) elements.error.hidden = true;
 
-          const status = await window.__TAURI__.core.invoke(config.statusCommand);
-          if (stopped) return;
-
-          if (painted && !launchRequested) {
-            await window.__TAURI__.core.invoke(config.readyCommand);
-            launchRequested = true;
-          }
-
-          elements.logs.textContent = status.logsDirectory ? `Logs: ${status.logsDirectory}` : '';
-          const seconds = status.elapsedSeconds || 0;
-          elements.elapsed.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-
-          const complete = status.steps.filter(step => step.status === 'complete').length;
-          const progress = status.steps.length ? Math.round(complete / status.steps.length * 100) : 0;
-          elements.progress.style.width = `${progress}%`;
-          elements.track.setAttribute('aria-valuenow', String(progress));
-          elements.percent.textContent = `${progress}%`;
-
-          const runningStep = status.steps.find(step => step.status === 'running');
-          if (status.ready) {
-            elements.active.textContent = 'Launching workspace...';
-          } else if (runningStep) {
-            elements.active.textContent = runningStep.detail || `Starting ${runningStep.label}...`;
-          } else {
-            elements.active.textContent = complete === status.steps.length ? 'Workspace ready' : 'Initializing platform services...';
-          }
-
-          elements.services.replaceChildren(...status.steps.map(step => {
+        if (!elements.services.children.length) {
+          elements.services.replaceChildren(...Object.entries(SERVICE_REGISTRY).map(([id, meta]) => {
             const item = document.createElement('li');
             item.className = 'service-card';
-            item.dataset.status = step.status;
-
-            const meta = SERVICE_REGISTRY[step.id] || {
-              title: step.label,
-              subtitle: step.detail || 'Platform Service',
-              port: '',
-              iconBg: 'rgba(255, 255, 255, 0.05)',
-              icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect width="18" height="18" x="3" y="3" rx="3"/></svg>'
-            };
+            item.dataset.status = 'stopping';
 
             const iconTile = document.createElement('div');
             iconTile.className = 'service-icon-tile';
@@ -657,7 +704,6 @@
 
             const metaRow = document.createElement('div');
             metaRow.className = 'service-meta-row';
-
             const subtitle = document.createElement('span');
             subtitle.className = 'service-subtitle';
             subtitle.textContent = meta.subtitle;
@@ -669,33 +715,155 @@
               portBadge.textContent = meta.port;
               metaRow.appendChild(portBadge);
             }
-
             details.append(title, metaRow);
 
             const pill = document.createElement('div');
             pill.className = 'status-pill';
-
             const dot = document.createElement('span');
             dot.className = 'status-dot';
-
             const statusText = document.createElement('span');
-            statusText.textContent = STATUS_LABELS[step.status] || step.status;
-
+            statusText.textContent = 'Stopping';
             pill.append(dot, statusText);
+
             item.append(iconTile, details, pill);
             return item;
           }));
+        } else {
+          document.querySelectorAll('.service-card').forEach(card => {
+            card.dataset.status = 'stopping';
+            const pillText = card.querySelector('.status-pill span:last-child');
+            if (pillText) pillText.textContent = 'Stopping';
+          });
+        }
+      };
+
+      window.__DOCSPYRE_UPDATE_SHUTDOWN__ = (detail, progress) => {
+        stopped = true;
+        if (detail && elements.active) elements.active.textContent = detail;
+        if (elements['tier-badge']) elements['tier-badge'].classList.add('stopping');
+        if (elements['badge-text']) elements['badge-text'].textContent = 'Stopping Services';
+        if (elements.progress) elements.progress.classList.add('shutdown');
+        if (typeof progress === 'number') {
+          if (elements.progress) elements.progress.style.width = `${progress}%`;
+          if (elements.percent) elements.percent.textContent = `${progress}%`;
+          if (elements.track) elements.track.setAttribute('aria-valuenow', String(progress));
+          if (progress >= 100) {
+            document.querySelectorAll('.service-card').forEach(card => {
+              card.dataset.status = 'stopped';
+              const pillText = card.querySelector('.status-pill span:last-child');
+              if (pillText) pillText.textContent = 'Stopped';
+            });
+          }
+        }
+      };
+
+      async function poll() {
+        if (stopped) return;
+        try {
+          const invoke = getInvoke();
+          if (!invoke) {
+            if (!stopped) setTimeout(poll, 150);
+            return;
+          }
+
+          const status = await invoke(config.statusCommand);
+          if (stopped) return;
+
+          if (painted && !launchRequested) {
+            await invoke(config.readyCommand);
+            launchRequested = true;
+          }
+
+          if (elements.logs) {
+            elements.logs.textContent = status.logsDirectory ? `Logs: ${status.logsDirectory}` : '';
+          }
+          const seconds = status.elapsedSeconds || 0;
+          elements.elapsed.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+
+          const complete = (status.steps || []).filter(step => step.status === 'complete').length;
+          const total = (status.steps || []).length || 1;
+          const progress = Math.round((complete / total) * 100);
+          elements.progress.style.width = `${progress}%`;
+          elements.track.setAttribute('aria-valuenow', String(progress));
+          elements.percent.textContent = `${progress}%`;
+
+          const runningStep = (status.steps || []).find(step => step.status === 'running');
+          if (status.ready) {
+            elements.active.textContent = 'Launching DocSpyre workspace...';
+          } else if (runningStep) {
+            elements.active.textContent = runningStep.detail || `Starting ${runningStep.label}...`;
+          } else {
+            elements.active.textContent = complete === total ? 'Workspace ready' : 'Verifying local containers & services...';
+          }
+
+          if (status.steps && status.steps.length) {
+            elements.services.replaceChildren(...status.steps.map(step => {
+              const item = document.createElement('li');
+              item.className = 'service-card';
+              item.dataset.status = step.status;
+
+              const meta = SERVICE_REGISTRY[step.id] || {
+                title: step.label,
+                subtitle: step.detail || 'Platform Service',
+                port: '',
+                iconBg: 'rgba(56, 242, 161, 0.12)',
+                icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38F2A1" stroke-width="1.8"><rect width="18" height="18" x="3" y="3" rx="3"/></svg>'
+              };
+
+              const iconTile = document.createElement('div');
+              iconTile.className = 'service-icon-tile';
+              if (meta.iconBg) iconTile.style.background = meta.iconBg;
+              iconTile.innerHTML = meta.icon;
+
+              const details = document.createElement('div');
+              details.className = 'service-details';
+
+              const title = document.createElement('div');
+              title.className = 'service-title';
+              title.textContent = meta.title;
+
+              const metaRow = document.createElement('div');
+              metaRow.className = 'service-meta-row';
+
+              const subtitle = document.createElement('span');
+              subtitle.className = 'service-subtitle';
+              subtitle.textContent = step.detail || meta.subtitle;
+              metaRow.appendChild(subtitle);
+
+              if (meta.port) {
+                const portBadge = document.createElement('span');
+                portBadge.className = 'service-port-badge';
+                portBadge.textContent = meta.port;
+                metaRow.appendChild(portBadge);
+              }
+
+              details.append(title, metaRow);
+
+              const pill = document.createElement('div');
+              pill.className = 'status-pill';
+
+              const dot = document.createElement('span');
+              dot.className = 'status-dot';
+
+              const statusText = document.createElement('span');
+              statusText.textContent = STATUS_LABELS[step.status] || step.status;
+
+              pill.append(dot, statusText);
+              item.append(iconTile, details, pill);
+              return item;
+            }));
+          }
 
           if (status.error) {
             showError(status.error, status.configPath);
           } else {
-            elements['app-name'].textContent = config.applicationName;
+            elements['app-name'].textContent = config.applicationName || 'DocSpyre';
             elements.error.hidden = true;
           }
         } catch (err) {
           if (!stopped) showError('Unable to read desktop startup progress. Restart the application.');
         } finally {
-          if (!stopped) setTimeout(poll, config.pollIntervalMs);
+          if (!stopped) setTimeout(poll, config.pollIntervalMs || 800);
         }
       }
 
@@ -704,4 +872,3 @@
   </script>
 </body>
 </html>
-

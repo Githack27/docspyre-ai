@@ -67,7 +67,7 @@ export async function writeDesktopLog(
     details: Readonly<Record<string, unknown>> = {},
     options: DesktopLogOptions = {},
 ): Promise<void> {
-    const directory = process.env[DESKTOP_LOGGING.directoryEnvironmentKey];
+    const directory = process.env[DESKTOP_LOGGING.directoryEnvironmentKey] ?? process.env["DOCSPYRE_LOG_DIR"] ?? process.env["DETQEL_LOG_DIR"];
     if (!directory || !isAbsolute(directory) || pendingWrites >= DESKTOP_LOGGING.maximumPendingWrites) return;
     let entry: string;
     try {

@@ -69,7 +69,7 @@ export async function prepareApplicationDatabase(options: ApplicationDatabaseOpt
     assertStartupActive(options.signal);
 
     phase = APPLICATION_DATABASE_PHASES.migrate;
-    options.report('Applying application database migrations...');
+    options.report('Deploying application database schema...');
     await runMigrations(options.databaseUrl);
     assertStartupActive(options.signal);
 
@@ -77,9 +77,9 @@ export async function prepareApplicationDatabase(options: ApplicationDatabaseOpt
     options.report("Verifying the managed application's database readiness...");
     const verifyClient = await pool.connect();
     try {
-      const { rows } = await verifyClient.query('SELECT count(*)::int as count FROM "_migrations"');
-      if (!rows[0] || rows[0].count === 0) {
-        throw new Error('No migrations recorded in _migrations table');
+      const { rows } = await verifyClient.query("SELECT to_regclass('users') AS users_table");
+      if (!rows[0]?.users_table) {
+        throw new Error('Core application tables are not present');
       }
     } finally {
       verifyClient.release();

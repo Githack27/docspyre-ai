@@ -132,6 +132,17 @@ async function main(): Promise<void> {
     // Config file might not exist yet; defaults will be used
   }
 
+  // Ensure required secrets have desktop defaults if not provided in config
+  if (!process.env.JWT_ACCESS_SECRET) {
+    process.env.JWT_ACCESS_SECRET = 'docspyre-desktop-jwt-access-secret-32-chars-long';
+  }
+  if (!process.env.JWT_REFRESH_SECRET) {
+    process.env.JWT_REFRESH_SECRET = 'docspyre-desktop-jwt-refresh-secret-32-chars-long';
+  }
+  if (!process.env.ENCRYPTION_KEY) {
+    process.env.ENCRYPTION_KEY = 'docspyre-secure-encrypt-key-32ch';
+  }
+
   process.env[DESKTOP_ENVIRONMENT_KEYS.host] = LOOPBACK_HOST;
   process.env[DESKTOP_ENVIRONMENT_KEYS.port] = String(DESKTOP_STARTUP_SETTINGS.initialApiPort);
   process.env[DESKTOP_ENVIRONMENT_KEYS.nodeEnvironment] = DESKTOP_PLATFORM.production;
@@ -168,19 +179,22 @@ async function main(): Promise<void> {
 
   process.env[DESKTOP_ENVIRONMENT_KEYS.databaseUrl] = infrastructure.applicationDatabaseUrl;
 
-  const { createApp } = await import('./app.js');
-  const app = createApp({ desktopToken: token, isDesktop: true });
-
-  await connectDatabase();
+  await connectDatabase(infrastructure.applicationDatabaseUrl);
   report(
     DESKTOP_STARTUP_STEP_IDS.applicationDatabase,
     DESKTOP_STARTUP_STATUS.complete,
-    'Database migrations applied and database is ready',
+    'Database schema deployed and database is ready',
   );
 
   if (parentClosed || startup.signal.aborted) {
     return;
   }
+
+  currentStep = DESKTOP_STARTUP_STEP_IDS.backendApi;
+  report(DESKTOP_STARTUP_STEP_IDS.backendApi, DESKTOP_STARTUP_STATUS.running, 'Initializing DocSpyre API');
+
+  const { createApp } = await import('./app.js');
+  const app = createApp({ desktopToken: token, isDesktop: true });
 
   report(DESKTOP_STARTUP_STEP_IDS.backendApi, DESKTOP_STARTUP_STATUS.running, 'Starting the private DocSpyre API');
   const listened = await listenOnPrivatePort(app);
@@ -211,8 +225,10 @@ main().catch(async (error) => {
       error instanceof DesktopInfrastructureError
         ? error.message
         : currentStep === DESKTOP_STARTUP_STEP_IDS.applicationDatabase
-          ? `Application database startup failed. Check ${DESKTOP_FILES.backendEnvironment}, PostgreSQL availability, and apply pending application migrations.`
-          : `Desktop startup failed. Check your runtime configuration and restart ${APPLICATION_NAME}.`;
+          ? `Application database startup failed: ${error instanceof Error ? error.message : String(error)}`
+          : currentStep === DESKTOP_STARTUP_STEP_IDS.backendApi
+            ? `Desktop API service startup failed: ${error instanceof Error ? error.message : String(error)}`
+            : `Desktop startup failed. Check your runtime configuration and restart ${APPLICATION_NAME}.`;
     if (currentStep && DESKTOP_STARTUP_STEPS.some((step) => step.id === currentStep)) {
       report(currentStep, DESKTOP_STARTUP_STATUS.error, message);
     }

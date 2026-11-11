@@ -14,7 +14,11 @@ import {
     DOCKER_PORT_KEYS,
     DOCKER_TIMEOUTS_MS,
 } from "../../constants/dockerConstants.js";
-import { LOOPBACK_HOST, PRIVATE_PORT_RANGE } from "../../constants/networkConstants.js";
+import {
+    DEFAULT_SERVICE_HOST_PORTS,
+    LOOPBACK_HOST,
+    PRIVATE_PORT_RANGE,
+} from "../../constants/networkConstants.js";
 import { DesktopInfrastructureError } from "./infrastructure-error.js";
 
 export interface InfrastructurePorts {
@@ -54,10 +58,10 @@ async function readSavedPorts(directory: string): Promise<Partial<Infrastructure
     }
     const saved = value as Record<string, unknown>;
     // A file saved before a service existed lacks that service's port; absent ports are allocated and saved
-    // by the caller. Every port that is present must still be valid and distinct.
+    // by the caller. If the port configuration changed or ports are invalid, reset and reallocate.
     const present = DOCKER_PORT_KEYS.map(key => saved[key]).filter(port => port !== undefined);
     if (saved.version !== DOCKER_PORT_FILE_VERSION || present.some(port => !validPort(port)) || new Set(present).size !== present.length) {
-        throw new DesktopInfrastructureError("Saved private service ports must be distinct TCP ports within the permitted private range.");
+        return null;
     }
     const ports: Partial<InfrastructurePorts> = {};
     for (const key of DOCKER_PORT_KEYS) if (saved[key] !== undefined) ports[key] = saved[key] as number;
@@ -139,8 +143,11 @@ export async function prepareInfrastructurePorts(options: InfrastructurePortsOpt
             if (ports[key] !== undefined) continue;
             assertActive(options.signal);
             const savedPort = saved !== null ? saved[key] : undefined;
-            if (savedPort !== undefined && !selected.has(savedPort) && await portIsAvailable(savedPort, options.signal)) {
+            const preferredPort = DEFAULT_SERVICE_HOST_PORTS[key];
+            if (savedPort !== undefined && validPort(savedPort) && !selected.has(savedPort) && await portIsAvailable(savedPort, options.signal)) {
                 ports[key] = savedPort;
+            } else if (preferredPort !== undefined && validPort(preferredPort) && !selected.has(preferredPort) && await portIsAvailable(preferredPort, options.signal)) {
+                ports[key] = preferredPort;
             } else {
                 ports[key] = await allocatePort(selected, options.signal);
             }

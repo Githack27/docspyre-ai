@@ -1,14 +1,14 @@
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { AgentState, type AgentStateType } from './state';
 import type { AgentRuntime } from './runtime';
-import { routeNode } from './nodes/route.node';
-import { retrieveNode } from './nodes/retrieve.node';
-import { answerNode } from './nodes/answer.node';
-import { summarizeNode } from './nodes/summarize.node';
-import { generateSqlNode, executeSqlNode, shouldRetrySql } from './nodes/dataset.node';
-import { datasetAnswerNode } from './nodes/dataset-answer.node';
-import { smalltalkNode } from './nodes/smalltalk.node';
-import { verifyNode } from './nodes/verify.node';
+import { routeNode } from './nodes/route-node.js';
+import { retrieveNode } from './nodes/retrieve-node.js';
+import { answerNode } from './nodes/answer-node.js';
+import { summarizeNode } from './nodes/summarize-node.js';
+import { generateSqlNode, executeSqlNode, shouldRetrySql } from './nodes/dataset-node.js';
+import { datasetAnswerNode } from './nodes/dataset-answer-node.js';
+import { smalltalkNode } from './nodes/smalltalk-node.js';
+import { verifyNode } from './nodes/verify-node.js';
 
 /**
  * Node identifiers.

@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -19,7 +19,7 @@ pids
 lib-cov
 
 # Coverage directory used by tools like istanbul
-coverage
+coverage/
 *.lcov
 
 # nyc test coverage
@@ -44,8 +44,9 @@ jspm_packages/
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
-# TypeScript cache
+# TypeScript cache & build output
 *.tsbuildinfo
+out-tsc/
 
 # Optional npm cache directory
 .npm
@@ -68,6 +69,7 @@ web_modules/
 # dotenv environment variable files
 .env
 .env.*
+.env.local
 !.env.example
 !.env.db.example
 !.env.backend.example
@@ -77,52 +79,46 @@ web_modules/
 .cache
 .parcel-cache
 
-# Next.js build output
-.next
-out
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-.output
+# Build outputs
+dist/
+out/
+.next/
+.nuxt/
+.output/
+tmp/
+bazel-out/
+.sass-cache/
 
 # Gatsby files
 .cache/
-# Comment in the public line in if your project uses Gatsby and not Next.js
-# https://nextjs.org/blog/next-9-1#public-directory-support
-# public
 
 # vuepress build output
 .vuepress/dist
-
-# vuepress v2.x temp directory
 .temp
 
 # Sveltekit cache directory
 .svelte-kit/
 
-# vitepress build output
+# vitepress
 **/.vitepress/dist
-
-# vitepress cache directory
 **/.vitepress/cache
 
-# Docusaurus cache and generated files
+# Docusaurus
 .docusaurus
 
-# Serverless directories
+# Serverless
 .serverless/
 
-# FuseBox cache
+# FuseBox
 .fusebox/
 
-# DynamoDB Local files
+# DynamoDB Local
 .dynamodb/
 
-# Firebase cache directory
+# Firebase
 .firebase/
 
-# TernJS port file
+# TernJS
 .tern-port
 
 # Stores VSCode versions used for testing VSCode extensions
@@ -140,7 +136,40 @@ dist
 !.yarn/sdks
 !.yarn/versions
 
-# Vite files
+# Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Angular
+.angular/
+
+# Rust / Cargo / Tauri build artifacts & resources
+target/
+**/target/
+gen/schemas/
+**/gen/schemas/
+binaries/
+**/binaries/
+resources/backend/
+**/resources/backend/
+
+# Desktop logs & local runtime
+logs/
+*.log
+.local/
+
+# File storage & uploads
+uploads/*
+!uploads/.gitkeep
+**/uploads/*
+!**/uploads/.gitkeep
+
+# IDEs and editors
+.vscode/
+.idea/
+.history/
+
+# OS files
+.DS_Store
+Thumbs.db

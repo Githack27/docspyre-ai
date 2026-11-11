@@ -7,7 +7,7 @@ import {
   DESKTOP_STARTUP_SETTINGS,
   type DesktopStartupStatus,
 } from '../constants/desktopConstants.js';
-import { LOOPBACK_HOST, PRIVATE_PORT_RANGE } from '../constants/networkConstants.js';
+import { DEFAULT_SERVICE_HOST_PORTS, LOOPBACK_HOST, PRIVATE_PORT_RANGE } from '../constants/networkConstants.js';
 
 export { DESKTOP_STARTUP_STEPS } from '../constants/desktopConstants.js';
 
@@ -26,8 +26,9 @@ export async function listenOnPrivatePort(
   app: Application,
 ): Promise<{ server: Server; address: string; port: number }> {
   const ports = new Set<number>();
+  const preferredPort = DEFAULT_SERVICE_HOST_PORTS.api;
   while (ports.size < DESKTOP_STARTUP_SETTINGS.apiPortAllocationAttempts) {
-    const port = randomInt(PRIVATE_PORT_RANGE.minimum, PRIVATE_PORT_RANGE.maximum + 1);
+    const port = ports.size === 0 ? preferredPort : randomInt(PRIVATE_PORT_RANGE.minimum, PRIVATE_PORT_RANGE.maximum + 1);
     if (ports.has(port)) continue;
     ports.add(port);
     try {

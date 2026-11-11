@@ -2,40 +2,66 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema';
 
-/**
- * Single, shared connection pool and Drizzle instance.
- * Cached on globalThis to survive hot-reloads in development.
- */
 declare global {
   // eslint-disable-next-line no-var
   var __docspyrePool: Pool | undefined;
+  // eslint-disable-next-line no-var
+  var __docspyreDb: ReturnType<typeof drizzle<typeof schema>> | undefined;
 }
 
-const createPool = (): Pool =>
-  new Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 20,
-    idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 5_000,
-  });
+let activeUrl: string | undefined = undefined;
 
-const pool: Pool = globalThis.__docspyrePool ?? createPool();
+export const getPool = (connectionUrl?: string): Pool => {
+  const targetUrl = connectionUrl || process.env.DATABASE_URL;
+  if (!globalThis.__docspyrePool || (targetUrl && activeUrl !== targetUrl)) {
+    if (globalThis.__docspyrePool) {
+      globalThis.__docspyrePool.end().catch(() => {});
+    }
+    activeUrl = targetUrl;
+    globalThis.__docspyrePool = new Pool({
+      connectionString: targetUrl,
+      max: 20,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 5_000,
+    });
+    globalThis.__docspyreDb = drizzle(globalThis.__docspyrePool, { schema });
+  }
+  return globalThis.__docspyrePool;
+};
 
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.__docspyrePool = pool;
-}
+const getDbInstance = (): ReturnType<typeof drizzle<typeof schema>> => {
+  if (!globalThis.__docspyreDb) {
+    getPool();
+  }
+  return globalThis.__docspyreDb!;
+};
 
-export const db = drizzle(pool, { schema });
+export type Database = ReturnType<typeof drizzle<typeof schema>>;
 
-export type Database = typeof db;
+export const db: Database = new Proxy({} as Database, {
+  get(_target, prop, receiver) {
+    const instance = getDbInstance();
+    const value = Reflect.get(instance as any, prop, receiver);
+    if (typeof value === 'function') {
+      return value.bind(instance);
+    }
+    return value;
+  },
+});
 
 /** Verifies connectivity. Call on application boot to fail fast. */
-export const connectDatabase = async (): Promise<void> => {
+export const connectDatabase = async (connectionUrl?: string): Promise<void> => {
+  const pool = getPool(connectionUrl);
   const client = await pool.connect();
   client.release();
 };
 
 /** Gracefully closes the pool. Call on application shutdown. */
 export const disconnectDatabase = async (): Promise<void> => {
-  await pool.end();
+  if (globalThis.__docspyrePool) {
+    await globalThis.__docspyrePool.end();
+    globalThis.__docspyrePool = undefined;
+    globalThis.__docspyreDb = undefined;
+    activeUrl = undefined;
+  }
 };

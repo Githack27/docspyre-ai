@@ -1,2 +1,6 @@
-<router-outlet />
+@if (!isReady()) {
+  <app-desktop-startup-screen [status]="status()" [runtimeError]="runtimeError()" />
+} @else {
+  <router-outlet />
+}
 <app-confirmation-modal />

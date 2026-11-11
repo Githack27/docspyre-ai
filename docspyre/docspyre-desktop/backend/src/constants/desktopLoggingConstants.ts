@@ -1,5 +1,5 @@
 export const DESKTOP_LOGGING = {
-    directoryEnvironmentKey: "DETQEL_LOG_DIR",
+    directoryEnvironmentKey: "DOCSPYRE_LOG_DIR",
     backendDirectory: "backend",
     backendFile: "backend.log",
     backendBackupFile: "backend.log.1",

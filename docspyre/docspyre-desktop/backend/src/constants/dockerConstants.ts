@@ -48,6 +48,8 @@ export const OLLAMA_GATEWAY_BASE_URL = `http://${DOCKER_SERVICE_NAMES.ollama}:${
 export const DOCKER_NETWORK_NAMES = {
     litellmPrivate: `${APPLICATION_NAMESPACE}-litellm-private`,
     gateway: `${APPLICATION_NAMESPACE}-gateway`,
+    vector: `${APPLICATION_NAMESPACE}-vector`,
+    application: `${APPLICATION_NAMESPACE}-application`,
 } as const;
 
 export const DOCKER_LABELS = {

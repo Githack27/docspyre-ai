@@ -4,8 +4,16 @@ export const MAXIMUM_TCP_PORT = 65535;
 export const POSTGRESQL_PROTOCOLS = ["postgres:", "postgresql:"] as const;
 
 export const PRIVATE_PORT_RANGE = {
-    minimum: 50_000,
-    maximum: 59_999,
+    minimum: 57_000,
+    maximum: 57_999,
+} as const;
+
+export const DEFAULT_SERVICE_HOST_PORTS = {
+    api: 57_000,
+    applicationDatabase: 57_001,
+    milvus: 57_003,
+    litellm: 57_004,
+    ollama: 57_005,
 } as const;
 
 export const SERVICE_PORTS = {

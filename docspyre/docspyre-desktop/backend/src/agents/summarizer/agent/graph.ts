@@ -1,11 +1,11 @@
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { SummarizerState } from './state';
 import type { SummarizerRuntime } from './runtime';
-import { initMemoryNode } from './nodes/init-memory.node';
-import { planOutlineNode } from './nodes/plan-outline.node';
-import { draftManualNode } from './nodes/draft-manual.node';
-import { visualsNode } from './nodes/visuals.node';
-import { finalizeNotesNode } from './nodes/finalize-notes.node';
+import { initMemoryNode } from './nodes/init-memory-node.js';
+import { planOutlineNode } from './nodes/plan-outline-node.js';
+import { draftManualNode } from './nodes/draft-manual-node.js';
+import { visualsNode } from './nodes/visuals-node.js';
+import { finalizeNotesNode } from './nodes/finalize-notes-node.js';
 
 const N = {
   initMemory: 'n_init_memory',
