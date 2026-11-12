@@ -14,6 +14,12 @@ export interface BackendStatus {
   steps: BackendStartupStep[];
   elapsedSeconds: number;
   logsDirectory?: string | null;
+  /** The startup update check, handled by the native startup loader before this window opens. */
+  update?: {
+    phase: 'idle' | 'checking' | 'available' | 'downloading' | 'installing' | 'done';
+    currentVersion: string;
+    version: string | null;
+  };
 }
 
 export const inDesktop = (): boolean => typeof window !== 'undefined' && isTauri();

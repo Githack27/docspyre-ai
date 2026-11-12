@@ -497,6 +497,83 @@
         transition: none !important;
       }
     }
+    /* Software update dialog and its release notes, shown over the loader while an update is offered. */
+    .update-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(3, 8, 12, 0.62);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .update-overlay[hidden] { display: none; }
+    .update-dialog {
+      width: min(460px, 100%);
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px 22px;
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      background: var(--panel-bg);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      user-select: text;
+    }
+    .update-dialog h2 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .update-dialog p { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+    .update-dialog .update-error { color: var(--status-error-text); }
+    .update-link {
+      appearance: none;
+      border: 0;
+      background: none;
+      padding: 0;
+      font: inherit;
+      font-weight: 700;
+      color: var(--status-running-text);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+    .update-progress-track { height: 6px; border-radius: 999px; background: var(--card-border); overflow: hidden; }
+    .update-progress-fill { height: 100%; width: 0; background: var(--status-running-text); transition: width 0.3s ease; }
+    .update-dialog .update-progress-label { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
+    .update-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .update-button {
+      height: 34px;
+      padding: 0 16px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background: transparent;
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .update-button.primary { border-color: transparent; background: var(--status-running-text); color: #06121a; }
+    .update-button:disabled { opacity: 0.5; cursor: default; }
+    .update-button:focus-visible, .update-link:focus-visible, .update-notes:focus-visible {
+      outline: 2px solid var(--status-running-text);
+      outline-offset: 2px;
+    }
+    .update-notes {
+      min-height: 120px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text-primary);
+    }
   </style>
 </head>
 <body>
@@ -547,6 +624,34 @@
     </section>
   </main>
 
+  <div id="update-overlay" class="update-overlay" hidden>
+    <section class="update-dialog" role="dialog" aria-modal="true" aria-labelledby="update-title" aria-describedby="update-message">
+      <h2 id="update-title">Update available</h2>
+      <p id="update-message"></p>
+      <p>Read the <button type="button" id="update-notes-link" class="update-link">Release notes</button> to see what changes in this version before you update.</p>
+      <p id="update-error" class="update-error" role="alert" hidden></p>
+      <div id="update-progress" hidden>
+        <div id="update-progress-track" class="update-progress-track" role="progressbar" aria-label="Update progress" aria-valuemin="0" aria-valuemax="100">
+          <div id="update-progress-fill" class="update-progress-fill"></div>
+        </div>
+        <p id="update-progress-label" class="update-progress-label" aria-live="polite"></p>
+      </div>
+      <div class="update-actions">
+        <button type="button" id="update-later" class="update-button">Later</button>
+        <button type="button" id="update-install" class="update-button primary">Update now</button>
+      </div>
+    </section>
+  </div>
+  <div id="update-notes-overlay" class="update-overlay" hidden>
+    <section class="update-dialog" role="dialog" aria-modal="true" aria-labelledby="update-notes-title">
+      <h2 id="update-notes-title">Release notes</h2>
+      <div id="update-notes" class="update-notes" tabindex="0"></div>
+      <div class="update-actions">
+        <button type="button" id="update-notes-close" class="update-button primary">Close</button>
+      </div>
+    </section>
+  </div>
+
   <script>
     (() => {
       const config = window.__DOCSPYRE_STARTUP_CONFIG__ || {
@@ -555,6 +660,8 @@
         pollIntervalMs: 800,
         statusCommand: 'backend_status',
         readyCommand: 'startup_ready',
+        updateInstallCommand: 'update_install',
+        updateSkipCommand: 'update_skip',
         logoLight: '/images/docspyre-logo.png',
         logoDark: '/images/docspyre-logo.png'
       };
@@ -630,6 +737,107 @@
         }
       };
 
+      // Software update, the first startup step. The native shell asks the License Portal for a newer signed
+      // release; when one exists, startup waits here until the user installs it or chooses Later.
+      SERVICE_REGISTRY['software-update'] = {
+        title: 'Software Update',
+        subtitle: 'Signed releases from the DETQEL License Portal',
+        port: '',
+        iconBg: 'rgba(56, 242, 161, 0.12)',
+        icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38F2A1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+      };
+
+      const updateUi = Object.fromEntries(
+        ['update-overlay', 'update-message', 'update-notes-link', 'update-error', 'update-progress', 'update-progress-track',
+          'update-progress-fill', 'update-progress-label', 'update-later', 'update-install', 'update-notes-overlay',
+          'update-notes', 'update-notes-close']
+          .map(id => [id, document.getElementById(id)])
+      );
+      let updateRequest = false;
+      let updateFocused = false;
+      const megabytes = bytes => `${(bytes / 1048576).toFixed(1)} MB`;
+
+      function hideUpdate() {
+        updateUi['update-overlay'].hidden = true;
+        updateUi['update-notes-overlay'].hidden = true;
+      }
+
+      function closeReleaseNotes() {
+        updateUi['update-notes-overlay'].hidden = true;
+        updateUi['update-notes-link'].focus();
+      }
+
+      function renderUpdate(update) {
+        const visible = !!update && ['available', 'downloading', 'installing'].includes(update.phase);
+        updateUi['update-overlay'].hidden = !visible;
+        if (!visible) {
+          updateUi['update-notes-overlay'].hidden = true;
+          updateFocused = false;
+          return;
+        }
+        const name = config.applicationName || 'The application';
+        updateUi['update-message'].textContent =
+          `${name} ${update.version || ''} is available. You are using version ${update.currentVersion}.`;
+        // Plain text only, never parsed as HTML.
+        if (updateUi['update-notes'].dataset.version !== update.version) {
+          updateUi['update-notes'].textContent = update.notes || 'No release notes were provided for this version.';
+          updateUi['update-notes'].dataset.version = update.version || '';
+        }
+        const working = update.phase !== 'available';
+        updateUi['update-later'].disabled = working || updateRequest;
+        updateUi['update-install'].disabled = working || updateRequest;
+        updateUi['update-install'].textContent = working ? 'Updating...' : update.error ? 'Try again' : 'Update now';
+        updateUi['update-error'].hidden = !update.error;
+        updateUi['update-error'].textContent = update.error || '';
+        updateUi['update-progress'].hidden = !working;
+        if (working) {
+          const total = update.totalBytes || 0;
+          const done = update.downloadedBytes || 0;
+          const percent = update.phase === 'installing' ? 100 : total ? Math.min(100, Math.round(done / total * 100)) : 0;
+          updateUi['update-progress-fill'].style.width = `${percent}%`;
+          updateUi['update-progress-track'].setAttribute('aria-valuenow', String(percent));
+          updateUi['update-progress-label'].textContent = update.phase === 'installing'
+            ? `Installing ${name} ${update.version}. It restarts when the installation finishes.`
+            : total ? `Downloading ${percent}% (${megabytes(done)} of ${megabytes(total)})` : `Downloading ${megabytes(done)}`;
+        }
+        if (!updateFocused) {
+          updateFocused = true;
+          updateUi['update-install'].focus();
+        }
+      }
+
+      async function decideUpdate(command) {
+        const invokeCommand = window.__TAURI__?.core?.invoke ?? window.__TAURI_INTERNALS__?.invoke;
+        if (updateRequest || !invokeCommand) return;
+        updateRequest = true;
+        updateUi['update-later'].disabled = true;
+        updateUi['update-install'].disabled = true;
+        updateUi['update-error'].hidden = true;
+        try {
+          await invokeCommand(command);
+        } catch (failure) {
+          updateUi['update-error'].textContent = typeof failure === 'string' ? failure : 'The update could not be started. Try again.';
+          updateUi['update-error'].hidden = false;
+        } finally {
+          updateRequest = false;
+        }
+      }
+
+      updateUi['update-install'].addEventListener('click', () => decideUpdate(config.updateInstallCommand || 'update_install'));
+      updateUi['update-later'].addEventListener('click', () => decideUpdate(config.updateSkipCommand || 'update_skip'));
+      updateUi['update-notes-link'].addEventListener('click', () => {
+        updateUi['update-notes-overlay'].hidden = false;
+        updateUi['update-notes'].scrollTop = 0;
+        updateUi['update-notes-close'].focus();
+      });
+      updateUi['update-notes-close'].addEventListener('click', closeReleaseNotes);
+      updateUi['update-notes-overlay'].addEventListener('click', event => {
+        if (event.target === updateUi['update-notes-overlay']) closeReleaseNotes();
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !updateUi['update-notes-overlay'].hidden) closeReleaseNotes();
+      });
+
       const STATUS_LABELS = {
         pending: 'Pending',
         running: 'Checking',
@@ -673,6 +881,7 @@
       // Shutdown hooks called by supervisor on app close
       window.__DOCSPYRE_STARTUP_SHUTDOWN__ = () => {
         stopped = true;
+        hideUpdate();
         if (elements['tier-badge']) elements['tier-badge'].classList.add('stopping');
         if (elements['badge-text']) elements['badge-text'].textContent = 'Stopping Services';
         if (elements.progress) {
@@ -768,6 +977,7 @@
 
           const status = await invoke(config.statusCommand);
           if (stopped) return;
+          renderUpdate(status.update);
 
           if (painted && !launchRequested) {
             await invoke(config.readyCommand);

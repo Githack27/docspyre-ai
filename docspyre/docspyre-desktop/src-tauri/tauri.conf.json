@@ -30,8 +30,17 @@
       "capabilities": ["main", "startup"]
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDUzQUJFNEJGRDQ3N0RDMjUKUldRbDNIZlV2K1NyVXpob005Rzh1VGNVS0hDb2hWUmY5RFFsOEk2bEpXTTlNcjdQV1lsOVRQdmgK",
+      "requireSignedVersion": true,
+      "dangerousInsecureTransportProtocol": true,
+      "windows": { "installMode": "passive" }
+    }
+  },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": ["nsis", "app", "dmg", "deb", "appimage"],
     "category": "Business",
     "icon": [

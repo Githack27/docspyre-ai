@@ -1,11 +1,12 @@
 mod constants;
 mod desktop_logs;
+mod desktop_updater;
 mod frontend_runtime;
 mod startup_assets;
 
 use constants::desktop_constants::{
-    APPLICATION_NAME, BACKEND_API_STEP, BACKEND_RUNTIME_STEP, BACKEND_STATUS_COMMAND,
-    CONTAINER_RUNTIME_ENV, CONTAINER_RUNTIME_EXECUTABLES, CREATE_NO_WINDOW,
+    APPLICATION_NAME, APP_VERSION_ENV, BACKEND_API_STEP, BACKEND_RUNTIME_STEP,
+    BACKEND_STATUS_COMMAND, CONTAINER_RUNTIME_ENV, CONTAINER_RUNTIME_EXECUTABLES, CREATE_NO_WINDOW,
     DESKTOP_LOG_DIRECTORY_ENV, DEVELOPMENT_BINARY_DIRECTORY, DEVELOPMENT_LOG_DIRECTORY,
     DOCKER_OWNERSHIP_LABEL, DOCKER_STOP_TIMEOUT_SECONDS, FRONTEND_STEP, FRONTEND_TIMEOUT_SECONDS,
     LOGO_DARK, LOGO_LIGHT, MAIN_WINDOW, NAME_LOGO_DARK, NAME_LOGO_LIGHT, NODE_BINARY_NAME,
@@ -20,7 +21,9 @@ use constants::network_constants::{
     API_STREAM_TIMEOUT_SECONDS, LOCAL_HTTP_SCHEME, LOOPBACK_HOST, PRIVATE_PORT_MAXIMUM,
     PRIVATE_PORT_MINIMUM,
 };
+use constants::update_constants::{UPDATE_INSTALL_COMMAND, UPDATE_SKIP_COMMAND, UPDATE_STEP};
 use desktop_logs::{read_diagnostic_lines, DesktopLogs};
+use desktop_updater::{DesktopUpdater, UpdateStatus};
 use frontend_runtime::FrontendRuntime;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -126,13 +129,23 @@ struct BackendStatus {
     steps: Vec<StartupStep>,
     elapsed_seconds: u64,
     logs_directory: Option<String>,
+    update: UpdateStatus,
 }
 
 fn update_startup_step(shared: &SharedBackend, id: &str, status: StartupStepStatus) {
+    set_startup_step(shared, id, status, None);
+}
+
+fn set_startup_step(
+    shared: &SharedBackend,
+    id: &str,
+    status: StartupStepStatus,
+    detail: Option<String>,
+) {
     if let Ok(mut backend) = shared.lock() {
         if let Some(step) = backend.steps.iter_mut().find(|step| step.id == id) {
             step.status = status;
-            step.detail = None;
+            step.detail = detail;
         }
     }
 }
@@ -198,6 +211,58 @@ async fn startup_ready(
         }
         backend.launch_started = true;
     }
+    // Checking for a newer release comes first; the services start once the update step is settled.
+    set_startup_step(
+        &shared,
+        UPDATE_STEP,
+        StartupStepStatus::Running,
+        Some("Checking for updates...".into()),
+    );
+    let launch_app = app.clone();
+    let launch_state = shared.clone();
+    app.state::<Arc<DesktopUpdater>>()
+        .inner()
+        .clone()
+        .start(&app, move |detail| {
+            set_startup_step(
+                &launch_state,
+                UPDATE_STEP,
+                StartupStepStatus::Complete,
+                Some(detail),
+            );
+            launch_frontend(launch_app, launch_state);
+        });
+    Ok(())
+}
+
+#[tauri::command]
+fn update_install(
+    app: tauri::AppHandle,
+    window: tauri::WebviewWindow,
+    updater: tauri::State<'_, Arc<DesktopUpdater>>,
+) -> Result<(), String> {
+    if window.label() != STARTUP_WINDOW {
+        return Err("Only the startup loader can install updates".into());
+    }
+    updater.install(&app)
+}
+
+#[tauri::command]
+fn update_skip(
+    window: tauri::WebviewWindow,
+    updater: tauri::State<'_, Arc<DesktopUpdater>>,
+) -> Result<(), String> {
+    if window.label() != STARTUP_WINDOW {
+        return Err("Only the startup loader can postpone updates".into());
+    }
+    updater.skip()
+}
+
+/// Starts the frontend, which in turn starts the backend once it has mounted.
+fn launch_frontend(app: tauri::AppHandle, shared: SharedBackend) {
+    if shared.lock().map_or(true, |backend| backend.stopping) {
+        return;
+    }
     let logs = app.state::<Arc<DesktopLogs>>().inner().clone();
     logs.frontend(
         "info",
@@ -233,7 +298,6 @@ async fn startup_ready(
             frontend_app.state::<FrontendRuntime>().stop();
         }
     });
-    Ok(())
 }
 
 #[tauri::command]
@@ -297,6 +361,7 @@ async fn frontend_log(
 fn backend_status(
     app: tauri::AppHandle,
     state: tauri::State<'_, SharedBackend>,
+    updater: tauri::State<'_, Arc<DesktopUpdater>>,
 ) -> Result<BackendStatus, String> {
     let mut backend = state.lock().map_err(|_| "Backend state unavailable")?;
     if tauri::is_dev() && backend.launch_started && !backend.stopping {
@@ -353,6 +418,7 @@ fn backend_status(
             .unwrap_or_else(Instant::now)
             .saturating_duration_since(backend.started_at)
             .as_secs(),
+        update: updater.status(),
     })
 }
 
@@ -859,6 +925,7 @@ fn start_backend(
         .env_remove("NODE_PATH")
         .env("DOCSPYRE_CONFIG_PATH", config_path)
         .env("DOCSPYRE_RUNTIME_DIR", runtime_dir)
+        .env(APP_VERSION_ENV, app.package_info().version.to_string())
         .env(DESKTOP_LOG_DIRECTORY_ENV, logs.directory())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -1066,6 +1133,8 @@ fn create_startup_loader(app: &tauri::App) -> tauri::Result<()> {
         "pollIntervalMs": STARTUP_POLL_INTERVAL_MS,
         "statusCommand": BACKEND_STATUS_COMMAND,
         "readyCommand": STARTUP_READY_COMMAND,
+        "updateInstallCommand": UPDATE_INSTALL_COMMAND,
+        "updateSkipCommand": UPDATE_SKIP_COMMAND,
         "logoLight": LOGO_LIGHT,
         "logoDark": LOGO_DARK,
         "nameLogoLight": NAME_LOGO_LIGHT,
@@ -1158,6 +1227,7 @@ pub fn run() {
         logs: None,
     }));
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(shared.clone())
         .manage(FrontendRuntime::default())
         .register_uri_scheme_protocol(STARTUP_ASSET_SCHEME, |_context, request| startup_assets::respond(&request))
@@ -1177,7 +1247,9 @@ pub fn run() {
             api_stream,
             api_stream_cancel,
             frontend_ready,
-            frontend_log
+            frontend_log,
+            update_install,
+            update_skip
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -1203,6 +1275,7 @@ pub fn run() {
             logs.backend("info", "Desktop startup initialized.");
             logs.frontend("info", "Opening the standalone startup loader.");
             app.manage(logs.clone());
+            app.manage(DesktopUpdater::new(app.package_info().version.to_string()));
             create_startup_loader(app)?;
             let loader_state = shared.clone();
             std::thread::spawn(move || {

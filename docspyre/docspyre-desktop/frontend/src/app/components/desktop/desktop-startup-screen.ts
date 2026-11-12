@@ -10,6 +10,11 @@ interface ServiceMeta {
 }
 
 const SERVICE_CATALOG: Record<string, ServiceMeta> = {
+  'software-update': {
+    title: 'Software Update',
+    subtitle: 'Signed releases from the DETQEL License Portal',
+    iconType: 'update',
+  },
   docker: {
     title: 'Docker Daemon',
     subtitle: 'Container Runtime Virtualization',

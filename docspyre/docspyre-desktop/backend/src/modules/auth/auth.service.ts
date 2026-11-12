@@ -28,7 +28,8 @@ export const sessionService = new SessionService(
 
 // Identifies this installation on the License Portal's Instances page; the portal stores at most 120 characters.
 const installationMetadata: PortalClientMetadata = {
-  appVersion: '2.0.0',
+  // The desktop shell passes the version of the installed app; it is unset only when run on its own.
+  ...(process.env.DOCSPYRE_APP_VERSION ? { appVersion: process.env.DOCSPYRE_APP_VERSION.slice(0, 40) } : {}),
   deviceName: hostname().slice(0, 120),
   platform: process.platform,
 };

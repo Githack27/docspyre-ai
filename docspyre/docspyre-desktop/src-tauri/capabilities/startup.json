@@ -3,6 +3,6 @@
   "identifier": "startup",
   "description": "Read startup progress from the standalone desktop loader.",
   "windows": ["startup"],
-  "permissions": ["allow-startup-ready", "allow-backend-status", "allow-frontend-log"]
+  "permissions": ["allow-startup-ready", "allow-backend-status", "allow-frontend-log", "allow-update-decision"]
 }
 
