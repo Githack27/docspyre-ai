@@ -1,25 +1,29 @@
-import { pgTable, uuid, varchar, timestamp, index } from 'drizzle-orm/pg-core';
-import { randomUUID } from 'node:crypto';
-import { userStatusEnum } from './enums';
+import { pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
-export const users = pgTable(
-  'users',
-  {
-    id: uuid('id').primaryKey().$defaultFn(() => randomUUID()),
-    email: varchar('email', { length: 255 }).notNull().unique(),
-    emailNormalized: varchar('email_normalized', { length: 255 }).notNull().unique(),
-    passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-    firstName: varchar('first_name', { length: 100 }),
-    lastName: varchar('last_name', { length: 100 }),
-    status: userStatusEnum('status').notNull().default('PENDING'),
-    emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
-    lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().$defaultFn(() => new Date()),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().$defaultFn(() => new Date()).$onUpdate(() => new Date()),
-    deletedAt: timestamp('deleted_at', { withTimezone: true }),
-  },
-  (table) => ({
-    statusIdx: index('users_status_idx').on(table.status),
-    deletedAtIdx: index('users_deleted_at_idx').on(table.deletedAt),
-  }),
-);
+export const users = pgTable('users', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  username: varchar('username', { length: 100 }).unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  passwordHash: text('password_hash'),
+  avatarUrl: text('avatar_url'),
+  status: varchar('status', { length: 50 }).notNull().default('active'),
+  // Identity and license issued by the DETQEL License Portal. The portal is the source of truth;
+  // these columns hold the last verified copy so each request is checked locally.
+  portalUserId: uuid('portal_user_id').unique(),
+  firstName: varchar('first_name', { length: 60 }),
+  lastName: varchar('last_name', { length: 60 }),
+  companyName: varchar('company_name', { length: 120 }),
+  country: varchar('country', { length: 2 }),
+  state: varchar('state', { length: 120 }),
+  licenseId: uuid('license_id'),
+  licenseType: varchar('license_type', { length: 30 }),
+  licenseBilling: varchar('license_billing', { length: 20 }),
+  licenseToken: text('license_token'),
+  licenseExpiresAt: timestamp('license_expires_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;

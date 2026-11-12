@@ -119,15 +119,6 @@ export class Docs {
           tip: 'Attach any document to a project from the project page.',
         },
         {
-          id: 'shared-files',
-          icon: 'bi-share',
-          title: 'Shared Files',
-          route: '/app/workspace/shared-files',
-          what: 'Files shared with you, and by you.',
-          steps: ['Open shared files', 'Check who has access', 'Open or manage sharing'],
-          tip: 'Set view or edit rights per person.',
-        },
-        {
           id: 'trash',
           icon: 'bi-trash',
           title: 'Trash',

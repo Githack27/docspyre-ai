@@ -1,5 +1,8 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import { ENCODED_SECRET_MINIMUM_LENGTH } from '../../constants/authConstants.js';
+import { LICENSE_PORTAL_DEFAULTS, LICENSE_PORTAL_INSECURE_HOSTS } from '../../constants/licenseConstants.js';
+import { POSTGRESQL_PROTOCOLS } from '../../constants/networkConstants.js';
 
 dotenv.config();
 
@@ -7,23 +10,38 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(0).max(65535).default(8000),
 
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  DATABASE_URL: z.string().url().refine((value) => {
+    const url = new URL(value);
+    return POSTGRESQL_PROTOCOLS.some((protocol) => protocol === url.protocol) && url.pathname.length > 1;
+  }, 'DATABASE_URL must be a PostgreSQL URL with a database name'),
 
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:4200')
     .transform((value) => value.split(',').map((origin) => origin.trim())),
 
-  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be >= 32 chars'),
-  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be >= 32 chars'),
+  AUTH_SESSION_SECRET: z.string().min(ENCODED_SECRET_MINIMUM_LENGTH),
+  AUTH_SESSION_TTL_SECONDS: z.coerce.number().int().positive().default(2592000),
 
-  ACCESS_TOKEN_TTL: z.string().default('15m'),
-  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  LICENSE_PORTAL_URL: z
+    .string()
+    .url()
+    .default(LICENSE_PORTAL_DEFAULTS.url)
+    .refine((value) => {
+      const url = new URL(value);
+      return url.protocol === 'https:' || (url.protocol === 'http:' && LICENSE_PORTAL_INSECURE_HOSTS.includes(url.hostname));
+    }, 'LICENSE_PORTAL_URL must use HTTPS unless it points to this machine'),
+
+  LICENSE_PORTAL_PRODUCT_KEY: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().regex(/^dpk_[A-Za-z0-9_-]{43}$/, 'LICENSE_PORTAL_PRODUCT_KEY must be a dpk_ key issued by the License Portal').optional(),
+  ),
+
+  LICENSE_PORTAL_ISSUER: z.string().min(1).default(LICENSE_PORTAL_DEFAULTS.issuer),
+  LICENSE_PORTAL_AUDIENCE: z.string().min(1).default(LICENSE_PORTAL_DEFAULTS.audience),
+  LICENSE_PORTAL_TIMEOUT_MS: z.coerce.number().int().positive().default(LICENSE_PORTAL_DEFAULTS.timeoutMs),
 
   BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
-
-  COOKIE_DOMAIN: z.string().optional(),
-
   ENCRYPTION_KEY: z.string().length(32, 'ENCRYPTION_KEY must be exactly 32 characters'),
 
   UPLOAD_DIR: z.string().default('uploads'),

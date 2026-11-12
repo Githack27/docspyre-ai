@@ -73,9 +73,6 @@
             <a [routerLink]="['/app/document-ai/chat-with-document']" [queryParams]="{ documentId: doc.id }" class="tile__act" title="Chat with Document">
               <i class="bi bi-chat-dots-fill text-emerald-500"></i>
             </a>
-            <button type="button" class="tile__act" (click)="openShare(doc)" title="Share">
-              <i class="bi bi-share"></i>
-            </button>
             <button type="button" class="tile__act tile__act--del" (click)="remove(doc.id)" [disabled]="deletingId() === doc.id" title="Move to Trash">
               @if (deletingId() === doc.id) { <i class="bi bi-arrow-repeat spin"></i> }
               @else { <i class="bi bi-trash"></i> }
@@ -94,7 +91,3 @@
 </section>
 
 <app-document-viewer [doc]="viewing()" (closed)="closeViewer()" (deleted)="remove($event)" />
-
-@if (sharing(); as doc) {
-  <app-share-dialog [documentId]="doc.id" [name]="doc.name" (closed)="closeShare()" />
-}

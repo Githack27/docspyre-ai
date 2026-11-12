@@ -5,9 +5,9 @@ import { authenticate, authRateLimiter, validate } from '../../core/middleware';
 
 const router: Router = Router();
 
+router.get('/license-options', authController.licenseOptions);
 router.post('/register', authRateLimiter, validate({ body: registerSchema }), authController.register);
 router.post('/login', authRateLimiter, validate({ body: loginSchema }), authController.login);
-router.post('/refresh', authController.refresh);
 router.post('/logout', authController.logout);
 router.get('/me', authenticate, authController.me);
 

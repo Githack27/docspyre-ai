@@ -17,7 +17,6 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DocumentService } from '../../../core/documents/document.service';
 import { WorkspaceService } from '../../../core/workspace/workspace.service';
-import { ShareService } from '../../../core/shares/share.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { displayName } from '../../../core/auth/user-display';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -79,7 +78,6 @@ const WEEK_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 export class Dashboard {
   private readonly documents = inject(DocumentService);
   private readonly workspace = inject(WorkspaceService);
-  private readonly shares = inject(ShareService);
   private readonly auth = inject(AuthService);
   private readonly nav = inject(NavigationService);
   private readonly router = inject(Router);
@@ -98,7 +96,7 @@ export class Dashboard {
   ];
 
   private readonly data = signal<{
-    kpis: { projects: number; documents: number; storageMb: number; shared: number };
+    kpis: { projects: number; documents: number; storageMb: number };
     recentProjects: ProjectSummary[];
     recentDocs: DocumentItem[];
     week: number[];
@@ -117,7 +115,6 @@ export class Dashboard {
     return [
       { key: 'projects', label: 'Projects', value: k?.projects ?? 0, decimals: false, suffix: '', icon: 'bi-folder-fill', accent: 'violet' },
       { key: 'documents', label: 'Documents', value: k?.documents ?? 0, decimals: false, suffix: '', icon: 'bi-file-earmark-richtext-fill', accent: 'blue' },
-      { key: 'shared', label: 'Shared with me', value: k?.shared ?? 0, decimals: false, suffix: '', icon: 'bi-people-fill', accent: 'pink' },
       { key: 'storage', label: 'Storage', value: k?.storageMb ?? 0, decimals: true, suffix: 'MB', icon: 'bi-hdd-fill', accent: 'green' },
     ];
   });
@@ -171,12 +168,11 @@ export class Dashboard {
     forkJoin({
       docs: this.documents.list().pipe(catchError(() => of([] as DocumentItem[]))),
       projects: this.workspace.listProjects().pipe(catchError(() => of([] as ProjectSummary[]))),
-      shared: this.shares.sharedWithMe().pipe(catchError(() => of([] as { sharedAt: string }[]))),
     }).subscribe({
-      next: ({ docs, projects, shared }) => {
+      next: ({ docs, projects }) => {
         const storageMb = docs.reduce((s, d) => s + d.sizeBytes, 0) / (1024 * 1024);
 
-        // 7-day activity (today back 6 days) from docs/projects/shares timestamps.
+        // 7-day activity (today back 6 days) from docs/projects timestamps.
         const week = new Array(7).fill(0);
         const start = new Date();
         start.setHours(0, 0, 0, 0);
@@ -187,7 +183,6 @@ export class Dashboard {
         };
         docs.forEach((d) => bump(d.createdAt));
         projects.forEach((p) => bump(p.updatedAt));
-        shared.forEach((s) => bump(s.sharedAt));
 
         const recentProjects = [...projects]
           .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -198,7 +193,6 @@ export class Dashboard {
             projects: projects.length,
             documents: docs.length,
             storageMb: Math.round(storageMb * 10) / 10,
-            shared: shared.length,
           },
           recentProjects,
           recentDocs: docs.slice(0, 5),
@@ -208,7 +202,7 @@ export class Dashboard {
       },
       error: () =>
         this.data.set({
-          kpis: { projects: 0, documents: 0, storageMb: 0, shared: 0 },
+          kpis: { projects: 0, documents: 0, storageMb: 0 },
           recentProjects: [],
           recentDocs: [],
           week: new Array(7).fill(0),

@@ -1,23 +1,21 @@
 import { PublicUser } from './auth.models';
 
-
 const KEYS = {
   accessToken: 'docspyre.accessToken',
   refreshToken: 'docspyre.refreshToken',
   user: 'docspyre.user',
+  rememberedUsername: 'docspyre.rememberedUsername',
   rememberedEmail: 'docspyre.rememberedEmail',
 } as const;
 
 export interface PersistedSession {
   accessToken: string;
   user: PublicUser;
-  // Desktop-only: refresh token held client-side instead of in a cookie.
   refreshToken?: string;
 }
 
 export class AuthStorage {
   constructor(private readonly isBrowser: boolean) {}
-
 
   save(session: PersistedSession, remember: boolean): void {
     if (!this.isBrowser) return;
@@ -36,13 +34,11 @@ export class AuthStorage {
     }
   }
 
-
   updateAccessToken(accessToken: string): void {
     if (!this.isBrowser) return;
     const tier = localStorage.getItem(KEYS.accessToken) !== null ? localStorage : sessionStorage;
     tier.setItem(KEYS.accessToken, accessToken);
   }
-
 
   updateRefreshToken(refreshToken: string): void {
     if (!this.isBrowser) return;
@@ -80,17 +76,25 @@ export class AuthStorage {
     }
   }
 
-  setRememberedEmail(email: string | null): void {
+  setRememberedUsername(username: string | null): void {
     if (!this.isBrowser) return;
-    if (email) {
-      localStorage.setItem(KEYS.rememberedEmail, email);
+    if (username) {
+      localStorage.setItem(KEYS.rememberedUsername, username);
     } else {
-      localStorage.removeItem(KEYS.rememberedEmail);
+      localStorage.removeItem(KEYS.rememberedUsername);
     }
   }
 
-  getRememberedEmail(): string | null {
+  getRememberedUsername(): string | null {
     if (!this.isBrowser) return null;
-    return localStorage.getItem(KEYS.rememberedEmail);
+    return localStorage.getItem(KEYS.rememberedUsername) ?? localStorage.getItem(KEYS.rememberedEmail);
+  }
+
+  setRememberedEmail(email: string | null): void {
+    this.setRememberedUsername(email);
+  }
+
+  getRememberedEmail(): string | null {
+    return this.getRememberedUsername();
   }
 }

@@ -25,11 +25,6 @@ export const WORKSPACE_ROUTES: Routes = [
           import('../../components/workspace/my-documents/my-documents').then((m) => m.MyDocuments),
       },
       {
-        path: 'shared-files',
-        loadComponent: () =>
-          import('../../components/workspace/shared-files/shared-files').then((m) => m.SharedFiles),
-      },
-      {
         path: 'trash',
         loadComponent: () => import('../../components/workspace/trash/trash').then((m) => m.Trash),
       },

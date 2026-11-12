@@ -15,7 +15,6 @@ import { isPlatformBrowser } from '@angular/common';
 import { forkJoin } from 'rxjs';
 import { DocumentService } from '../../../core/documents/document.service';
 import { WorkspaceService } from '../../../core/workspace/workspace.service';
-import { ShareService } from '../../../core/shares/share.service';
 
 interface Stat {
   key: string;
@@ -47,7 +46,7 @@ interface Week {
 }
 
 interface ActivityData {
-  metrics: { projects: number; documents: number; storageMb: number; sharedBy: number };
+  metrics: { projects: number; documents: number; storageMb: number };
   totals: { total: number; activeDays: number; current: number; longest: number };
   weeks: Week[];
   events: ActivityEvent[];
@@ -60,7 +59,7 @@ const DAY_MS = 86_400_000;
 const INFO: Record<string, { title: string; body: string }> = {
   heatmap: {
     title: 'Contribution activity',
-    body: 'Each square is a day over the last 6 months. The greener the square, the more you did that day — uploads, project updates and shares all count. It is the same idea as a code contribution graph, applied to your workspace.',
+    body: 'Each square is a day over the last 6 months. The greener the square, the more you did that day — uploads and project updates all count. It is the same idea as a code contribution graph, applied to your workspace.',
   },
   streak: {
     title: 'Streaks & totals',
@@ -68,7 +67,6 @@ const INFO: Record<string, { title: string; body: string }> = {
   },
   projects: { title: 'Projects', body: 'Workspaces you own or belong to. Projects group related files and members.' },
   documents: { title: 'Documents', body: 'Active files in your library across every type. Trashed items are excluded.' },
-  shared: { title: 'Shared out', body: 'Files you are sharing — direct shares plus files you added to shared projects.' },
   storage: { title: 'Storage used', body: 'Total size of your active documents on disk. Emptying Trash frees space after 30 days.' },
 };
 
@@ -81,7 +79,6 @@ const INFO: Record<string, { title: string; body: string }> = {
 export class Activity {
   private readonly documents = inject(DocumentService);
   private readonly workspace = inject(WorkspaceService);
-  private readonly shares = inject(ShareService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly destroyRef = inject(DestroyRef);
 
@@ -98,7 +95,6 @@ export class Activity {
     return [
       { key: 'projects', label: 'Projects', value: m?.projects ?? 0, suffix: '', decimals: false, icon: 'bi-folder-fill', accent: 'violet', info: 'projects' },
       { key: 'documents', label: 'Documents', value: m?.documents ?? 0, suffix: '', decimals: false, icon: 'bi-file-earmark-richtext-fill', accent: 'blue', info: 'documents' },
-      { key: 'shared', label: 'Shared out', value: m?.sharedBy ?? 0, suffix: '', decimals: false, icon: 'bi-share-fill', accent: 'pink', info: 'shared' },
       { key: 'storage', label: 'Storage', value: m?.storageMb ?? 0, suffix: 'MB', decimals: true, icon: 'bi-hdd-fill', accent: 'green', info: 'storage' },
     ];
   });
@@ -140,9 +136,8 @@ export class Activity {
     forkJoin({
       docs: this.documents.list(),
       projects: this.workspace.listProjects(),
-      by: this.shares.sharedByMe(),
     }).subscribe({
-      next: ({ docs, projects, by }) => {
+      next: ({ docs, projects }) => {
         const dayCount = new Map<string, number>();
         const bump = (iso: string) => {
           const key = this.dayKey(new Date(iso));
@@ -153,14 +148,12 @@ export class Activity {
           bump(p.createdAt);
           if (p.updatedAt !== p.createdAt) bump(p.updatedAt);
         });
-        by.forEach((s) => bump(s.sharedAt));
 
         const { weeks, totals } = this.buildCalendar(dayCount);
 
         const events: ActivityEvent[] = [
           ...docs.slice(0, 6).map((d) => ({ icon: 'bi-cloud-arrow-up-fill', text: `Uploaded ${d.name}`, at: new Date(d.createdAt).getTime(), accent: 'blue' })),
           ...projects.slice(0, 4).map((p) => ({ icon: 'bi-folder-fill', text: `Updated ${p.name}`, at: new Date(p.updatedAt).getTime(), accent: 'violet' })),
-          ...by.slice(0, 3).map((s) => ({ icon: 'bi-send-fill', text: `Shared ${s.name}`, at: new Date(s.sharedAt).getTime(), accent: 'pink' })),
         ].sort((a, b) => b.at - a.at).slice(0, 6);
 
         const storageMb = docs.reduce((sum, d) => sum + d.sizeBytes, 0) / (1024 * 1024);
@@ -170,7 +163,6 @@ export class Activity {
             projects: projects.length,
             documents: docs.length,
             storageMb: Math.round(storageMb * 10) / 10,
-            sharedBy: by.length,
           },
           totals,
           weeks,
@@ -179,7 +171,7 @@ export class Activity {
       },
       error: () =>
         this.data.set({
-          metrics: { projects: 0, documents: 0, storageMb: 0, sharedBy: 0 },
+          metrics: { projects: 0, documents: 0, storageMb: 0 },
           totals: { total: 0, activeDays: 0, current: 0, longest: 0 },
           weeks: this.placeholderWeeks(),
           events: [],

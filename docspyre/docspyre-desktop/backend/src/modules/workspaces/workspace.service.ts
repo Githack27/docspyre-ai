@@ -31,9 +31,8 @@ export const workspaceService = {
           .from(users)
           .where(
             and(
-              inArray(users.emailNormalized, invitedEmails),
-              eq(users.status, 'ACTIVE'),
-              isNull(users.deletedAt),
+              inArray(users.email, invitedEmails),
+              eq(users.status, 'active'),
               ne(users.id, ownerId),
             ),
           )

@@ -1,57 +1,73 @@
-export type UserStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+export type UserStatus = 'active' | 'suspended' | 'deactivated';
 
+export interface UserLicense {
+  id: string;
+  type: string | null;
+  billing: string | null;
+  expiresAt: string | null;
+}
 
 export interface PublicUser {
   id: string;
+  name: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
-  status: UserStatus;
-  emailVerifiedAt: string | null;
-  createdAt: string;
+  username?: string | null;
+  avatarUrl?: string | null;
+  status: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  companyName?: string | null;
+  country?: string | null;
+  state?: string | null;
+  license?: UserLicense | null;
 }
 
+export interface LicenseOption {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  billing: string;
+  durationDays: number | null;
+}
+
+export interface RegistrationPayload {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  companyName: string;
+  password: string;
+  confirmPassword: string;
+  phone: string;
+  country: string;
+  state: string;
+  licensePlanId: string;
+}
+
+export interface RegistrationResponse {
+  status: string;
+  licenseId: string;
+  message: string;
+}
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
   remember: boolean;
 }
 
-
-export interface SignupPayload {
-  fullName: string;
-  email: string;
-  password: string;
-}
-
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-
 export interface AuthResponse {
   user: PublicUser;
   accessToken: string;
-  // Present only for desktop clients, which carry the refresh token in the
-  // body instead of an HttpOnly cookie.
-  refreshToken?: string;
+  expiresAt: string;
 }
 
-
 export interface ApiErrorResponse {
-  error: {
+  error?: {
     code: string;
     message: string;
     details?: unknown;
   };
+  message?: string;
 }

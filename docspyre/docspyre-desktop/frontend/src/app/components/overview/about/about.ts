@@ -90,7 +90,7 @@ export class About {
       accent: 'green',
       title: 'Workspace',
       blurb: 'One home for all your work.',
-      points: ['Projects & documents', 'Quick uploads', 'Shared files', 'Safe trash & restore'],
+      points: ['Projects & documents', 'Quick uploads', 'Project storage', 'Safe trash & restore'],
     },
   ];
 

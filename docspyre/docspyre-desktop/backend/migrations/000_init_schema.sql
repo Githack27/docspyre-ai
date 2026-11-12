@@ -10,10 +10,6 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ─── Enums ───────────────────────────────────────────────────────────────────
 
 DO $$ BEGIN
-  CREATE TYPE "UserStatus" AS ENUM ('PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED');
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
   CREATE TYPE "WorkspaceRole" AS ENUM ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
@@ -28,29 +24,33 @@ DO $$ BEGIN
   CREATE TYPE "DocumentKind" AS ENUM ('IMAGE', 'VIDEO', 'AUDIO', 'PDF', 'DOCUMENT', 'OTHER');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-DO $$ BEGIN
-  CREATE TYPE "SharePermission" AS ENUM ('VIEW', 'DOWNLOAD');
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 -- ─── 1. Users ────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS "users" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   "email" varchar(255) NOT NULL UNIQUE,
-  "email_normalized" varchar(255) NOT NULL UNIQUE,
-  "password_hash" varchar(255) NOT NULL,
-  "first_name" varchar(100),
-  "last_name" varchar(100),
-  "status" "UserStatus" NOT NULL DEFAULT 'PENDING',
-  "email_verified_at" timestamp with time zone,
-  "last_login_at" timestamp with time zone,
+  "username" varchar(100) UNIQUE,
+  "name" varchar(255) NOT NULL,
+  "password_hash" text,
+  "avatar_url" text,
+  "status" varchar(50) NOT NULL DEFAULT 'active',
+  "portal_user_id" uuid UNIQUE,
+  "first_name" varchar(60),
+  "last_name" varchar(60),
+  "company_name" varchar(120),
+  "country" varchar(2),
+  "state" varchar(120),
+  "license_id" uuid,
+  "license_type" varchar(30),
+  "license_billing" varchar(20),
+  "license_token" text,
+  "license_expires_at" timestamp with time zone,
   "created_at" timestamp with time zone NOT NULL DEFAULT now(),
-  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
-  "deleted_at" timestamp with time zone
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now()
 );
 
+CREATE INDEX IF NOT EXISTS "users_portal_user_id_idx" ON "users" ("portal_user_id");
 CREATE INDEX IF NOT EXISTS "users_status_idx" ON "users" ("status");
-CREATE INDEX IF NOT EXISTS "users_deleted_at_idx" ON "users" ("deleted_at");
 
 -- ─── 2. Sessions ─────────────────────────────────────────────────────────────
 
@@ -140,22 +140,9 @@ CREATE INDEX IF NOT EXISTS "workspace_files_workspace_id_idx" ON "workspace_file
 CREATE INDEX IF NOT EXISTS "workspace_files_document_id_idx" ON "workspace_files" ("document_id");
 CREATE INDEX IF NOT EXISTS "workspace_files_deleted_at_idx" ON "workspace_files" ("deleted_at");
 
--- ─── 7. Document Shares ──────────────────────────────────────────────────────
+DROP TABLE IF EXISTS "document_shares" CASCADE;
 
-CREATE TABLE IF NOT EXISTS "document_shares" (
-  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  "document_id" uuid NOT NULL REFERENCES "documents"("id") ON DELETE CASCADE,
-  "shared_by_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
-  "shared_with_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
-  "permission" "SharePermission" NOT NULL DEFAULT 'VIEW',
-  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT "document_shares_document_shared_with_unique" UNIQUE ("document_id", "shared_with_id")
-);
-
-CREATE INDEX IF NOT EXISTS "document_shares_shared_with_id_idx" ON "document_shares" ("shared_with_id");
-CREATE INDEX IF NOT EXISTS "document_shares_shared_by_id_idx" ON "document_shares" ("shared_by_id");
-
--- ─── 8. Document Chunks ──────────────────────────────────────────────────────
+-- ─── 7. Document Chunks ──────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS "document_chunks" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),

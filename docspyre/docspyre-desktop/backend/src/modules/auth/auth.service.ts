@@ -1,44 +1,54 @@
-import { db, eq, users, sessions, auditLogs } from '@docspyre/database';
+import { db, eq, or, users, auditLogs, type User, type NewUser } from '@docspyre/database';
 import { ApiError } from '../../core/utils/api-error';
-import { hashPassword, verifyPassword } from '../../core/utils/password';
-import { signAccessToken } from '../../core/utils/jwt';
-import { generateRefreshToken, hashRefreshToken, refreshTokenExpiry } from '../../core/utils/tokens';
-import { requireRow } from '../../core/utils/rows';
+import { verifyPassword } from '../../shared/security/password';
+import { LicensePortalClient, type PortalClientMetadata } from '../../shared/licensing/license-portal.client';
+import { LicenseTokenVerifier, type LicenseClaims } from '../../shared/licensing/license-token.verifier';
+import { SessionService } from '../../shared/security/session';
+import { env } from '../../core/config/env';
 import { toPublicUser, type AuthContext, type AuthResult } from './auth.types';
 import type { LoginInput, RegisterInput } from './auth.validation';
-import type { InferSelectModel } from '@docspyre/database';
 
-type UserRow = InferSelectModel<typeof users>;
+const portalClient = new LicensePortalClient({
+  baseUrl: env.LICENSE_PORTAL_URL,
+  productKey: env.LICENSE_PORTAL_PRODUCT_KEY,
+  timeoutMs: env.LICENSE_PORTAL_TIMEOUT_MS,
+});
 
-const issueSession = async (
-  user: UserRow,
-  ctx: AuthContext,
-): Promise<AuthResult & { sessionId: string }> => {
-  const refreshToken = generateRefreshToken();
+const tokenVerifier = new LicenseTokenVerifier({
+  portalUrl: env.LICENSE_PORTAL_URL,
+  issuer: env.LICENSE_PORTAL_ISSUER,
+  audience: env.LICENSE_PORTAL_AUDIENCE,
+  timeoutMs: env.LICENSE_PORTAL_TIMEOUT_MS,
+});
 
-  const session = requireRow(
-    await db
-      .insert(sessions)
-      .values({
-        userId: user.id,
-        refreshTokenHash: hashRefreshToken(refreshToken),
-        expiresAt: refreshTokenExpiry(),
-        ipAddress: ctx.ipAddress ?? null,
-        userAgent: ctx.userAgent ?? null,
-      })
-      .returning(),
-    'session insert',
-  );
+export const sessionService = new SessionService(
+  env.AUTH_SESSION_SECRET,
+  env.AUTH_SESSION_TTL_SECONDS,
+);
 
-  const accessToken = signAccessToken({ sub: user.id, sid: session.id });
-
-  return {
-    user: toPublicUser(user),
-    accessToken,
-    refreshToken,
-    sessionId: session.id,
-  };
+const installationMetadata: PortalClientMetadata = {
+  appVersion: '2.0.0',
+  platform: process.platform,
 };
+
+function identityFrom(claims: LicenseClaims, token: string): Partial<NewUser> & Pick<NewUser, 'name' | 'email'> {
+  return {
+    portalUserId: claims.sub,
+    name: claims.user.displayName,
+    email: claims.user.email,
+    username: claims.user.username,
+    firstName: claims.user.firstName,
+    lastName: claims.user.lastName,
+    companyName: claims.user.companyName,
+    country: claims.user.country,
+    state: claims.user.state,
+    licenseId: claims.license.id,
+    licenseType: claims.license.type,
+    licenseBilling: claims.license.billing,
+    licenseToken: token,
+    licenseExpiresAt: claims.license.expiresAt ? new Date(claims.license.expiresAt) : new Date(claims.exp * 1000),
+  };
+}
 
 const recordAudit = (
   action: 'USER_REGISTERED' | 'USER_LOGIN' | 'USER_LOGIN_FAILED' | 'USER_LOGOUT',
@@ -59,130 +69,91 @@ const recordAudit = (
 };
 
 export const authService = {
-  async register(input: RegisterInput, ctx: AuthContext): Promise<AuthResult> {
-    const emailNormalized = input.email;
+  async licenseOptions() {
+    return { options: await portalClient.licenseOptions() };
+  },
 
-    const [existing] = await db
-      .select()
-      .from(users)
-      .where(eq(users.emailNormalized, emailNormalized))
-      .limit(1);
-
-    if (existing) {
-      throw ApiError.conflict('An account with this email already exists');
-    }
-
-    const passwordHash = await hashPassword(input.password);
-
-    const user = requireRow(
-      await db
-        .insert(users)
-        .values({
-          email: input.email,
-          emailNormalized,
-          passwordHash,
-          firstName: input.firstName ?? null,
-          lastName: input.lastName ?? null,
-          status: 'ACTIVE',
-        })
-        .returning(),
-      'user insert',
-    );
-
-    const result = await issueSession(user, ctx);
-    recordAudit('USER_REGISTERED', ctx, result.user.id);
-    return result;
+  async register(input: RegisterInput, ctx: AuthContext) {
+    const { confirmPassword: _confirmed, ...registration } = input;
+    const result = await portalClient.register(registration);
+    recordAudit('USER_REGISTERED', ctx, undefined, { username: input.username, email: input.email });
+    return { status: result.status, licenseId: result.licenseId, message: result.message };
   },
 
   async login(input: LoginInput, ctx: AuthContext): Promise<AuthResult> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.emailNormalized, input.email))
-      .limit(1);
+    const grant = await portalClient.login(input.username, input.password, installationMetadata);
+    const claims = await tokenVerifier.verify(grant.token);
+    const user = await this.syncUser(claims, grant.token, input.password);
 
-    const passwordValid = user
-      ? await verifyPassword(input.password, user.passwordHash)
-      : await verifyPassword(input.password, '$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinv');
-
-    if (!user || !passwordValid || user.deletedAt) {
-      recordAudit('USER_LOGIN_FAILED', ctx, user?.id, { email: input.email });
-      throw ApiError.unauthorized('Invalid email or password');
+    if (user.status !== 'active') {
+      recordAudit('USER_LOGIN_FAILED', ctx, user.id, { reason: 'account_inactive' });
+      throw ApiError.forbidden('This account has been disabled on this DocSpyre installation.');
     }
 
-    if (user.status !== 'ACTIVE') {
-      throw ApiError.forbidden('Account is not active');
-    }
-
-    await db
-      .update(users)
-      .set({ lastLoginAt: new Date() })
-      .where(eq(users.id, user.id));
-
-    const result = await issueSession(user, ctx);
+    const session = sessionService.issue(user.id, user.licenseExpiresAt);
     recordAudit('USER_LOGIN', ctx, user.id);
-    return result;
+
+    return {
+      user: toPublicUser(user),
+      accessToken: session.accessToken,
+      expiresAt: session.expiresAt,
+    };
   },
 
-  async refresh(rawToken: string, ctx: AuthContext): Promise<AuthResult> {
-    const refreshTokenHash = hashRefreshToken(rawToken);
-
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.refreshTokenHash, refreshTokenHash))
-      .limit(1);
-
-    if (!session || session.revokedAt !== null || session.expiresAt <= new Date()) {
-      throw ApiError.unauthorized('Refresh token is invalid or expired');
+  async me(userId: string): Promise<AuthResult> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user || user.status !== 'active') {
+      throw ApiError.notFound('User not found');
     }
+    const session = sessionService.issue(user.id, user.licenseExpiresAt);
+    return {
+      user: toPublicUser(user),
+      accessToken: session.accessToken,
+      expiresAt: session.expiresAt,
+    };
+  },
 
-    const [user] = await db
+  async syncUser(claims: LicenseClaims, token: string, password: string): Promise<User> {
+    const identity = identityFrom(claims, token);
+    const [linked] = await db
       .select()
       .from(users)
-      .where(eq(users.id, session.userId))
+      .where(eq(users.portalUserId, claims.sub))
       .limit(1);
 
-    if (!user || user.status !== 'ACTIVE' || user.deletedAt) {
-      throw ApiError.forbidden('Account is not active');
+    if (linked) {
+      return this.updated(linked.id, identity);
     }
 
-    const rotated = await issueSession(user, ctx);
-
-    await db
-      .update(sessions)
-      .set({ revokedAt: new Date(), replacedBySessionId: rotated.sessionId })
-      .where(eq(sessions.id, session.id));
-
-    return rotated;
-  },
-
-  async logout(rawToken: string | undefined, ctx: AuthContext): Promise<void> {
-    if (!rawToken) return;
-
-    const refreshTokenHash = hashRefreshToken(rawToken);
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.refreshTokenHash, refreshTokenHash))
-      .limit(1);
-
-    if (session && session.revokedAt === null) {
-      await db
-        .update(sessions)
-        .set({ revokedAt: new Date() })
-        .where(eq(sessions.id, session.id));
-      recordAudit('USER_LOGOUT', ctx, session.userId);
-    }
-  },
-
-  async getProfile(userId: string) {
-    const [user] = await db
+    // First portal sign-in on this installation. Check if a local account with same username or email exists.
+    const [local] = await db
       .select()
       .from(users)
-      .where(eq(users.id, userId))
+      .where(or(eq(users.username, claims.user.username), eq(users.email, claims.user.email)))
       .limit(1);
-    if (!user) throw ApiError.notFound('User not found');
-    return toPublicUser(user);
+
+    if (local) {
+      if (local.portalUserId || !verifyPassword(password, local.passwordHash)) {
+        throw ApiError.conflict('Another account on this DocSpyre installation already uses this username or email.');
+      }
+      return this.updated(local.id, { ...identity, passwordHash: null });
+    }
+
+    const [created] = await db
+      .insert(users)
+      .values({ ...identity, status: 'active' } as NewUser)
+      .returning();
+
+    return created;
+  },
+
+  async updated(id: string, changes: Partial<NewUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...changes, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    if (!user) throw ApiError.conflict('The account changed while signing in. Try again.');
+    return user;
   },
 };

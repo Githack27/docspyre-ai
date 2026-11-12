@@ -10,12 +10,11 @@ import {
   viewerKind,
 } from '../../../core/documents/document.models';
 import { DocumentViewer } from '../../shared/ui/document-viewer/document-viewer';
-import { ShareDialog } from '../../shared/ui/share-dialog/share-dialog';
 import { DocumentCard } from '../../shared/ui/document-card/document-card';
 
 @Component({
   selector: 'app-my-documents',
-  imports: [RouterLink, DocumentViewer, ShareDialog, DocumentCard],
+  imports: [RouterLink, DocumentViewer, DocumentCard],
   templateUrl: './my-documents.html',
   styleUrl: './my-documents.css',
 })
@@ -33,7 +32,6 @@ export class MyDocuments {
   protected readonly dragging = signal(false);
 
   protected readonly viewing = signal<DocumentItem | null>(null);
-  protected readonly sharing = signal<DocumentItem | null>(null);
   protected readonly deletingId = signal<string | null>(null);
 
   private readonly thumbs = signal<Record<string, string>>({});
@@ -121,14 +119,6 @@ export class MyDocuments {
 
   protected closeViewer(): void {
     this.viewing.set(null);
-  }
-
-  protected openShare(doc: DocumentItem): void {
-    this.sharing.set(doc);
-  }
-
-  protected closeShare(): void {
-    this.sharing.set(null);
   }
 
   protected remove(id: string): void {

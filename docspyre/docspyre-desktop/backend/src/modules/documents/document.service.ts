@@ -1,6 +1,6 @@
 import {
   db, eq, and, isNull, isNotNull, lte, inArray, desc,
-  documents, workspaceFiles, documentShares, workspaceMembers,
+  documents, workspaceFiles, workspaceMembers,
 } from '@docspyre/database';
 import type { InferSelectModel } from '@docspyre/database';
 import { ApiError } from '../../core/utils/api-error';
@@ -133,14 +133,6 @@ export const documentService = {
 
     if (!doc) throw ApiError.notFound('Document not found');
     if (doc.ownerId === userId) return doc;
-
-    // Check direct share
-    const [share] = await db
-      .select()
-      .from(documentShares)
-      .where(and(eq(documentShares.documentId, id), eq(documentShares.sharedWithId, userId)))
-      .limit(1);
-    if (share) return doc;
 
     // Check workspace membership
     const [viaWorkspace] = await db

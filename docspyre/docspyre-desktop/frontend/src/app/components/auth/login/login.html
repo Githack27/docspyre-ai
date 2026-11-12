@@ -1,19 +1,17 @@
 <div class="auth">
-  
   <aside class="auth__left">
     <div class="auth__brand">
       <img class="auth__banner" src="/images/login-banner.png" alt="DocSpyre AI" />
       <h1 class="auth__title">DocSpyre <span>AI</span></h1>
       <p class="auth__tagline">
-        Transform your documents with intelligent AI-powered analysis and insights
+        Document Intelligence & Multi-Model Agent Platform powered by DETQEL
       </p>
     </div>
   </aside>
 
-  
   <section class="auth__right">
-    <div class="auth__stack">
-      
+    <div class="auth__stack" [class.auth__stack--wide]="mode() === 'signup'">
+      <!-- Sign In Form -->
       <form
         class="auth-form"
         [class.is-active]="mode() === 'login'"
@@ -22,7 +20,7 @@
       >
         <header class="auth-form__head">
           <h2>Welcome Back</h2>
-          <p>Sign in to your account</p>
+          <p>Sign in to your DocSpyre account</p>
         </header>
 
         @if (mode() === 'login' && feedback(); as note) {
@@ -30,19 +28,19 @@
         }
 
         <div class="field">
-          <label for="login-email">Email Address</label>
-          <div class="field__control" [class.is-invalid]="showError(loginForm, 'email')">
-            <i class="bi bi-envelope" aria-hidden="true"></i>
+          <label for="login-username">Username</label>
+          <div class="field__control" [class.is-invalid]="showError(loginForm, 'username')">
+            <i class="bi bi-person" aria-hidden="true"></i>
             <input
-              id="login-email"
-              type="email"
-              formControlName="email"
-              placeholder="Enter your email"
-              autocomplete="email"
+              id="login-username"
+              type="text"
+              formControlName="username"
+              placeholder="Enter your username"
+              autocomplete="username"
             />
           </div>
-          @if (showError(loginForm, 'email')) {
-            <small class="field__error">{{ errorText(loginForm, 'email', 'Email') }}</small>
+          @if (showError(loginForm, 'username')) {
+            <small class="field__error">{{ errorText(loginForm, 'username', 'Username') }}</small>
           }
         </div>
 
@@ -68,20 +66,22 @@
             <input type="checkbox" formControlName="remember" />
             <span>Remember me</span>
           </label>
-          <a class="link" href="#" (click)="$event.preventDefault()">Forgot password?</a>
         </div>
 
-        <app-button type="submit" variant="primary" [fullWidth]="true" [disabled]="submitting()">Sign In</app-button>
+        <app-button type="submit" variant="primary" [fullWidth]="true" [disabled]="submitting()">
+          @if (submitting()) { <i class="bi bi-arrow-repeat spin"></i> Signing in... }
+          @else { Sign In }
+        </app-button>
 
         <div class="auth-form__divider"></div>
 
         <p class="auth-form__switch">
           Don't have an account?
-          <a class="link" href="#" (click)="$event.preventDefault(); setMode('signup')">Sign up here</a>
+          <a class="link" href="#" (click)="$event.preventDefault(); setMode('signup')">Register here</a>
         </p>
       </form>
 
-      
+      <!-- Registration Form -->
       <form
         class="auth-form"
         [class.is-active]="mode() === 'signup'"
@@ -89,95 +89,261 @@
         (ngSubmit)="onSignup()"
       >
         <header class="auth-form__head">
-          <h2>Create Account</h2>
-          <p>Sign up to get started</p>
+          <h2>Create License Account</h2>
+          <p>Register with the DETQEL License Portal to activate DocSpyre</p>
         </header>
 
         @if (mode() === 'signup' && feedback(); as note) {
           <div class="alert alert--{{ note.type }}">{{ note.text }}</div>
         }
 
+        @if (licenseError()) {
+          <div class="alert alert--error">
+            {{ licenseError() }}
+          </div>
+        }
+
+        <!-- Name Fields -->
+        <div class="form-grid">
+          <div class="field">
+            <label for="signup-firstName">First Name</label>
+            <div class="field__control" [class.is-invalid]="showError(signupForm, 'firstName')">
+              <i class="bi bi-person" aria-hidden="true"></i>
+              <input
+                id="signup-firstName"
+                type="text"
+                formControlName="firstName"
+                placeholder="First name"
+                autocomplete="given-name"
+              />
+            </div>
+            @if (showError(signupForm, 'firstName')) {
+              <small class="field__error">{{ errorText(signupForm, 'firstName', 'First name') }}</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="signup-lastName">Last Name</label>
+            <div class="field__control" [class.is-invalid]="showError(signupForm, 'lastName')">
+              <i class="bi bi-person" aria-hidden="true"></i>
+              <input
+                id="signup-lastName"
+                type="text"
+                formControlName="lastName"
+                placeholder="Last name"
+                autocomplete="family-name"
+              />
+            </div>
+            @if (showError(signupForm, 'lastName')) {
+              <small class="field__error">{{ errorText(signupForm, 'lastName', 'Last name') }}</small>
+            }
+          </div>
+        </div>
+
+        <!-- Username & Email -->
+        <div class="form-grid">
+          <div class="field">
+            <label for="signup-username">Username</label>
+            <div class="field__control" [class.is-invalid]="showError(signupForm, 'username')">
+              <i class="bi bi-at" aria-hidden="true"></i>
+              <input
+                id="signup-username"
+                type="text"
+                formControlName="username"
+                placeholder="Username (e.g. jdoe)"
+                autocomplete="username"
+              />
+            </div>
+            @if (showError(signupForm, 'username')) {
+              <small class="field__error">{{ errorText(signupForm, 'username', 'Username') }}</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="signup-email">Work Email</label>
+            <div class="field__control" [class.is-invalid]="showError(signupForm, 'email')">
+              <i class="bi bi-envelope" aria-hidden="true"></i>
+              <input
+                id="signup-email"
+                type="email"
+                formControlName="email"
+                placeholder="Work email address"
+                autocomplete="email"
+              />
+            </div>
+            @if (showError(signupForm, 'email')) {
+              <small class="field__error">{{ errorText(signupForm, 'email', 'Email') }}</small>
+            }
+          </div>
+        </div>
+
+        <!-- Company Name -->
         <div class="field">
-          <label for="signup-name">Full Name</label>
-          <div class="field__control" [class.is-invalid]="showError(signupForm, 'fullName')">
-            <i class="bi bi-person" aria-hidden="true"></i>
+          <label for="signup-companyName">Company / Organization</label>
+          <div class="field__control" [class.is-invalid]="showError(signupForm, 'companyName')">
+            <i class="bi bi-building" aria-hidden="true"></i>
             <input
-              id="signup-name"
+              id="signup-companyName"
               type="text"
-              formControlName="fullName"
-              placeholder="Enter your full name"
-              autocomplete="name"
+              formControlName="companyName"
+              placeholder="Your company or organization name"
+              autocomplete="organization"
             />
           </div>
-          @if (showError(signupForm, 'fullName')) {
-            <small class="field__error">{{ errorText(signupForm, 'fullName', 'Full name') }}</small>
+          @if (showError(signupForm, 'companyName')) {
+            <small class="field__error">{{ errorText(signupForm, 'companyName', 'Company name') }}</small>
           }
         </div>
 
-        <div class="field">
-          <label for="signup-email">Email Address</label>
-          <div class="field__control" [class.is-invalid]="showError(signupForm, 'email')">
-            <i class="bi bi-envelope" aria-hidden="true"></i>
-            <input
-              id="signup-email"
-              type="email"
-              formControlName="email"
-              placeholder="Enter your email"
-              autocomplete="email"
-            />
+        <!-- Password & Confirm Password -->
+        <div class="form-grid">
+          <div class="field">
+            <label for="signup-password">Password</label>
+            <div class="field__control" [class.is-invalid]="showError(signupForm, 'password')">
+              <i class="bi bi-lock" aria-hidden="true"></i>
+              <input
+                id="signup-password"
+                type="password"
+                formControlName="password"
+                placeholder="Min 12 characters"
+                autocomplete="new-password"
+              />
+            </div>
+            @if (showError(signupForm, 'password')) {
+              <small class="field__error">{{ errorText(signupForm, 'password', 'Password') }}</small>
+            }
           </div>
-          @if (showError(signupForm, 'email')) {
-            <small class="field__error">{{ errorText(signupForm, 'email', 'Email') }}</small>
-          }
+
+          <div class="field">
+            <label for="signup-confirm">Confirm Password</label>
+            <div
+              class="field__control"
+              [class.is-invalid]="showError(signupForm, 'confirmPassword') || showPasswordMismatch()"
+            >
+              <i class="bi bi-shield-lock" aria-hidden="true"></i>
+              <input
+                id="signup-confirm"
+                type="password"
+                formControlName="confirmPassword"
+                placeholder="Confirm password"
+                autocomplete="new-password"
+              />
+            </div>
+            @if (showError(signupForm, 'confirmPassword')) {
+              <small class="field__error">
+                {{ errorText(signupForm, 'confirmPassword', 'Confirm password') }}
+              </small>
+            } @else if (showPasswordMismatch()) {
+              <small class="field__error">Passwords do not match.</small>
+            }
+          </div>
         </div>
 
-        <div class="field">
-          <label for="signup-password">Password</label>
-          <div class="field__control" [class.is-invalid]="showError(signupForm, 'password')">
-            <i class="bi bi-lock" aria-hidden="true"></i>
-            <input
-              id="signup-password"
-              type="password"
-              formControlName="password"
-              placeholder="Create a password"
-              autocomplete="new-password"
-            />
+        <!-- Phone & Country -->
+        <div class="form-grid">
+          <div class="field">
+            <label for="signup-phone">Phone Number</label>
+            <div class="field__control" [class.is-invalid]="showError(signupForm, 'phone')">
+              <i class="bi bi-telephone" aria-hidden="true"></i>
+              <input
+                id="signup-phone"
+                type="tel"
+                formControlName="phone"
+                placeholder="Digits only (6-15)"
+                autocomplete="tel"
+              />
+            </div>
+            @if (showError(signupForm, 'phone')) {
+              <small class="field__error">{{ errorText(signupForm, 'phone', 'Phone') }}</small>
+            }
           </div>
-          @if (showError(signupForm, 'password')) {
-            <small class="field__error">{{ errorText(signupForm, 'password', 'Password') }}</small>
-          }
+
+          <div class="field">
+            <label for="signup-country">Country</label>
+            <div class="field__control" [class.is-invalid]="showError(signupForm, 'country')">
+              <i class="bi bi-globe" aria-hidden="true"></i>
+              <select id="signup-country" formControlName="country">
+                <option value="" disabled selected>
+                  @if (countriesLoading()) { Loading countries... }
+                  @else { Select country }
+                </option>
+                @for (c of countries(); track c.code) {
+                  <option [value]="c.code">{{ c.name }}</option>
+                }
+              </select>
+            </div>
+            @if (showError(signupForm, 'country')) {
+              <small class="field__error">Select your country.</small>
+            }
+          </div>
         </div>
 
-        <div class="field">
-          <label for="signup-confirm">Confirm Password</label>
-          <div
-            class="field__control"
-            [class.is-invalid]="showError(signupForm, 'confirmPassword') || showPasswordMismatch()"
-          >
-            <i class="bi bi-shield-lock" aria-hidden="true"></i>
-            <input
-              id="signup-confirm"
-              type="password"
-              formControlName="confirmPassword"
-              placeholder="Re-enter your password"
-              autocomplete="new-password"
-            />
+        <!-- State & License Plan -->
+        <div class="form-grid">
+          <div class="field">
+            <label for="signup-state">State / Region</label>
+            <div class="field__control">
+              <i class="bi bi-geo-alt" aria-hidden="true"></i>
+              @if (availableRegions().length > 0) {
+                <select id="signup-state" formControlName="state">
+                  <option value="" selected>Select state / region</option>
+                  @for (r of availableRegions(); track r) {
+                    <option [value]="r">{{ r }}</option>
+                  }
+                </select>
+              } @else {
+                <input
+                  id="signup-state"
+                  type="text"
+                  formControlName="state"
+                  placeholder="State / Province"
+                />
+              }
+            </div>
           </div>
-          @if (showError(signupForm, 'confirmPassword')) {
-            <small class="field__error">
-              {{ errorText(signupForm, 'confirmPassword', 'Confirm password') }}
-            </small>
-          } @else if (showPasswordMismatch()) {
-            <small class="field__error">Passwords do not match.</small>
-          }
+
+          <div class="field">
+            <label for="signup-license">License Plan</label>
+            <div class="field__control" [class.is-invalid]="showError(signupForm, 'licensePlanId')">
+              <i class="bi bi-award" aria-hidden="true"></i>
+              <select id="signup-license" formControlName="licensePlanId">
+                <option value="" disabled selected>
+                  @if (licenseLoading()) { Loading licenses... }
+                  @else { Select license plan }
+                </option>
+                @for (plan of licenseOptions(); track plan.id) {
+                  <option [value]="plan.id">
+                    {{ plan.name }} ({{ plan.billing === 'FREE' ? 'Free' : plan.billing }})
+                  </option>
+                }
+              </select>
+            </div>
+            @if (showError(signupForm, 'licensePlanId')) {
+              <small class="field__error">Select a license plan.</small>
+            }
+          </div>
         </div>
 
-        <app-button type="submit" variant="primary" [fullWidth]="true" [disabled]="submitting()">Sign Up</app-button>
+        <!-- Terms Agreement -->
+        <div class="auth-form__row">
+          <label class="checkbox" [class.is-invalid]="showError(signupForm, 'agreeTerms')">
+            <input type="checkbox" formControlName="agreeTerms" />
+            <span>I agree to the DETQEL Terms of Service and Privacy Policy</span>
+          </label>
+        </div>
+        @if (showError(signupForm, 'agreeTerms')) {
+          <small class="field__error" style="margin-top: -0.8rem; margin-bottom: 1rem;">You must accept the terms to proceed.</small>
+        }
+
+        <app-button type="submit" variant="primary" [fullWidth]="true" [disabled]="submitting()">
+          @if (submitting()) { <i class="bi bi-arrow-repeat spin"></i> Submitting Registration... }
+          @else { Submit Registration }
+        </app-button>
 
         <div class="auth-form__divider"></div>
 
         <p class="auth-form__switch">
-          Already have an account?
+          Already registered?
           <a class="link" href="#" (click)="$event.preventDefault(); setMode('login')">Sign in here</a>
         </p>
       </form>

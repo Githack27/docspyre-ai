@@ -2,7 +2,7 @@ import { relations } from 'drizzle-orm';
 import { users } from './users';
 import { sessions } from './sessions';
 import { workspaces, workspaceMembers } from './workspaces';
-import { documents, workspaceFiles, documentShares, documentChunks } from './documents';
+import { documents, workspaceFiles, documentChunks } from './documents';
 import { auditLogs } from './audit';
 import { chatSessions, chatMessages } from './chat';
 import { providerConfigs } from './configuration';
@@ -24,8 +24,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   auditLogs: many(auditLogs),
   documents: many(documents),
   uploadedFiles: many(workspaceFiles),
-  sharesSent: many(documentShares, { relationName: 'sharesSent' }),
-  sharesReceived: many(documentShares, { relationName: 'sharesReceived' }),
   chatSessions: many(chatSessions),
   chatMessages: many(chatMessages),
   providerConfigs: many(providerConfigs),
@@ -57,7 +55,6 @@ export const workspaceMembersRelations = relations(workspaceMembers, ({ one }) =
 export const documentsRelations = relations(documents, ({ one, many }) => ({
   owner: one(users, { fields: [documents.ownerId], references: [users.id] }),
   workspaceFiles: many(workspaceFiles),
-  shares: many(documentShares),
   chunks: many(documentChunks),
   chatSessions: many(chatSessions),
   summaries: many(documentSummaries),
@@ -71,12 +68,6 @@ export const workspaceFilesRelations = relations(workspaceFiles, ({ one }) => ({
   workspace: one(workspaces, { fields: [workspaceFiles.workspaceId], references: [workspaces.id] }),
   uploadedBy: one(users, { fields: [workspaceFiles.uploadedById], references: [users.id] }),
   document: one(documents, { fields: [workspaceFiles.documentId], references: [documents.id] }),
-}));
-
-export const documentSharesRelations = relations(documentShares, ({ one }) => ({
-  document: one(documents, { fields: [documentShares.documentId], references: [documents.id] }),
-  sharedBy: one(users, { fields: [documentShares.sharedById], references: [users.id], relationName: 'sharesSent' }),
-  sharedWith: one(users, { fields: [documentShares.sharedWithId], references: [users.id], relationName: 'sharesReceived' }),
 }));
 
 export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
@@ -158,4 +149,3 @@ export const summarizerMemoryRelations = relations(summarizerMemory, ({ one }) =
   document: one(documents, { fields: [summarizerMemory.documentId], references: [documents.id] }),
   user: one(users, { fields: [summarizerMemory.userId], references: [users.id] }),
 }));
-

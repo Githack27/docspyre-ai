@@ -1,17 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Button } from '../../shared/ui/button/button';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ApiErrorResponse } from '../../../core/auth/auth.models';
+import { ApiErrorResponse, LicenseOption, RegistrationPayload } from '../../../core/auth/auth.models';
+import { CountryOption, loadCountries } from '../../../core/auth/country-regions';
 import {
   confirmPasswordValidators,
   emailFieldValidators,
   loginPasswordValidators,
-  nameFieldValidators,
   passwordMatchValidator,
+  phoneValidator,
   signupPasswordValidators,
+  usernameValidator,
 } from '../../../core/validation/auth-validators';
 import { resolveValidationMessage } from '../../../core/validation/validation-messages';
 
@@ -33,32 +35,95 @@ export class Login implements OnInit {
   protected readonly feedback = signal<Feedback>(null);
   protected readonly submitting = signal(false);
 
+  protected readonly licenseOptions = signal<LicenseOption[]>([]);
+  protected readonly licenseLoading = signal(false);
+  protected readonly licenseError = signal<string | null>(null);
+
+  protected readonly countries = signal<CountryOption[]>([]);
+  protected readonly countriesLoading = signal(false);
+
+  protected readonly selectedCountryCode = signal<string>('');
+  protected readonly availableRegions = computed<string[]>(() => {
+    const code = this.selectedCountryCode();
+    if (!code) return [];
+    const found = this.countries().find((c) => c.code === code);
+    return found?.regions ?? [];
+  });
+
   protected readonly loginForm: FormGroup = this.fb.group({
-    email: ['', emailFieldValidators],
+    username: ['', loginPasswordValidators],
     password: ['', loginPasswordValidators],
     remember: [false],
   });
 
   protected readonly signupForm: FormGroup = this.fb.group(
     {
-      fullName: ['', nameFieldValidators],
+      firstName: ['', [Validators.required, Validators.maxLength(60)]],
+      lastName: ['', [Validators.required, Validators.maxLength(60)]],
+      username: ['', [Validators.required, usernameValidator()]],
       email: ['', emailFieldValidators],
+      companyName: ['', [Validators.required, Validators.maxLength(120)]],
       password: ['', signupPasswordValidators],
       confirmPassword: ['', confirmPasswordValidators],
+      phone: ['', [Validators.required, phoneValidator()]],
+      country: ['', [Validators.required]],
+      state: [''],
+      licensePlanId: ['', [Validators.required]],
+      agreeTerms: [false, [Validators.requiredTrue]],
     },
     { validators: passwordMatchValidator() },
   );
 
   ngOnInit(): void {
-    const rememberedEmail = this.auth.getRememberedEmail();
-    if (rememberedEmail) {
-      this.loginForm.patchValue({ email: rememberedEmail, remember: true });
+    const remembered = this.auth.getRememberedUsername();
+    if (remembered) {
+      this.loginForm.patchValue({ username: remembered, remember: true });
     }
+
+    this.signupForm.get('country')?.valueChanges.subscribe((code: string) => {
+      this.selectedCountryCode.set(code);
+      this.signupForm.get('state')?.setValue('');
+    });
   }
 
   protected setMode(mode: AuthMode): void {
     this.mode.set(mode);
     this.feedback.set(null);
+    if (mode === 'signup') {
+      this.ensureSignupDataLoaded();
+    }
+  }
+
+  private ensureSignupDataLoaded(): void {
+    if (this.countries().length === 0 && !this.countriesLoading()) {
+      this.countriesLoading.set(true);
+      loadCountries()
+        .then((items) => {
+          this.countries.set(items);
+          this.countriesLoading.set(false);
+        })
+        .catch(() => {
+          this.countriesLoading.set(false);
+        });
+    }
+
+    if (this.licenseOptions().length === 0 && !this.licenseLoading()) {
+      this.licenseLoading.set(true);
+      this.licenseError.set(null);
+      this.auth.licenseOptions().subscribe({
+        next: (opts) => {
+          this.licenseOptions.set(opts);
+          this.licenseLoading.set(false);
+          if (opts.length > 0 && !this.signupForm.get('licensePlanId')?.value) {
+            this.signupForm.patchValue({ licensePlanId: opts[0].id });
+          }
+        },
+        error: (err: unknown) => {
+          this.licenseLoading.set(false);
+          this.licenseError.set(this.extractError(err));
+        },
+      });
+    }
   }
 
   protected onLogin(): void {
@@ -68,9 +133,9 @@ export class Login implements OnInit {
     }
 
     this.submitting.set(true);
-    const { email, password, remember } = this.loginForm.getRawValue();
+    const { username, password, remember } = this.loginForm.getRawValue();
 
-    this.auth.login({ email, password, remember }).subscribe({
+    this.auth.login({ username: username.trim(), password, remember }).subscribe({
       next: () => {
         this.submitting.set(false);
         this.router.navigate(['/app']);
@@ -89,12 +154,31 @@ export class Login implements OnInit {
     }
 
     this.submitting.set(true);
-    const { fullName, email, password } = this.signupForm.getRawValue();
+    const formVal = this.signupForm.getRawValue();
 
-    this.auth.register({ fullName, email, password }).subscribe({
-      next: () => {
+    const payload: RegistrationPayload = {
+      firstName: formVal.firstName.trim(),
+      lastName: formVal.lastName.trim(),
+      username: formVal.username.trim(),
+      email: formVal.email.trim(),
+      companyName: formVal.companyName.trim(),
+      password: formVal.password,
+      confirmPassword: formVal.confirmPassword,
+      phone: formVal.phone.trim(),
+      country: formVal.country,
+      state: formVal.state?.trim() || '',
+      licensePlanId: formVal.licensePlanId,
+    };
+
+    this.auth.register(payload).subscribe({
+      next: (res) => {
         this.submitting.set(false);
-        this.router.navigate(['/app']);
+        this.setMode('login');
+        this.loginForm.patchValue({ username: payload.username, password: '' });
+        this.feedback.set({
+          type: 'success',
+          text: `${res.message} You can sign in once your license is approved.`,
+        });
       },
       error: (error: unknown) => {
         this.submitting.set(false);
@@ -103,13 +187,11 @@ export class Login implements OnInit {
     });
   }
 
-  
   protected showError(form: FormGroup, controlName: string): boolean {
     const control = form.get(controlName);
     return !!control && control.invalid && (control.touched || control.dirty);
   }
 
-  
   protected errorText(form: FormGroup, controlName: string, label: string): string {
     const control = form.get(controlName);
     return this.showError(form, controlName)
@@ -117,7 +199,6 @@ export class Login implements OnInit {
       : '';
   }
 
-  
   protected showPasswordMismatch(): boolean {
     const confirm = this.signupForm.get('confirmPassword');
     return (
@@ -127,16 +208,21 @@ export class Login implements OnInit {
     );
   }
 
-  
   private extractError(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       const body = error.error as ApiErrorResponse | null;
       if (body?.error?.message) {
         return body.error.message;
       }
-      if (error.status === 0) {
-        return 'Unable to reach the server. Please try again.';
+      if (body?.message) {
+        return body.message;
       }
+      if (error.status === 0) {
+        return 'Unable to reach the server. Please check your connection.';
+      }
+    }
+    if (error instanceof Error) {
+      return error.message;
     }
     return 'Something went wrong. Please try again.';
   }

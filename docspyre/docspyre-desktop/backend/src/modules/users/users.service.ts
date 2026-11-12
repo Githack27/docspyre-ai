@@ -1,7 +1,8 @@
-import { db, eq, ne, and, isNull, ilike, users } from '@docspyre/database';
+import { db, eq, ne, and, or, ilike, users } from '@docspyre/database';
 
 export const userService = {
   async searchByEmail(query: string, callerId: string) {
+    const q = `%${query.toLowerCase()}%`;
     const rows = await db
       .select({
         id: users.id,
@@ -12,9 +13,8 @@ export const userService = {
       .from(users)
       .where(
         and(
-          ilike(users.emailNormalized, `%${query.toLowerCase()}%`),
-          eq(users.status, 'ACTIVE'),
-          isNull(users.deletedAt),
+          or(ilike(users.email, q), ilike(users.name, q)),
+          eq(users.status, 'active'),
           ne(users.id, callerId),
         ),
       )

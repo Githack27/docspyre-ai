@@ -1,12 +1,5 @@
 import { pgEnum } from 'drizzle-orm/pg-core';
 
-export const userStatusEnum = pgEnum('UserStatus', [
-  'PENDING',
-  'ACTIVE',
-  'SUSPENDED',
-  'DEACTIVATED',
-]);
-
 export const workspaceRoleEnum = pgEnum('WorkspaceRole', [
   'OWNER',
   'ADMIN',
@@ -30,9 +23,4 @@ export const documentKindEnum = pgEnum('DocumentKind', [
   'PDF',
   'DOCUMENT',
   'OTHER',
-]);
-
-export const sharePermissionEnum = pgEnum('SharePermission', [
-  'VIEW',
-  'DOWNLOAD',
 ]);

@@ -1,8 +1,8 @@
 import {
-  pgTable, uuid, varchar, integer, timestamp, index, unique, text, real,
+  pgTable, uuid, varchar, integer, timestamp, index, text, real,
 } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
-import { documentKindEnum, sharePermissionEnum } from './enums';
+import { documentKindEnum } from './enums';
 import { users } from './users';
 import { workspaces } from './workspaces';
 
@@ -48,26 +48,6 @@ export const workspaceFiles = pgTable(
     workspaceIdIdx: index('workspace_files_workspace_id_idx').on(table.workspaceId),
     documentIdIdx: index('workspace_files_document_id_idx').on(table.documentId),
     deletedAtIdx: index('workspace_files_deleted_at_idx').on(table.deletedAt),
-  }),
-);
-
-export const documentShares = pgTable(
-  'document_shares',
-  {
-    id: uuid('id').primaryKey().$defaultFn(() => randomUUID()),
-    documentId: uuid('document_id').notNull().references(() => documents.id, { onDelete: 'cascade' }),
-    sharedById: uuid('shared_by_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    sharedWithId: uuid('shared_with_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    permission: sharePermissionEnum('permission').notNull().default('VIEW'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().$defaultFn(() => new Date()),
-  },
-  (table) => ({
-    sharedWithIdIdx: index('document_shares_shared_with_id_idx').on(table.sharedWithId),
-    sharedByIdIdx: index('document_shares_shared_by_id_idx').on(table.sharedById),
-    documentSharedWithUnique: unique('document_shares_document_shared_with_unique').on(
-      table.documentId,
-      table.sharedWithId,
-    ),
   }),
 );
 

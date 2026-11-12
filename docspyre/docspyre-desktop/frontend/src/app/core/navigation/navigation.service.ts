@@ -43,7 +43,6 @@ export class NavigationService {
       items: [
         { id: 'my-projects', label: 'My Projects', icon: 'bi-folder', route: '/app/workspace/my-projects' },
         { id: 'my-documents', label: 'My Documents', icon: 'bi-file-earmark-richtext', route: '/app/workspace/my-documents' },
-        { id: 'shared-files', label: 'Shared Files', icon: 'bi-share', route: '/app/workspace/shared-files' },
         { id: 'trash', label: 'Trash', icon: 'bi-trash', route: '/app/workspace/trash' },
       ],
     },
