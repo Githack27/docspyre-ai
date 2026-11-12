@@ -3,7 +3,10 @@ export type UserStatus = 'active' | 'suspended' | 'deactivated';
 export interface UserLicense {
   id: string;
   type: string | null;
+  /** Display name from the License Portal, e.g. "Enterprise". */
+  name?: string | null;
   billing: string | null;
+  /** When the license ends; null means it never expires. */
   expiresAt: string | null;
 }
 

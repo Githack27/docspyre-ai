@@ -3,17 +3,31 @@ import { z } from 'zod';
 import { ENCODED_SECRET_MINIMUM_LENGTH } from '../../constants/authConstants.js';
 import { LICENSE_PORTAL_DEFAULTS, LICENSE_PORTAL_INSECURE_HOSTS } from '../../constants/licenseConstants.js';
 import { POSTGRESQL_PROTOCOLS } from '../../constants/networkConstants.js';
+import { resolveManagedDatabaseUrl } from './managed-database.js';
 
 dotenv.config();
+
+// The desktop app sets DATABASE_URL itself from the live container. Running the API on its own, fall back to the
+// same persisted credentials and port so the URL never has to be copied into .env or kept in sync by hand.
+if (!process.env.DATABASE_URL) {
+  const managedUrl = resolveManagedDatabaseUrl();
+  if (managedUrl) process.env.DATABASE_URL = managedUrl;
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(0).max(65535).default(8000),
 
-  DATABASE_URL: z.string().url().refine((value) => {
-    const url = new URL(value);
-    return POSTGRESQL_PROTOCOLS.some((protocol) => protocol === url.protocol) && url.pathname.length > 1;
-  }, 'DATABASE_URL must be a PostgreSQL URL with a database name'),
+  DATABASE_URL: z
+    .string({
+      required_error:
+        'No database is configured. Start the DocSpyre desktop app once to provision its database, or set DATABASE_URL to use another one',
+    })
+    .url()
+    .refine((value) => {
+      const url = new URL(value);
+      return POSTGRESQL_PROTOCOLS.some((protocol) => protocol === url.protocol) && url.pathname.length > 1;
+    }, 'DATABASE_URL must be a PostgreSQL URL with a database name'),
 
   CORS_ORIGINS: z
     .string()

@@ -14,6 +14,7 @@ const claimsSchema = z.object({
     id: z.string().uuid(),
     product: z.string().min(1),
     type: z.string().min(1).max(30),
+    name: z.string().min(1).max(80).optional(),
     billing: z.string().min(1).max(20),
     expiresAt: z.string().datetime({ offset: true }).nullable(),
   }),

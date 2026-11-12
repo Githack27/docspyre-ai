@@ -8,7 +8,9 @@ export interface AuthContext {
 export interface UserLicense {
   id: string;
   type: string | null;
+  name: string | null;
   billing: string | null;
+  /** When the license itself ends on the portal; null means it never expires. */
   expiresAt: Date | null;
 }
 
@@ -43,8 +45,9 @@ export const toPublicUser = (user: User): PublicUser => ({
     ? {
         id: user.licenseId,
         type: user.licenseType,
+        name: user.licenseName,
         billing: user.licenseBilling,
-        expiresAt: user.licenseExpiresAt,
+        expiresAt: user.licenseEndsAt,
       }
     : null,
 });

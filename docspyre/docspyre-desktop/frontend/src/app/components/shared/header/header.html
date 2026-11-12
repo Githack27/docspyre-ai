@@ -44,13 +44,18 @@
     </span>
     <span class="user__meta">
       <span class="user__name">{{ user().name }}</span>
-      <span class="user__plan">{{ user().plan }} | <i class="bi bi-coin" aria-hidden="true"></i> {{ user().credits }}</span>
+      <span class="user__plan" [class.user__plan--expired]="user().expired">
+{{ user().summary }}</span>
     </span>
 
     <div class="user__tip" role="tooltip">
       <span class="user__tip-name">{{ user().name }}</span>
-      <span class="user__tip-row"><i class="bi bi-gem" aria-hidden="true"></i> {{ user().plan }} plan</span>
-      <span class="user__tip-row"><i class="bi bi-coin" aria-hidden="true"></i> {{ user().credits }}</span>
+      <span class="user__tip-row"><i class="bi bi-gem" aria-hidden="true"></i> {{ user().license }} license</span>
+      @if (user().validity) {
+        <span class="user__tip-row" [class.user__plan--expired]="user().expired">
+          <i class="bi bi-calendar-check" aria-hidden="true"></i> {{ user().validity }}
+        </span>
+      }
     </div>
   </div>
 

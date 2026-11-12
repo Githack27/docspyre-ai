@@ -41,6 +41,9 @@ export const DESKTOP_PROTECTED_ENVIRONMENT_KEYS: readonly string[] = [
     DESKTOP_ENVIRONMENT_KEYS.host, DESKTOP_ENVIRONMENT_KEYS.port, DESKTOP_ENVIRONMENT_KEYS.nodeEnvironment,
     DESKTOP_ENVIRONMENT_KEYS.nodeOptions, DESKTOP_ENVIRONMENT_KEYS.nodePath, DESKTOP_ENVIRONMENT_KEYS.runtimeDirectory,
 ];
+/** Must match `identifier` in src-tauri/tauri.conf.json; Tauri keeps the private runtime under its app config directory. */
+export const DESKTOP_APP_IDENTIFIER = "ai.docspyre.desktop";
+export const DESKTOP_RUNTIME_DIRECTORY_NAME = "runtime";
 export const DESKTOP_VALIDATION = { startupToken: /^[a-f0-9-]{36}$/, windowsUserSid: /\bS-\d-(?:\d+-)*\d+\b/ } as const;
 export const DESKTOP_RETRYABLE_PORT_ERRORS: readonly string[] = ["EADDRINUSE", "EACCES"];
 export const DESKTOP_FILESYSTEM_ERROR_CODES = { notFound: "ENOENT", alreadyExists: "EEXIST" } as const;

@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   afterNextRender,
@@ -12,6 +13,7 @@ import {
 import { DOCUMENT } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { licenseName, licenseValidity } from '../../../core/auth/license-display';
 import { displayName, userInitials } from '../../../core/auth/user-display';
 import { NavCategory, NavigationService } from '../../../core/navigation/navigation.service';
 import { ShellService } from '../../../core/shell/shell.service';
@@ -20,9 +22,15 @@ import { IconButton } from '../ui/icon-button/icon-button';
 interface UserSummary {
   name: string;
   initials: string;
-  plan: string;
-  credits: string;
+  license: string;
+  validity: string;
+  /** "Enterprise · 365 days" */
+  summary: string;
+  expired: boolean;
 }
+
+/** Re-evaluates the days remaining while the app stays open, so the count drops at midnight. */
+const LICENSE_CLOCK_INTERVAL_MS = 60_000;
 
 @Component({
   selector: 'app-header',
@@ -45,17 +53,32 @@ export class Header {
 
   protected readonly indicatorStyle = signal<Record<string, string>>({ opacity: '0' });
 
+  private readonly now = signal(Date.now());
+
   protected readonly user = computed<UserSummary>(() => {
     const account = this.auth.currentUser();
+    const license = account?.license;
+    const now = this.now();
+    const name = licenseName(license);
+    const validity = licenseValidity(license, now);
     return {
       name: displayName(account),
       initials: userInitials(account),
-      plan: 'Basic',
-      credits: '24/100 credits',
+      license: name,
+      validity,
+      summary: validity ? `${name} · ${validity}` : name,
+      expired: Boolean(license?.expiresAt && new Date(license.expiresAt).getTime() <= now),
     };
   });
 
   constructor() {
+    const destroyRef = inject(DestroyRef);
+    afterNextRender(() => {
+      this.now.set(Date.now());
+      const clock = setInterval(() => this.now.set(Date.now()), LICENSE_CLOCK_INTERVAL_MS);
+      destroyRef.onDestroy(() => clearInterval(clock));
+    });
+
     afterNextRender(() => {
       this.updateIndicator();
       this.document.fonts?.ready.then(() => this.updateIndicator());

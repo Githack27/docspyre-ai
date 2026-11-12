@@ -19,8 +19,12 @@ export const users = pgTable('users', {
   licenseId: uuid('license_id'),
   licenseType: varchar('license_type', { length: 30 }),
   licenseBilling: varchar('license_billing', { length: 20 }),
+  licenseName: varchar('license_name', { length: 80 }),
   licenseToken: text('license_token'),
+  /** When the current license token expires; gates every request and forces a portal re-check. */
   licenseExpiresAt: timestamp('license_expires_at', { withTimezone: true }),
+  /** When the license itself ends on the portal (null: no expiry). Shown to the user as days remaining. */
+  licenseEndsAt: timestamp('license_ends_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

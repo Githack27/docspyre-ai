@@ -181,8 +181,12 @@
   color: var(--text-muted);
 }
 
+.user__plan--expired {
+  color: #ef4444;
+}
+
 /* Compact account popover — only surfaced on small screens where the
-   inline meta (plan + credits) is hidden. */
+   inline meta (license + days remaining) is hidden. */
 .user__tip {
   display: none;
   position: absolute;

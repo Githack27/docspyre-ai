@@ -1,6 +1,5 @@
 import { db, eq, or, users, auditLogs, type User, type NewUser } from '@docspyre/database';
 import { ApiError } from '../../core/utils/api-error';
-import { verifyPassword } from '../../shared/security/password';
 import { LicensePortalClient, type PortalClientMetadata } from '../../shared/licensing/license-portal.client';
 import { LicenseTokenVerifier, type LicenseClaims } from '../../shared/licensing/license-token.verifier';
 import { SessionService } from '../../shared/security/session';
@@ -44,9 +43,13 @@ function identityFrom(claims: LicenseClaims, token: string): Partial<NewUser> & 
     state: claims.user.state,
     licenseId: claims.license.id,
     licenseType: claims.license.type,
+    licenseName: claims.license.name ?? null,
     licenseBilling: claims.license.billing,
     licenseToken: token,
-    licenseExpiresAt: claims.license.expiresAt ? new Date(claims.license.expiresAt) : new Date(claims.exp * 1000),
+    // The token lifetime (capped by the portal at the license end) gates every request, so a revoked or
+    // expired license is re-checked with the portal at the next sign-in, as in KIN.
+    licenseExpiresAt: new Date(claims.exp * 1000),
+    licenseEndsAt: claims.license.expiresAt ? new Date(claims.license.expiresAt) : null,
   };
 }
 
@@ -83,7 +86,7 @@ export const authService = {
   async login(input: LoginInput, ctx: AuthContext): Promise<AuthResult> {
     const grant = await portalClient.login(input.username, input.password, installationMetadata);
     const claims = await tokenVerifier.verify(grant.token);
-    const user = await this.syncUser(claims, grant.token, input.password);
+    const user = await this.syncUser(claims, grant.token);
 
     if (user.status !== 'active') {
       recordAudit('USER_LOGIN_FAILED', ctx, user.id, { reason: 'account_inactive' });
@@ -113,7 +116,7 @@ export const authService = {
     };
   },
 
-  async syncUser(claims: LicenseClaims, token: string, password: string): Promise<User> {
+  async syncUser(claims: LicenseClaims, token: string): Promise<User> {
     const identity = identityFrom(claims, token);
     const [linked] = await db
       .select()
@@ -125,18 +128,15 @@ export const authService = {
       return this.updated(linked.id, identity);
     }
 
-    // First portal sign-in on this installation. Check if a local account with same username or email exists.
-    const [local] = await db
-      .select()
+    // First portal sign-in on this installation. The portal is the only account source, so a username or
+    // email already held by another portal identity here is a conflict, not an account to adopt.
+    const [taken] = await db
+      .select({ id: users.id })
       .from(users)
       .where(or(eq(users.username, claims.user.username), eq(users.email, claims.user.email)))
       .limit(1);
-
-    if (local) {
-      if (local.portalUserId || !verifyPassword(password, local.passwordHash)) {
-        throw ApiError.conflict('Another account on this DocSpyre installation already uses this username or email.');
-      }
-      return this.updated(local.id, { ...identity, passwordHash: null });
+    if (taken) {
+      throw ApiError.conflict('Another account on this DocSpyre installation already uses this username or email.');
     }
 
     const [created] = await db
