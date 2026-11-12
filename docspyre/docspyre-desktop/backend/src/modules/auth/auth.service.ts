@@ -1,3 +1,4 @@
+import { hostname } from 'node:os';
 import { db, eq, or, users, auditLogs, type User, type NewUser } from '@docspyre/database';
 import { ApiError } from '../../core/utils/api-error';
 import { LicensePortalClient, type PortalClientMetadata } from '../../shared/licensing/license-portal.client';
@@ -25,8 +26,10 @@ export const sessionService = new SessionService(
   env.AUTH_SESSION_TTL_SECONDS,
 );
 
+// Identifies this installation on the License Portal's Instances page; the portal stores at most 120 characters.
 const installationMetadata: PortalClientMetadata = {
   appVersion: '2.0.0',
+  deviceName: hostname().slice(0, 120),
   platform: process.platform,
 };
 
