@@ -180,3 +180,4 @@ volumes:
   docspyre-app-db-data:
     name: docspyre-app-db-data
     external: true
+
