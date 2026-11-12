@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { AuthService } from './core/auth/auth.service';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { ConfirmationModal } from './components/shared/ui/confirmation-modal/confirmation-modal';
@@ -32,6 +33,17 @@ export class App implements OnInit, OnDestroy {
 
   private pollTimer: any = null;
   private destroyed = false;
+  private readonly auth = inject(AuthService);
+
+  constructor() {
+    // Once the API is reachable, replace the profile saved at sign-in with the current one.
+    let synced = false;
+    effect(() => {
+      if (synced || !this.isReady()) return;
+      synced = true;
+      untracked(() => this.auth.syncProfile());
+    });
+  }
 
   ngOnInit(): void {
     if (this.isDesktop()) {

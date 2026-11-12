@@ -40,6 +40,12 @@ export class AuthStorage {
     tier.setItem(KEYS.accessToken, accessToken);
   }
 
+  updateUser(user: PublicUser): void {
+    if (!this.isBrowser) return;
+    const tier = localStorage.getItem(KEYS.accessToken) !== null ? localStorage : sessionStorage;
+    tier.setItem(KEYS.user, JSON.stringify(user));
+  }
+
   updateRefreshToken(refreshToken: string): void {
     if (!this.isBrowser) return;
     const tier = localStorage.getItem(KEYS.accessToken) !== null ? localStorage : sessionStorage;

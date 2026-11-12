@@ -63,11 +63,7 @@ export class AuthService {
     }
 
     this.refresh$ = this.http.get<AuthResponse>(`${this.baseUrl}/me`).pipe(
-      tap((res) => {
-        this.accessToken = res.accessToken;
-        this.storage.updateAccessToken(res.accessToken);
-        this.currentUser.set(res.user);
-      }),
+      tap((res) => this.applyProfile(res)),
       map((res) => res.accessToken),
       finalize(() => (this.refresh$ = null)),
       shareReplay(1),
@@ -79,13 +75,25 @@ export class AuthService {
     return this.http
       .get<AuthResponse>(`${this.baseUrl}/me`)
       .pipe(
-        tap((res) => {
-          this.accessToken = res.accessToken;
-          this.storage.updateAccessToken(res.accessToken);
-          this.currentUser.set(res.user);
-        }),
+        tap((res) => this.applyProfile(res)),
         map((res) => res.user),
       );
+  }
+
+  /**
+   * The saved profile is from sign-in; replace it with the server's current one (license, name, etc.) when the app
+   * starts. A session that can no longer be renewed is cleared by the interceptor.
+   */
+  syncProfile(): void {
+    if (!this.isBrowser || !this.accessToken || !this.currentUser()) return;
+    this.refresh().subscribe({ error: () => undefined });
+  }
+
+  private applyProfile(res: AuthResponse): void {
+    this.accessToken = res.accessToken;
+    this.storage.updateAccessToken(res.accessToken);
+    this.storage.updateUser(res.user);
+    this.currentUser.set(res.user);
   }
 
   getAccessToken(): string | null {
