@@ -1,9 +1,9 @@
-import { createChatModel } from '../../llm/model.factory';
-import { messageText } from '../../llm/output';
-import { logger } from '../../../../core/utils/logger';
-import { ROUTER_SYSTEM, buildRouterPrompt, type AgentRoute } from '../prompts';
-import type { AgentRuntime } from '../runtime';
-import type { AgentStateType, AgentStateUpdate } from '../state';
+import { createChatModel } from '../../llm/model.factory.js';
+import { messageText } from '../../llm/output.js';
+import { logger } from '../../../../core/utils/logger.js';
+import { ROUTER_SYSTEM, buildRouterPrompt, type AgentRoute } from '../prompts.js';
+import type { AgentRuntime } from '../runtime.js';
+import type { AgentStateType, AgentStateUpdate } from '../state.js';
 
 const ROUTES: readonly AgentRoute[] = ['document_qa', 'dataset_query', 'summarize', 'smalltalk'];
 

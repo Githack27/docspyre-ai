@@ -1,11 +1,11 @@
-import { db, eq, documents } from '@docspyre/database';
-import { logger } from '../../../core/utils/logger';
-import { providerResolverService } from '../llm/provider-resolver.service';
-import { datasetService } from '../data/dataset.service';
-import { parserService } from './parser.service';
-import { chunkerService } from './chunker.service';
-import { indexerService } from './indexer.service';
-import { summarizerService } from './summarizer.service';
+import { db, eq, documents } from '../../../db/index.js';
+import { logger } from '../../../core/utils/logger.js';
+import { providerResolverService } from '../llm/provider-resolver.service.js';
+import { datasetService } from '../data/dataset.service.js';
+import { parserService } from './parser.service.js';
+import { chunkerService } from './chunker.service.js';
+import { indexerService } from './indexer.service.js';
+import { summarizerService } from './summarizer.service.js';
 
 export interface IngestionJob {
   documentId: string;

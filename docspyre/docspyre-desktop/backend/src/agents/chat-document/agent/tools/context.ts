@@ -1,7 +1,7 @@
-import type { ResolvedProvider } from '../../llm/provider-resolver.service';
-import type { RetrievedChunk, RetrievalMode } from '../../retrieval/retriever.service';
-import type { DatasetSchema } from '../../data/dataset.service';
-import type { DatasetSource } from '../../data/duckdb.service';
+import type { ResolvedProvider } from '../../llm/provider-resolver.service.js';
+import type { RetrievedChunk, RetrievalMode } from '../../retrieval/retriever.service.js';
+import type { DatasetSchema } from '../../data/dataset.service.js';
+import type { DatasetSource } from '../../data/duckdb.service.js';
 
 /** Recorded for every tool invocation and persisted on the agent run. */
 export interface ToolCallRecord {

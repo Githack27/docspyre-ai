@@ -1,7 +1,7 @@
-import { db, eq, and, desc, providerConfigs } from '@docspyre/database';
-import { decrypt } from '../../../core/utils/encryption';
-import { env } from '../../../core/config';
-import { logger } from '../../../core/utils/logger';
+import { db, eq, and, desc, providerConfigs } from '../../../db/index.js';
+import { decrypt } from '../../../core/utils/encryption.js';
+import { env } from '../../../core/config/index.js';
+import { logger } from '../../../core/utils/logger.js';
 
 export type ProviderId = 'gemini' | 'openai' | 'anthropic' | 'cohere' | 'ollama';
 

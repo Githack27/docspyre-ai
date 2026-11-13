@@ -1,7 +1,7 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { retrieverService } from '../../retrieval/retriever.service';
-import { recordToolCall, type AgentToolContext } from './context';
+import { retrieverService } from '../../retrieval/retriever.service.js';
+import { recordToolCall, type AgentToolContext } from './context.js';
 
 const schema = z.object({
   query: z

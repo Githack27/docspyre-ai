@@ -1,7 +1,7 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { summarizerService } from '../../ingestion/summarizer.service';
-import { recordToolCall, type AgentToolContext } from './context';
+import { summarizerService } from '../../ingestion/summarizer.service.js';
+import { recordToolCall, type AgentToolContext } from './context.js';
 
 const schema = z.object({
   includeSections: z

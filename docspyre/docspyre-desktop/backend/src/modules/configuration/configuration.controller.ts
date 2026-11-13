@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { configurationService } from './configuration.service';
-import { asyncHandler } from '../../core/utils/async-handler';
-import { ApiError } from '../../core/utils/api-error';
+import { configurationService } from './configuration.service.js';
+import { asyncHandler } from '../../core/utils/async-handler.js';
+import { ApiError } from '../../core/utils/api-error.js';
 
 export const configurationController = {
   list: asyncHandler(async (req: Request, res: Response) => {

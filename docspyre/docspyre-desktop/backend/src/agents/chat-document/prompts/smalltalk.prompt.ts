@@ -1,5 +1,5 @@
-import type { ConversationContext } from '../memory/conversation-summary.service';
-import { composeSystemPrompt } from './system.prompt';
+import type { ConversationContext } from '../memory/conversation-summary.service.js';
+import { composeSystemPrompt } from './system.prompt.js';
 
 export const buildSmalltalkPrompt = (input: {
   question: string;

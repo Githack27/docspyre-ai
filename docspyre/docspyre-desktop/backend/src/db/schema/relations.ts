@@ -1,19 +1,19 @@
 import { relations } from 'drizzle-orm';
-import { users } from './users';
-import { sessions } from './sessions';
-import { workspaces, workspaceMembers } from './workspaces';
-import { documents, workspaceFiles, documentChunks } from './documents';
-import { auditLogs } from './audit';
-import { chatSessions, chatMessages } from './chat';
-import { providerConfigs } from './configuration';
+import { users } from './users.js';
+import { sessions } from './sessions.js';
+import { workspaces, workspaceMembers } from './workspaces.js';
+import { documents, workspaceFiles, documentChunks } from './documents.js';
+import { auditLogs } from './audit.js';
+import { chatSessions, chatMessages } from './chat.js';
+import { providerConfigs } from './configuration.js';
 import {
   agentRuns,
   documentSummaries,
   conversationSummaries,
   documentNotes,
   summarizerMemory,
-} from './agent';
-import { datasetTables, datasetQueries } from './datasets';
+} from './agent.js';
+import { datasetTables, datasetQueries } from './datasets.js';
 
 // ─── User Relations ───────────────────────────────────────────────────────────
 

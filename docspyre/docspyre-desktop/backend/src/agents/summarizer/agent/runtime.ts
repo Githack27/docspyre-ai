@@ -1,5 +1,5 @@
-import type { ResolvedProvider } from '../../chat-document/llm/provider-resolver.service';
-import type { NoteImage, OutlineData } from './state';
+import type { ResolvedProvider } from '../../chat-document/llm/provider-resolver.service.js';
+import type { NoteImage, OutlineData } from './state.js';
 
 export type SummarizerStreamEvent =
   | { type: 'status'; phase: string; message: string }

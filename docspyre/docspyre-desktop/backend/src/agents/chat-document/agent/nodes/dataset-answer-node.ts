@@ -1,7 +1,7 @@
-import { createChatModel } from '../../llm/model.factory';
-import { buildDatasetAnswerPrompt } from '../prompts';
-import { streamAnswer, emitDegraded, type AgentRuntime } from '../runtime';
-import type { AgentStateType, AgentStateUpdate } from '../state';
+import { createChatModel } from '../../llm/model.factory.js';
+import { buildDatasetAnswerPrompt } from '../prompts.js';
+import { streamAnswer, emitDegraded, type AgentRuntime } from '../runtime.js';
+import type { AgentStateType, AgentStateUpdate } from '../state.js';
 
 /** Parses the markdown table the query tool produced back into rows. */
 const parseTable = (text: string): { columns: string[]; rows: Record<string, unknown>[] } => {

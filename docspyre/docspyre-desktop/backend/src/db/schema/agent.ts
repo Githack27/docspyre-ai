@@ -11,10 +11,10 @@ import {
   jsonb,
 } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
-import { users } from './users';
-import { workspaces } from './workspaces';
-import { documents } from './documents';
-import { chatSessions, chatMessages } from './chat';
+import { users } from './users.js';
+import { workspaces } from './workspaces.js';
+import { documents } from './documents.js';
+import { chatSessions, chatMessages } from './chat.js';
 
 /**
  * One row per agent invocation. Doubles as a durable result store and as the

@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { userService } from './users.service';
-import { asyncHandler } from '../../core/utils/async-handler';
-import { ApiError } from '../../core/utils/api-error';
+import { userService } from './users.service.js';
+import { asyncHandler } from '../../core/utils/async-handler.js';
+import { ApiError } from '../../core/utils/api-error.js';
 
 export const usersController = {
   search: asyncHandler(async (req: Request, res: Response) => {

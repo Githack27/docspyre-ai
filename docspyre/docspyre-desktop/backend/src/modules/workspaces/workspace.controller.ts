@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { workspaceService } from './workspace.service';
-import { asyncHandler } from '../../core/utils/async-handler';
-import { ApiError } from '../../core/utils/api-error';
+import { workspaceService } from './workspace.service.js';
+import { asyncHandler } from '../../core/utils/async-handler.js';
+import { ApiError } from '../../core/utils/api-error.js';
 
 export const workspaceController = {
   list: asyncHandler(async (req: Request, res: Response) => {

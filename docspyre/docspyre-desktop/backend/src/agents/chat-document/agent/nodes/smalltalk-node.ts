@@ -1,7 +1,7 @@
-import { createChatModel } from '../../llm/model.factory';
-import { buildSmalltalkPrompt } from '../prompts';
-import { streamAnswer, emitDegraded, type AgentRuntime } from '../runtime';
-import type { AgentStateType, AgentStateUpdate } from '../state';
+import { createChatModel } from '../../llm/model.factory.js';
+import { buildSmalltalkPrompt } from '../prompts.js';
+import { streamAnswer, emitDegraded, type AgentRuntime } from '../runtime.js';
+import type { AgentStateType, AgentStateUpdate } from '../state.js';
 
 const FALLBACK = 'I can answer questions about the file you have open. What would you like to know about it?';
 

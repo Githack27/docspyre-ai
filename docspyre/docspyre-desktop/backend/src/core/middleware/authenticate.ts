@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from 'express';
-import { db, eq, users } from '@docspyre/database';
-import { sessionService } from '../../modules/auth/auth.service';
-import { hasActiveLicense } from '../../shared/licensing/license-token.verifier';
-import { ApiError } from '../utils/api-error';
-import { asyncHandler } from '../utils/async-handler';
+import { db, eq, users } from '../../db/index.js';
+import { sessionService } from '../../modules/auth/auth.service.js';
+import { hasActiveLicense } from '../../shared/licensing/license-token.verifier.js';
+import { ApiError } from '../utils/api-error.js';
+import { asyncHandler } from '../utils/async-handler.js';
 
 export const authenticate = asyncHandler(
   async (req: Request, _res: Response, next: NextFunction) => {

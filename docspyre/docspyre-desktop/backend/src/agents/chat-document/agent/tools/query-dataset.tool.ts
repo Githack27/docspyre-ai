@@ -1,9 +1,9 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { db, datasetQueries } from '@docspyre/database';
-import { logger } from '../../../../core/utils/logger';
-import { duckdbService, DatasetQueryError } from '../../data/duckdb.service';
-import { recordToolCall, type AgentToolContext } from './context';
+import { db, datasetQueries } from '../../../../db/index.js';
+import { logger } from '../../../../core/utils/logger.js';
+import { duckdbService, DatasetQueryError } from '../../data/duckdb.service.js';
+import { recordToolCall, type AgentToolContext } from './context.js';
 
 const schema = z.object({
   sql: z

@@ -1,7 +1,7 @@
 import { pgTable, uuid, varchar, timestamp, index, jsonb } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
-import { auditActionEnum } from './enums';
-import { users } from './users';
+import { auditActionEnum } from './enums.js';
+import { users } from './users.js';
 
 export const auditLogs = pgTable(
   'audit_logs',

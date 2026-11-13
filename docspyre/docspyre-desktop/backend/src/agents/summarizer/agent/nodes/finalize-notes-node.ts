@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { db, eq, documentNotes, summarizerMemory } from '@docspyre/database';
-import type { SummarizerStateType } from '../state';
-import type { SummarizerRuntime } from '../runtime';
-import { logger } from '../../../../core/utils/logger';
+import { db, eq, documentNotes, summarizerMemory } from '../../../../db/index.js';
+import type { SummarizerStateType } from '../state.js';
+import type { SummarizerRuntime } from '../runtime.js';
+import { logger } from '../../../../core/utils/logger.js';
 
 export const finalizeNotesNode = (runtime: SummarizerRuntime) => {
   return async (state: SummarizerStateType): Promise<Partial<SummarizerStateType>> => {

@@ -1,1 +1,1 @@
-export { env, isProduction } from './env';
+export { env, isProduction } from './env.js';

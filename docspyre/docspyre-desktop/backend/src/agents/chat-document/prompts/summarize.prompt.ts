@@ -1,6 +1,6 @@
-import type { ConversationContext } from '../memory/conversation-summary.service';
-import { composeSystemPrompt, ANSWER_FORMAT } from './system.prompt';
-import { renderConversation } from './document-qa.prompt';
+import type { ConversationContext } from '../memory/conversation-summary.service.js';
+import { composeSystemPrompt, ANSWER_FORMAT } from './system.prompt.js';
+import { renderConversation } from './document-qa.prompt.js';
 
 export const DOCUMENT_SUMMARY_SYSTEM = `You write high-precision, factual summaries of documents for an AI retrieval and synthesis system.
 Rules:

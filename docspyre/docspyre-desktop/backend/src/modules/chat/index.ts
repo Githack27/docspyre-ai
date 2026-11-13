@@ -1,2 +1,2 @@
-export { chatRoutes } from './chat.routes';
-export { chatService } from './chat.service';
+export { chatRoutes } from './chat.routes.js';
+export { chatService } from './chat.service.js';

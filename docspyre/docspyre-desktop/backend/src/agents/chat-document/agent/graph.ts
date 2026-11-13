@@ -1,6 +1,6 @@
 import { StateGraph, START, END } from '@langchain/langgraph';
-import { AgentState, type AgentStateType } from './state';
-import type { AgentRuntime } from './runtime';
+import { AgentState, type AgentStateType } from './state.js';
+import type { AgentRuntime } from './runtime.js';
 import { routeNode } from './nodes/route-node.js';
 import { retrieveNode } from './nodes/retrieve-node.js';
 import { answerNode } from './nodes/answer-node.js';

@@ -1,7 +1,7 @@
-import type { DatasetSchema } from '../data/dataset.service';
-import type { ConversationContext } from '../memory/conversation-summary.service';
-import { composeSystemPrompt, ANSWER_FORMAT } from './system.prompt';
-import { renderConversation } from './document-qa.prompt';
+import type { DatasetSchema } from '../data/dataset.service.js';
+import type { ConversationContext } from '../memory/conversation-summary.service.js';
+import { composeSystemPrompt, ANSWER_FORMAT } from './system.prompt.js';
+import { renderConversation } from './document-qa.prompt.js';
 
 export const DATASET_SQL_SYSTEM = `You translate analytical questions into exactly one DuckDB SQL SELECT statement over the user's data tables.
 

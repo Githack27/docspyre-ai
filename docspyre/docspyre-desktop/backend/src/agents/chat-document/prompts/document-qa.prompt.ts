@@ -1,6 +1,6 @@
-import type { RetrievedChunk } from '../retrieval/retriever.service';
-import type { ConversationContext } from '../memory/conversation-summary.service';
-import { composeSystemPrompt, ANSWER_FORMAT, CITATION_RULES } from './system.prompt';
+import type { RetrievedChunk } from '../retrieval/retriever.service.js';
+import type { ConversationContext } from '../memory/conversation-summary.service.js';
+import { composeSystemPrompt, ANSWER_FORMAT, CITATION_RULES } from './system.prompt.js';
 
 export const renderChunks = (chunks: RetrievedChunk[]): string => {
   if (!chunks.length) {

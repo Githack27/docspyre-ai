@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { authRoutes } from '../modules/auth';
-import { workspaceRoutes } from '../modules/workspaces';
-import { userRoutes } from '../modules/users';
-import { documentRoutes } from '../modules/documents';
-import { chatRoutes } from '../modules/chat';
-import { configurationRoutes } from '../modules/configuration';
-import { summarizerRoutes } from '../agents/summarizer';
+import { authRoutes } from '../modules/auth/index.js';
+import { workspaceRoutes } from '../modules/workspaces/index.js';
+import { userRoutes } from '../modules/users/index.js';
+import { documentRoutes } from '../modules/documents/index.js';
+import { chatRoutes } from '../modules/chat/index.js';
+import { configurationRoutes } from '../modules/configuration/index.js';
+import { summarizerRoutes } from '../agents/summarizer/index.js';
 
 const router: Router = Router();
 

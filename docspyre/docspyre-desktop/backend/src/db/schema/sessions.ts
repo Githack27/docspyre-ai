@@ -1,6 +1,6 @@
 import { pgTable, uuid, varchar, timestamp, index } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
-import { users } from './users';
+import { users } from './users.js';
 
 export const sessions = pgTable(
   'sessions',

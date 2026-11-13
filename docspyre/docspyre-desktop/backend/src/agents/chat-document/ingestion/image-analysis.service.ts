@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { HumanMessage } from '@langchain/core/messages';
-import { storagePath } from '../../../modules/documents/document.storage';
-import { logger } from '../../../core/utils/logger';
-import { createVisionModel, supportsVision } from '../llm/model.factory';
-import { messageText } from '../llm/output';
-import type { ResolvedProvider } from '../llm/provider-resolver.service';
+import { storagePath } from '../../../modules/documents/document.storage.js';
+import { logger } from '../../../core/utils/logger.js';
+import { createVisionModel, supportsVision } from '../llm/model.factory.js';
+import { messageText } from '../llm/output.js';
+import type { ResolvedProvider } from '../llm/provider-resolver.service.js';
 
 /**
  * Prompt for turning an image into indexable text. The goal is a faithful,

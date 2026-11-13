@@ -1,4 +1,4 @@
-import { isProduction } from '../config';
+import { isProduction } from '../config/index.js';
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 

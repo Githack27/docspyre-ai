@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { env } from '../../../../core/config';
-import { logger } from '../../../../core/utils/logger';
-import type { ResolvedProvider } from '../../../chat-document/llm/provider-resolver.service';
+import { env } from '../../../../core/config/index.js';
+import { logger } from '../../../../core/utils/logger.js';
+import type { ResolvedProvider } from '../../../chat-document/llm/provider-resolver.service.js';
 
 const UPLOAD_ROOT = path.isAbsolute(env.UPLOAD_DIR)
   ? env.UPLOAD_DIR

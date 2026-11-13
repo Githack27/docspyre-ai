@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
-import { storagePath } from '../../../modules/documents/document.storage';
-import { logger } from '../../../core/utils/logger';
-import { imageAnalysisService, isImage } from './image-analysis.service';
-import type { ResolvedProvider } from '../llm/provider-resolver.service';
+import { storagePath } from '../../../modules/documents/document.storage.js';
+import { logger } from '../../../core/utils/logger.js';
+import { imageAnalysisService, isImage } from './image-analysis.service.js';
+import type { ResolvedProvider } from '../llm/provider-resolver.service.js';
 
 export interface ParsedBlock {
   page: number;

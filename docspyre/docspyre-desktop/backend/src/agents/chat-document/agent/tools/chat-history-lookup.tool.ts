@@ -1,7 +1,7 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { db, eq, asc, chatMessages } from '@docspyre/database';
-import { recordToolCall, type AgentToolContext } from './context';
+import { db, eq, asc, chatMessages } from '../../../../db/index.js';
+import { recordToolCall, type AgentToolContext } from './context.js';
 
 const schema = z.object({
   query: z

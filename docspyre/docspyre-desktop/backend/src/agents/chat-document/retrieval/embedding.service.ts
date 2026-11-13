@@ -1,9 +1,9 @@
 import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { OllamaEmbeddings } from '@langchain/ollama';
-import { env } from '../../../core/config';
-import { logger } from '../../../core/utils/logger';
-import type { ResolvedProvider } from '../llm/provider-resolver.service';
+import { env } from '../../../core/config/index.js';
+import { logger } from '../../../core/utils/logger.js';
+import type { ResolvedProvider } from '../llm/provider-resolver.service.js';
 
 /**
  * Stable identifiers persisted alongside each chunk vector. Dense similarity is

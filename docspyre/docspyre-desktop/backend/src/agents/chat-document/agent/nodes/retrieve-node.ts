@@ -1,6 +1,6 @@
-import { env } from '../../../../core/config';
-import type { AgentRuntime } from '../runtime';
-import type { AgentStateType, AgentStateUpdate } from '../state';
+import { env } from '../../../../core/config/index.js';
+import type { AgentRuntime } from '../runtime.js';
+import type { AgentStateType, AgentStateUpdate } from '../state.js';
 
 /**
  * Gathers grounding excerpts through the search tool. Runs before the document

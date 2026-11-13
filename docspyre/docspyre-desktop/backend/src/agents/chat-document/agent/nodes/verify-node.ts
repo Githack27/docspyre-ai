@@ -1,15 +1,15 @@
-import { createChatModel } from '../../llm/model.factory';
-import { messageText, extractJson } from '../../llm/output';
-import { logger } from '../../../../core/utils/logger';
-import { VERIFIER_SYSTEM, buildVerifierPrompt } from '../prompts';
-import type { AgentRuntime } from '../runtime';
+import { createChatModel } from '../../llm/model.factory.js';
+import { messageText, extractJson } from '../../llm/output.js';
+import { logger } from '../../../../core/utils/logger.js';
+import { VERIFIER_SYSTEM, buildVerifierPrompt } from '../prompts.js';
+import type { AgentRuntime } from '../runtime.js';
 import type {
   AgentStateType,
   AgentStateUpdate,
   ClaimVerdict,
   ClaimVerification,
   VerifiedClaim,
-} from '../state';
+} from '../state.js';
 
 interface VerifierPayload {
   claims?: {

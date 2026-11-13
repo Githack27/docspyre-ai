@@ -1,4 +1,4 @@
-import { db, eq, ne, and, or, ilike, users } from '@docspyre/database';
+import { db, eq, ne, and, or, ilike, users } from '../../db/index.js';
 
 export const userService = {
   async searchByEmail(query: string, callerId: string) {

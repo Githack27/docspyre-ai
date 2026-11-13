@@ -1,12 +1,12 @@
 import { hostname } from 'node:os';
-import { db, eq, or, users, auditLogs, type User, type NewUser } from '@docspyre/database';
-import { ApiError } from '../../core/utils/api-error';
-import { LicensePortalClient, type PortalClientMetadata } from '../../shared/licensing/license-portal.client';
-import { LicenseTokenVerifier, type LicenseClaims } from '../../shared/licensing/license-token.verifier';
-import { SessionService } from '../../shared/security/session';
-import { env } from '../../core/config/env';
-import { toPublicUser, type AuthContext, type AuthResult } from './auth.types';
-import type { LoginInput, RegisterInput } from './auth.validation';
+import { db, eq, or, users, auditLogs, type User, type NewUser } from '../../db/index.js';
+import { ApiError } from '../../core/utils/api-error.js';
+import { LicensePortalClient, type PortalClientMetadata } from '../../shared/licensing/license-portal.client.js';
+import { LicenseTokenVerifier, type LicenseClaims } from '../../shared/licensing/license-token.verifier.js';
+import { SessionService } from '../../shared/security/session.js';
+import { env } from '../../core/config/env.js';
+import { toPublicUser, type AuthContext, type AuthResult } from './auth.types.js';
+import type { LoginInput, RegisterInput } from './auth.validation.js';
 
 const portalClient = new LicensePortalClient({
   baseUrl: env.LICENSE_PORTAL_URL,

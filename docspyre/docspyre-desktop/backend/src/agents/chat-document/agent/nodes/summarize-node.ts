@@ -1,8 +1,8 @@
-import { createChatModel } from '../../llm/model.factory';
-import { summarizerService } from '../../ingestion/summarizer.service';
-import { buildSummarizeAnswerPrompt } from '../prompts';
-import { streamAnswer, emitDegraded, type AgentRuntime } from '../runtime';
-import type { AgentStateType, AgentStateUpdate } from '../state';
+import { createChatModel } from '../../llm/model.factory.js';
+import { summarizerService } from '../../ingestion/summarizer.service.js';
+import { buildSummarizeAnswerPrompt } from '../prompts.js';
+import { streamAnswer, emitDegraded, type AgentRuntime } from '../runtime.js';
+import type { AgentStateType, AgentStateUpdate } from '../state.js';
 
 const NO_SUMMARY_MESSAGE =
   'This document has not finished processing yet, so I do not have a summary for it. Give it a moment and ask again.';

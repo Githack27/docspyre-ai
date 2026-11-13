@@ -1,11 +1,11 @@
 import {
   db, eq, and, inArray, sql,
   documentChunks, workspaceFiles,
-} from '@docspyre/database';
-import { env } from '../../../core/config';
-import { logger } from '../../../core/utils/logger';
-import { embeddingService } from './embedding.service';
-import type { ResolvedProvider } from '../llm/provider-resolver.service';
+} from '../../../db/index.js';
+import { env } from '../../../core/config/index.js';
+import { logger } from '../../../core/utils/logger.js';
+import { embeddingService } from './embedding.service.js';
+import type { ResolvedProvider } from '../llm/provider-resolver.service.js';
 
 export interface RetrievedChunk {
   chunk_id: string;

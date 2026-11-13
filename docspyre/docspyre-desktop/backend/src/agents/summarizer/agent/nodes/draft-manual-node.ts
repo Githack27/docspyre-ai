@@ -1,10 +1,10 @@
-import { db, eq, inArray, documents, documentChunks, summarizerMemory } from '@docspyre/database';
-import type { SummarizerStateType, OutlineData } from '../state';
-import type { SummarizerRuntime } from '../runtime';
-import { createChatModel } from '../../../chat-document/llm/model.factory';
-import { messageText } from '../../../chat-document/llm/output';
-import { MANUAL_WRITER_SYSTEM, buildManualPrompt } from '../../prompts/summarizer.prompt';
-import { logger } from '../../../../core/utils/logger';
+import { db, eq, inArray, documents, documentChunks, summarizerMemory } from '../../../../db/index.js';
+import type { SummarizerStateType, OutlineData } from '../state.js';
+import type { SummarizerRuntime } from '../runtime.js';
+import { createChatModel } from '../../../chat-document/llm/model.factory.js';
+import { messageText } from '../../../chat-document/llm/output.js';
+import { MANUAL_WRITER_SYSTEM, buildManualPrompt } from '../../prompts/summarizer.prompt.js';
+import { logger } from '../../../../core/utils/logger.js';
 
 export const draftManualNode = (runtime: SummarizerRuntime) => {
   return async (state: SummarizerStateType): Promise<Partial<SummarizerStateType>> => {

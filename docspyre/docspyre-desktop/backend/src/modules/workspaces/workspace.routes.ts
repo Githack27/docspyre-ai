@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { workspaceController } from './workspace.controller';
-import { createWorkspaceSchema, addFileSchema, workspaceIdParam, attachDocumentSchema, fileParam } from './workspace.validation';
-import { uploadMiddleware } from '../documents/document.upload';
-import { authenticate, validate, requireWorkspaceRole } from '../../core/middleware';
+import { workspaceController } from './workspace.controller.js';
+import { createWorkspaceSchema, addFileSchema, workspaceIdParam, attachDocumentSchema, fileParam } from './workspace.validation.js';
+import { uploadMiddleware } from '../documents/document.upload.js';
+import { authenticate, validate, requireWorkspaceRole } from '../../core/middleware/index.js';
 
 const router: Router = Router();
 router.use(authenticate);

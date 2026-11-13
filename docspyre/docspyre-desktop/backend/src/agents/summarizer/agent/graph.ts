@@ -1,6 +1,6 @@
 import { StateGraph, START, END } from '@langchain/langgraph';
-import { SummarizerState } from './state';
-import type { SummarizerRuntime } from './runtime';
+import { SummarizerState } from './state.js';
+import type { SummarizerRuntime } from './runtime.js';
 import { initMemoryNode } from './nodes/init-memory-node.js';
 import { planOutlineNode } from './nodes/plan-outline-node.js';
 import { draftManualNode } from './nodes/draft-manual-node.js';

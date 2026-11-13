@@ -1,7 +1,7 @@
 import { pgTable, uuid, varchar, timestamp, index, unique } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
-import { workspaceRoleEnum } from './enums';
-import { users } from './users';
+import { workspaceRoleEnum } from './enums.js';
+import { users } from './users.js';
 
 export const workspaces = pgTable(
   'workspaces',

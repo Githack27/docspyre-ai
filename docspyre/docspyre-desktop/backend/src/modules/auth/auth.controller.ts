@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { authService } from './auth.service';
-import type { AuthContext } from './auth.types';
-import { asyncHandler } from '../../core/utils/async-handler';
-import { ApiError } from '../../core/utils/api-error';
+import { authService } from './auth.service.js';
+import type { AuthContext } from './auth.types.js';
+import { asyncHandler } from '../../core/utils/async-handler.js';
+import { ApiError } from '../../core/utils/api-error.js';
 
 const contextFrom = (req: Request): AuthContext => ({
   ipAddress: req.ip,

@@ -3,9 +3,9 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { timingSafeEqual } from 'node:crypto';
-import { env } from './core/config';
-import { apiRouter } from './routes';
-import { errorHandler, globalRateLimiter, notFound } from './core/middleware';
+import { env } from './core/config/index.js';
+import { apiRouter } from './routes/index.js';
+import { errorHandler, globalRateLimiter, notFound } from './core/middleware/index.js';
 
 export interface CreateAppOptions {
   desktopToken?: string;

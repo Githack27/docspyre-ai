@@ -1,6 +1,6 @@
 import { pgTable, uuid, varchar, text, boolean, timestamp, index } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
-import { users } from './users';
+import { users } from './users.js';
 
 export const providerConfigs = pgTable(
   'provider_configs',

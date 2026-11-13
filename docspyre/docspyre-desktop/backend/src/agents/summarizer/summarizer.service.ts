@@ -1,13 +1,13 @@
 import path from 'node:path';
 import { existsSync, createReadStream } from 'node:fs';
-import { db, eq, and, desc, documentNotes, documents } from '@docspyre/database';
-import { providerResolverService } from '../chat-document/llm/provider-resolver.service';
-import { buildSummarizerGraph } from './agent/graph';
-import type { SummarizerStreamEvent } from './agent/runtime';
-import type { SummarizerFormat } from './prompts/summarizer.prompt';
-import { env } from '../../core/config';
-import { ApiError } from '../../core/utils/api-error';
-import { logger } from '../../core/utils/logger';
+import { db, eq, and, desc, documentNotes, documents } from '../../db/index.js';
+import { providerResolverService } from '../chat-document/llm/provider-resolver.service.js';
+import { buildSummarizerGraph } from './agent/graph.js';
+import type { SummarizerStreamEvent } from './agent/runtime.js';
+import type { SummarizerFormat } from './prompts/summarizer.prompt.js';
+import { env } from '../../core/config/index.js';
+import { ApiError } from '../../core/utils/api-error.js';
+import { logger } from '../../core/utils/logger.js';
 
 const UPLOAD_ROOT = path.isAbsolute(env.UPLOAD_DIR)
   ? env.UPLOAD_DIR

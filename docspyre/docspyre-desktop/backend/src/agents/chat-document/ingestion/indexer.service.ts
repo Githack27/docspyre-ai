@@ -1,8 +1,8 @@
-import { db, eq, documentChunks } from '@docspyre/database';
-import { logger } from '../../../core/utils/logger';
-import { embeddingService } from '../retrieval/embedding.service';
-import type { ResolvedProvider } from '../llm/provider-resolver.service';
-import type { DocumentChunkDraft } from './chunker.service';
+import { db, eq, documentChunks } from '../../../db/index.js';
+import { logger } from '../../../core/utils/logger.js';
+import { embeddingService } from '../retrieval/embedding.service.js';
+import type { ResolvedProvider } from '../llm/provider-resolver.service.js';
+import type { DocumentChunkDraft } from './chunker.service.js';
 
 /** Embedding requests per batch; keeps payloads under provider limits. */
 const EMBED_BATCH_SIZE = 32;

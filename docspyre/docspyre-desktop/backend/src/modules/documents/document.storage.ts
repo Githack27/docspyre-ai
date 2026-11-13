@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { createReadStream, existsSync } from 'node:fs';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { env } from '../../core/config';
+import { env } from '../../core/config/index.js';
 
 const uploadRoot = path.isAbsolute(env.UPLOAD_DIR)
   ? env.UPLOAD_DIR

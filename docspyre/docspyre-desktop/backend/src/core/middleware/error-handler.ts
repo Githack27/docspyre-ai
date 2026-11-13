@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
-import { ApiError } from '../utils/api-error';
-import { logger } from '../utils/logger';
-import { isProduction } from '../config';
+import { ApiError } from '../utils/api-error.js';
+import { logger } from '../utils/logger.js';
+import { isProduction } from '../config/index.js';
 
 /**
  * Centralised error handler. Known operational errors (ApiError) are rendered
@@ -29,6 +29,7 @@ export const errorHandler = (
   }
 
   res.status(apiError.statusCode).json({
+    message: apiError.message,
     error: {
       code: apiError.code,
       message: apiError.message,

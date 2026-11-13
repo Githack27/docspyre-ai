@@ -1,11 +1,11 @@
 import path from 'node:path';
-import { db, eq, datasetTables } from '@docspyre/database';
-import { logger } from '../../../core/utils/logger';
-import { storagePath, storageExists } from '../../../modules/documents/document.storage';
-import { duckdbService, type DatasetFormat, type DatasetSource } from './duckdb.service';
-import { createChatModel } from '../llm/model.factory';
-import { DATASET_DESCRIPTION_SYSTEM, buildDatasetDescriptionPrompt } from '../agent/prompts';
-import type { ResolvedProvider } from '../llm/provider-resolver.service';
+import { db, eq, datasetTables } from '../../../db/index.js';
+import { logger } from '../../../core/utils/logger.js';
+import { storagePath, storageExists } from '../../../modules/documents/document.storage.js';
+import { duckdbService, type DatasetFormat, type DatasetSource } from './duckdb.service.js';
+import { createChatModel } from '../llm/model.factory.js';
+import { DATASET_DESCRIPTION_SYSTEM, buildDatasetDescriptionPrompt } from '../agent/prompts.js';
+import type { ResolvedProvider } from '../llm/provider-resolver.service.js';
 
 /** Column shape consumed by the text-to-SQL prompt. */
 export interface DatasetColumn {

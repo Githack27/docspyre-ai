@@ -2,12 +2,12 @@ import { randomBytes } from 'node:crypto';
 import {
   db, eq, and, ne, isNull, inArray, desc, count,
   users, workspaces, workspaceMembers, workspaceFiles, documents,
-} from '@docspyre/database';
-import { ApiError } from '../../core/utils/api-error';
-import { requireRow } from '../../core/utils/rows';
-import { documentService } from '../documents/document.service';
-import type { AddFileInput, CreateWorkspaceInput } from './workspace.validation';
-import type { PublicFile, PublicMember, PublicWorkspaceDetail, PublicWorkspaceSummary } from './workspace.types';
+} from '../../db/index.js';
+import { ApiError } from '../../core/utils/api-error.js';
+import { requireRow } from '../../core/utils/rows.js';
+import { documentService } from '../documents/document.service.js';
+import type { AddFileInput, CreateWorkspaceInput } from './workspace.validation.js';
+import type { PublicFile, PublicMember, PublicWorkspaceDetail, PublicWorkspaceSummary } from './workspace.types.js';
 
 const slugify = (name: string): string =>
   name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'project';

@@ -1,14 +1,14 @@
 import {
   db, eq, and, isNull, isNotNull, lte, inArray, desc,
   documents, workspaceFiles, workspaceMembers,
-} from '@docspyre/database';
-import type { InferSelectModel } from '@docspyre/database';
-import { ApiError } from '../../core/utils/api-error';
-import { kindFromMime } from './document.kind';
-import { removeFile, saveBuffer } from './document.storage';
-import type { PublicDocument } from './document.types';
-import { requireRow } from '../../core/utils/rows';
-import { ingestionQueue } from '../../agents/chat-document/ingestion/queue.service';
+} from '../../db/index.js';
+import type { InferSelectModel } from '../../db/index.js';
+import { ApiError } from '../../core/utils/api-error.js';
+import { kindFromMime } from './document.kind.js';
+import { removeFile, saveBuffer } from './document.storage.js';
+import type { PublicDocument } from './document.types.js';
+import { requireRow } from '../../core/utils/rows.js';
+import { ingestionQueue } from '../../agents/chat-document/ingestion/queue.service.js';
 
 type DocumentRow = InferSelectModel<typeof documents>;
 

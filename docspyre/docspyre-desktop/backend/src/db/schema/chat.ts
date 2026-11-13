@@ -1,8 +1,8 @@
 import { pgTable, uuid, varchar, text, timestamp, index, integer } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
-import { users } from './users';
-import { workspaces } from './workspaces';
-import { documents, workspaceFiles } from './documents';
+import { users } from './users.js';
+import { workspaces } from './workspaces.js';
+import { documents, workspaceFiles } from './documents.js';
 
 export const chatSessions = pgTable(
   'chat_sessions',

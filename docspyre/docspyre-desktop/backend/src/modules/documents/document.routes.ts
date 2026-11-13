@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { documentController } from './document.controller';
-import { documentIdParam } from './document.validation';
-import { uploadMiddleware } from './document.upload';
-import { authenticate, validate } from '../../core/middleware';
+import { documentController } from './document.controller.js';
+import { documentIdParam } from './document.validation.js';
+import { uploadMiddleware } from './document.upload.js';
+import { authenticate, validate } from '../../core/middleware/index.js';
 
 const router: Router = Router();
 router.use(authenticate);

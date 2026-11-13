@@ -1,13 +1,13 @@
-import { createChatModel } from '../../llm/model.factory';
-import { summarizerService } from '../../ingestion/summarizer.service';
-import { buildDocumentQaPrompt, buildWebSearchAnswerPrompt } from '../prompts';
-import { streamAnswer, emitDegraded, type AgentRuntime } from '../runtime';
+import { createChatModel } from '../../llm/model.factory.js';
+import { summarizerService } from '../../ingestion/summarizer.service.js';
+import { buildDocumentQaPrompt, buildWebSearchAnswerPrompt } from '../prompts.js';
+import { streamAnswer, emitDegraded, type AgentRuntime } from '../runtime.js';
 import {
   citationsFrom,
   webCitationsFrom,
   type AgentStateType,
   type AgentStateUpdate,
-} from '../state';
+} from '../state.js';
 
 const NO_MODEL_MESSAGE =
   'I cannot reach a language model right now, so I am unable to answer from the document. Add an AI provider key in Settings, or try again shortly.';

@@ -1,5 +1,5 @@
 import multer from 'multer';
-import { env } from '../../core/config';
+import { env } from '../../core/config/index.js';
 
 export const uploadMiddleware = multer({
   storage: multer.memoryStorage(),

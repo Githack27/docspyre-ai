@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { summarizerController } from './summarizer.controller';
-import { authenticate } from '../../core/middleware';
+import { summarizerController } from './summarizer.controller.js';
+import { authenticate } from '../../core/middleware/index.js';
 
 const router: Router = Router();
 

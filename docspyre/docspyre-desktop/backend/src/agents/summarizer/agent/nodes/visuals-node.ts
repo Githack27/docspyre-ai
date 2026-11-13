@@ -1,7 +1,7 @@
-import type { SummarizerStateType, NoteImage } from '../state';
-import type { SummarizerRuntime } from '../runtime';
-import { imageGeneratorTool } from '../tools/image-generator.tool';
-import { logger } from '../../../../core/utils/logger';
+import type { SummarizerStateType, NoteImage } from '../state.js';
+import type { SummarizerRuntime } from '../runtime.js';
+import { imageGeneratorTool } from '../tools/image-generator.tool.js';
+import { logger } from '../../../../core/utils/logger.js';
 
 const VISUAL_TAG_RE = /!\[visual:\s*([^\]]+)\]\(generate\)/gi;
 

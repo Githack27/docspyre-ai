@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
@@ -18,12 +18,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "typeRoots": ["../node_modules/@types"],
-    "baseUrl": ".",
-    "paths": {
-      "@docspyre/database": ["./src/db/index.ts"],
-      "@docspyre/database/*": ["./src/db/*"]
-    }
+    "typeRoots": ["../node_modules/@types"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

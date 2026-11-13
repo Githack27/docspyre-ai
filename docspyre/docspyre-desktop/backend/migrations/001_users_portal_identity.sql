@@ -24,3 +24,8 @@ ALTER TABLE "users" ALTER COLUMN "password_hash" DROP NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS "users_username_key" ON "users" ("username");
 CREATE UNIQUE INDEX IF NOT EXISTS "users_portal_user_id_key" ON "users" ("portal_user_id");
 CREATE INDEX IF NOT EXISTS "users_portal_user_id_idx" ON "users" ("portal_user_id");
+
+-- Remove legacy sharing tables
+DROP TABLE IF EXISTS "document_shares" CASCADE;
+DROP TABLE IF EXISTS "workspace_shares" CASCADE;
+DROP TABLE IF EXISTS "shares" CASCADE;

@@ -1,14 +1,14 @@
-import { db, eq, and, documentSummaries } from '@docspyre/database';
-import { logger } from '../../../core/utils/logger';
-import { createChatModel, describeModel } from '../llm/model.factory';
-import { messageText, extractJson } from '../llm/output';
-import type { ResolvedProvider } from '../llm/provider-resolver.service';
+import { db, eq, and, documentSummaries } from '../../../db/index.js';
+import { logger } from '../../../core/utils/logger.js';
+import { createChatModel, describeModel } from '../llm/model.factory.js';
+import { messageText, extractJson } from '../llm/output.js';
+import type { ResolvedProvider } from '../llm/provider-resolver.service.js';
 import {
   DOCUMENT_SUMMARY_SYSTEM,
   SECTION_SUMMARY_SYSTEM,
   buildDocumentSummaryPrompt,
   buildSectionSummaryPrompt,
-} from '../agent/prompts';
+} from '../agent/prompts.js';
 
 /** Total characters of excerpt sent to the document-level summariser. */
 const DOCUMENT_EXCERPT_BUDGET = 24_000;

@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
-import { db, eq, and, desc, agentRuns } from '@docspyre/database';
-import { logger } from '../../../core/utils/logger';
-import type { AgentRoute } from '../agent/prompts';
-import type { Citation, ClaimVerification, AnswerSource } from '../agent/state';
-import type { ToolCallRecord } from '../agent/tools';
+import { db, eq, and, desc, agentRuns } from '../../../db/index.js';
+import { logger } from '../../../core/utils/logger.js';
+import type { AgentRoute } from '../agent/prompts.js';
+import type { Citation, ClaimVerification, AnswerSource } from '../agent/state.js';
+import type { ToolCallRecord } from '../agent/tools/index.js';
 
 export interface AgentRunScope {
   documentId: string | null;

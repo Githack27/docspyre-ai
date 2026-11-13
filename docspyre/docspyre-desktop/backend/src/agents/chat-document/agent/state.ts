@@ -1,6 +1,6 @@
 import { Annotation } from '@langchain/langgraph';
-import type { RetrievedChunk } from '../retrieval/retriever.service';
-import type { AgentRoute } from './prompts';
+import type { RetrievedChunk } from '../retrieval/retriever.service.js';
+import type { AgentRoute } from './prompts.js';
 
 /** Citation payload sent to the client. Field names are part of the API contract. */
 export interface Citation {

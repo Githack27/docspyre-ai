@@ -1,5 +1,5 @@
-import type { RetrievedChunk } from '../retrieval/retriever.service';
-import { renderChunks } from './document-qa.prompt';
+import type { RetrievedChunk } from '../retrieval/retriever.service.js';
+import { renderChunks } from './document-qa.prompt.js';
 
 export const VERIFIER_SYSTEM = `You audit whether an assistant's answer is supported by the source excerpts it was given.
 

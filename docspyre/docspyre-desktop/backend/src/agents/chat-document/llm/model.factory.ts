@@ -3,8 +3,8 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOllama } from '@langchain/ollama';
-import { env } from '../../../core/config';
-import type { ResolvedProvider } from './provider-resolver.service';
+import { env } from '../../../core/config/index.js';
+import type { ResolvedProvider } from './provider-resolver.service.js';
 
 /** Cohere exposes an OpenAI-compatible surface, so it reuses the OpenAI client. */
 const COHERE_OPENAI_BASE_URL = 'https://api.cohere.ai/compatibility/v1';

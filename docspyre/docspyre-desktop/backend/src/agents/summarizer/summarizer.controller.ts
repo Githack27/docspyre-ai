@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express';
-import { summarizerService } from './summarizer.service';
-import type { SummarizerStreamEvent } from './agent/runtime';
-import { asyncHandler } from '../../core/utils/async-handler';
-import { ApiError } from '../../core/utils/api-error';
-import { logger } from '../../core/utils/logger';
+import { summarizerService } from './summarizer.service.js';
+import type { SummarizerStreamEvent } from './agent/runtime.js';
+import { asyncHandler } from '../../core/utils/async-handler.js';
+import { ApiError } from '../../core/utils/api-error.js';
+import { logger } from '../../core/utils/logger.js';
 
 const frame = (payload: unknown): string => `data: ${JSON.stringify(payload)}\n\n`;
 

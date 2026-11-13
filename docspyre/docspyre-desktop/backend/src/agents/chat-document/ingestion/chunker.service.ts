@@ -1,4 +1,4 @@
-import type { ParsedBlock } from './parser.service';
+import type { ParsedBlock } from './parser.service.js';
 
 export interface DocumentChunkDraft {
   chunkId: string;

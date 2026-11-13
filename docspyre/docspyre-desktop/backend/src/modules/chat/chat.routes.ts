@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { chatController } from './chat.controller';
-import { chatDocumentController } from '../../agents/chat-document';
-import { authenticate } from '../../core/middleware';
+import { chatController } from './chat.controller.js';
+import { chatDocumentController } from '../../agents/chat-document/index.js';
+import { authenticate } from '../../core/middleware/index.js';
 
 const router: Router = Router();
 router.use(authenticate);

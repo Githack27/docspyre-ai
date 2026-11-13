@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PORTAL_PASSWORD_LENGTH } from '../../constants/licenseConstants';
+import { PORTAL_PASSWORD_LENGTH } from '../../constants/licenseConstants.js';
 
 const username = z
   .string()

@@ -210,15 +210,24 @@ export class Login implements OnInit {
 
   private extractError(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
-      const body = error.error as ApiErrorResponse | null;
-      if (body?.error?.message) {
+      const body = error.error as (ApiErrorResponse & { error?: string | { message?: string }; details?: unknown; issues?: Array<{ message?: string }> }) | null;
+      if (typeof body?.error === 'string') {
+        return body.error;
+      }
+      if (typeof body?.error?.message === 'string') {
         return body.error.message;
       }
-      if (body?.message) {
+      if (typeof body?.message === 'string') {
         return body.message;
+      }
+      if (Array.isArray(body?.issues) && body.issues.length > 0 && typeof body.issues[0]?.message === 'string') {
+        return body.issues[0].message;
       }
       if (error.status === 0) {
         return 'Unable to reach the server. Please check your connection.';
+      }
+      if (error.statusText && error.status !== 200) {
+        return `Request failed (${error.status}: ${error.statusText})`;
       }
     }
     if (error instanceof Error) {

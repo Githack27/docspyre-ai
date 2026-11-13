@@ -1,9 +1,9 @@
 import {
   db, eq, and, isNull, desc,
   chatSessions, chatMessages, workspaceMembers, documents, workspaceFiles,
-} from '@docspyre/database';
-import { ApiError } from '../../core/utils/api-error';
-import { requireRow } from '../../core/utils/rows';
+} from '../../db/index.js';
+import { ApiError } from '../../core/utils/api-error.js';
+import { requireRow } from '../../core/utils/rows.js';
 
 export interface PublicChatSession {
   id: string;

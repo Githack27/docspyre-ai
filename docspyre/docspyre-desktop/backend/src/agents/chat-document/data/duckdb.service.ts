@@ -1,7 +1,7 @@
 import { DuckDBInstance, type DuckDBConnection } from '@duckdb/node-api';
-import { env } from '../../../core/config';
-import { logger } from '../../../core/utils/logger';
-import { guardSelect, enforceRowLimit } from './sql-guard';
+import { env } from '../../../core/config/index.js';
+import { logger } from '../../../core/utils/logger.js';
+import { guardSelect, enforceRowLimit } from './sql-guard.js';
 
 export type DatasetFormat = 'CSV' | 'TSV' | 'XLSX' | 'JSON' | 'PARQUET' | 'SQLITE' | 'DUCKDB';
 

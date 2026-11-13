@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { chatService } from './chat.service';
-import { chatDocumentService } from '../../agents/chat-document/chat-document.service';
-import { asyncHandler } from '../../core/utils/async-handler';
-import { ApiError } from '../../core/utils/api-error';
+import { chatService } from './chat.service.js';
+import { chatDocumentService } from '../../agents/chat-document/chat-document.service.js';
+import { asyncHandler } from '../../core/utils/async-handler.js';
+import { ApiError } from '../../core/utils/api-error.js';
 
 export const chatController = {
   list: asyncHandler(async (req: Request, res: Response) => {

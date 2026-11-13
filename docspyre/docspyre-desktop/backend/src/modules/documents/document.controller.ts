@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { documentService } from './document.service';
-import { storageExists, streamFile } from './document.storage';
-import { asyncHandler } from '../../core/utils/async-handler';
-import { ApiError } from '../../core/utils/api-error';
+import { documentService } from './document.service.js';
+import { storageExists, streamFile } from './document.storage.js';
+import { asyncHandler } from '../../core/utils/async-handler.js';
+import { ApiError } from '../../core/utils/api-error.js';
 
 const VALID_KINDS = ['IMAGE', 'VIDEO', 'AUDIO', 'PDF', 'DOCUMENT', 'OTHER'];
 

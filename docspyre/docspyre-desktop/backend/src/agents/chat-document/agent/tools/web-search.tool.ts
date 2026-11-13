@@ -1,7 +1,7 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { recordToolCall, type AgentToolContext } from './context';
-import type { WebSearchResultItem } from '../../prompts/web-search.prompt';
+import { recordToolCall, type AgentToolContext } from './context.js';
+import type { WebSearchResultItem } from '../../prompts/web-search.prompt.js';
 
 const decodeHtmlEntities = (text: string): string => {
   return text

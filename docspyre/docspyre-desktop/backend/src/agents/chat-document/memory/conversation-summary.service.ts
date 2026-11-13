@@ -1,9 +1,9 @@
-import { db, eq, asc, chatMessages, chatSessions, conversationSummaries } from '@docspyre/database';
-import { env } from '../../../core/config';
-import { logger } from '../../../core/utils/logger';
-import { createChatModel, describeModel } from '../llm/model.factory';
-import { messageText } from '../llm/output';
-import type { ResolvedProvider } from '../llm/provider-resolver.service';
+import { db, eq, asc, chatMessages, chatSessions, conversationSummaries } from '../../../db/index.js';
+import { env } from '../../../core/config/index.js';
+import { logger } from '../../../core/utils/logger.js';
+import { createChatModel, describeModel } from '../llm/model.factory.js';
+import { messageText } from '../llm/output.js';
+import type { ResolvedProvider } from '../llm/provider-resolver.service.js';
 import {
   CONVERSATION_SUMMARY_SYSTEM,
   buildConversationSummaryPrompt,
@@ -11,7 +11,7 @@ import {
   buildFullSessionSummaryPrompt,
   TITLE_GENERATION_SYSTEM,
   buildTitlePrompt,
-} from '../prompts';
+} from '../prompts/index.js';
 
 export interface ConversationTurn {
   role: 'user' | 'assistant';

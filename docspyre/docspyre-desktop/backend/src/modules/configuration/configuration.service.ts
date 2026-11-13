@@ -1,7 +1,7 @@
-import { db, eq, and, providerConfigs } from '@docspyre/database';
-import { encrypt, decrypt } from '../../core/utils/encryption';
-import { ApiError } from '../../core/utils/api-error';
-import { requireRow } from '../../core/utils/rows';
+import { db, eq, and, providerConfigs } from '../../db/index.js';
+import { encrypt, decrypt } from '../../core/utils/encryption.js';
+import { ApiError } from '../../core/utils/api-error.js';
+import { requireRow } from '../../core/utils/rows.js';
 
 /** Returns null on failure so corrupted rows don't crash listing. */
 const safeDecrypt = (ciphertext: string): string | null => {

@@ -1,2 +1,2 @@
-export { workspaceRoutes } from './workspace.routes';
-export { workspaceService } from './workspace.service';
+export { workspaceRoutes } from './workspace.routes.js';
+export { workspaceService } from './workspace.service.js';

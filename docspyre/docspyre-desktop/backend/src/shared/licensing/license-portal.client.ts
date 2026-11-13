@@ -37,7 +37,11 @@ export type PortalLicenseOption = z.infer<typeof licenseOptionSchema>;
 const licenseOptionsSchema = z.object({ items: z.array(licenseOptionSchema).max(100) });
 const registrationResultSchema = z.object({ status: z.string(), licenseId: z.string().uuid(), message: z.string() });
 const loginResultSchema = z.object({ token: z.string().min(1).max(8_192), expiresAt: z.string() });
-const portalErrorSchema = z.object({ error: z.object({ code: z.string(), message: z.string() }) });
+const portalErrorSchema = z.union([
+  z.object({ error: z.object({ code: z.string().optional(), message: z.string() }) }),
+  z.object({ error: z.string() }),
+  z.object({ message: z.string(), code: z.string().optional() }),
+]);
 
 /** Statuses whose portal message is written for the end user and can be shown as is. */
 const USER_FACING_STATUSES = new Set([400, 401, 403, 409, 429]);
@@ -91,13 +95,29 @@ export class LicensePortalClient {
 
   private failure(status: number, payload: unknown): ApiError {
     const error = portalErrorSchema.safeParse(payload);
-    const code = error.success ? error.data.error.code : undefined;
+    let code: string | undefined;
+    let message: string | undefined;
+
+    if (error.success) {
+      if ('error' in error.data) {
+        if (typeof error.data.error === 'string') {
+          message = error.data.error;
+        } else {
+          code = error.data.error.code;
+          message = error.data.error.message;
+        }
+      } else if ('message' in error.data) {
+        code = error.data.code;
+        message = error.data.message;
+      }
+    }
+
     // A rejected product key is an installation problem, not the user's credentials.
     if (code === 'PRODUCT_UNAUTHORIZED') {
       return new ApiError(503, 'PRODUCT_UNAUTHORIZED', "The DETQEL License Portal did not accept this DocSpyre installation's product key.");
     }
-    if (error.success && USER_FACING_STATUSES.has(status)) {
-      return new ApiError(status, code ?? 'PORTAL_ERROR', error.data.error.message, { code });
+    if (message && USER_FACING_STATUSES.has(status)) {
+      return new ApiError(status, code ?? 'PORTAL_ERROR', message, { code });
     }
     return new ApiError(502, 'BAD_GATEWAY', 'The DETQEL License Portal could not complete the request. Try again shortly.');
   }

@@ -1,11 +1,11 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { logger } from '../../../core/utils/logger';
-import { messageText } from '../llm/output';
-import type { ResolvedProvider } from '../llm/provider-resolver.service';
-import type { ConversationContext } from '../memory/conversation-summary.service';
-import type { AgentToolContext, AgentTools } from './tools';
-import type { AgentRoute } from './prompts';
-import type { TokenUsage } from './state';
+import { logger } from '../../../core/utils/logger.js';
+import { messageText } from '../llm/output.js';
+import type { ResolvedProvider } from '../llm/provider-resolver.service.js';
+import type { ConversationContext } from '../memory/conversation-summary.service.js';
+import type { AgentToolContext, AgentTools } from './tools/index.js';
+import type { AgentRoute } from './prompts.js';
+import type { TokenUsage } from './state.js';
 
 /**
  * Events emitted while the graph runs. The controller translates these into SSE

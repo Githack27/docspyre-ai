@@ -1,6 +1,6 @@
-import type { ConversationContext } from '../memory/conversation-summary.service';
-import { composeSystemPrompt, ANSWER_FORMAT, WEB_CITATION_RULES } from './system.prompt';
-import { renderConversation } from './document-qa.prompt';
+import type { ConversationContext } from '../memory/conversation-summary.service.js';
+import { composeSystemPrompt, ANSWER_FORMAT, WEB_CITATION_RULES } from './system.prompt.js';
+import { renderConversation } from './document-qa.prompt.js';
 
 export interface WebSearchResultItem {
   title: string;

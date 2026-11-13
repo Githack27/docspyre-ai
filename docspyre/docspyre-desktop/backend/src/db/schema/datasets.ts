@@ -11,7 +11,7 @@ import {
   jsonb,
 } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
-import { documents } from './documents';
+import { documents } from './documents.js';
 
 /**
  * Schema catalogue for uploads that are really data sources (CSV, Excel,

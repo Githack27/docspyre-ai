@@ -1,7 +1,7 @@
-export { authenticate } from './authenticate';
-export { requireWorkspaceRole } from './authorize';
-export { errorHandler } from './error-handler';
-export { notFound } from './not-found';
-export { globalRateLimiter, authRateLimiter } from './rate-limit';
-export { validate } from './validate';
-export type { Infer } from './validate';
+export { authenticate } from './authenticate.js';
+export { requireWorkspaceRole } from './authorize.js';
+export { errorHandler } from './error-handler.js';
+export { notFound } from './not-found.js';
+export { globalRateLimiter, authRateLimiter } from './rate-limit.js';
+export { validate } from './validate.js';
+export type { Infer } from './validate.js';

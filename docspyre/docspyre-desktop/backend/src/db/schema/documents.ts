@@ -2,9 +2,9 @@ import {
   pgTable, uuid, varchar, integer, timestamp, index, text, real,
 } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
-import { documentKindEnum } from './enums';
-import { users } from './users';
-import { workspaces } from './workspaces';
+import { documentKindEnum } from './enums.js';
+import { users } from './users.js';
+import { workspaces } from './workspaces.js';
 
 export const documents = pgTable(
   'documents',

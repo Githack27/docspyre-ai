@@ -1,4 +1,4 @@
-import type { User } from '@docspyre/database';
+import type { User } from '../../db/index.js';
 
 export interface AuthContext {
   ipAddress?: string;

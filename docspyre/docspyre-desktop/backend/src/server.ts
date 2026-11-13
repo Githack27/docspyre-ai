@@ -1,10 +1,10 @@
 import type { Server } from 'node:http';
-import { createApp } from './app';
-import { env } from './core/config';
-import { logger } from './core/utils/logger';
-import { connectDatabase, disconnectDatabase } from '@docspyre/database';
-import { ensureUploadDir } from './modules/documents/document.storage';
-import { documentService } from './modules/documents/document.service';
+import { createApp } from './app.js';
+import { env } from './core/config/index.js';
+import { logger } from './core/utils/logger.js';
+import { connectDatabase, disconnectDatabase } from './db/index.js';
+import { ensureUploadDir } from './modules/documents/document.storage.js';
+import { documentService } from './modules/documents/document.service.js';
 
 const PURGE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 

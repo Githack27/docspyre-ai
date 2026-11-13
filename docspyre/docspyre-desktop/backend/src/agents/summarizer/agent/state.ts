@@ -1,5 +1,5 @@
 import { Annotation } from '@langchain/langgraph';
-import type { SummarizerFormat } from '../prompts/summarizer.prompt';
+import type { SummarizerFormat } from '../prompts/summarizer.prompt.js';
 
 export interface NoteImage {
   id: string;

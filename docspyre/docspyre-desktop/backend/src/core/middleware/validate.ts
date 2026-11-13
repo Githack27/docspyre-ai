@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError, type ZodTypeAny, type infer as ZodInfer } from 'zod';
-import { ApiError } from '../utils/api-error';
+import { ApiError } from '../utils/api-error.js';
 
 interface RequestSchemas {
   body?: ZodTypeAny;

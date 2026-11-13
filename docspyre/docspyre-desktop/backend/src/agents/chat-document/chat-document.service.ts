@@ -1,17 +1,17 @@
-import { db, eq, documents, chatMessages, chatSessions, conversationSummaries, workspaceFiles } from '@docspyre/database';
-import { env } from '../../core/config';
-import { logger } from '../../core/utils/logger';
-import { ApiError } from '../../core/utils/api-error';
-import { chatService } from '../../modules/chat/chat.service';
-import { providerResolverService, type ResolvedProvider } from './llm/provider-resolver.service';
-import { describeModel } from './llm/model.factory';
-import { datasetService } from './data/dataset.service';
-import { conversationSummaryService } from './memory/conversation-summary.service';
-import { createToolContext, createAgentTools } from './agent/tools';
-import { buildAgentGraph } from './agent/graph';
-import type { AgentRuntime, AgentStreamEvent } from './agent/runtime';
-import type { AnswerSource, Citation, ClaimVerification } from './agent/state';
-import { agentRunRepository, type AgentRunScope } from './persistence/agent-run.repository';
+import { db, eq, documents, chatMessages, chatSessions, conversationSummaries, workspaceFiles } from '../../db/index.js';
+import { env } from '../../core/config/index.js';
+import { logger } from '../../core/utils/logger.js';
+import { ApiError } from '../../core/utils/api-error.js';
+import { chatService } from '../../modules/chat/chat.service.js';
+import { providerResolverService, type ResolvedProvider } from './llm/provider-resolver.service.js';
+import { describeModel } from './llm/model.factory.js';
+import { datasetService } from './data/dataset.service.js';
+import { conversationSummaryService } from './memory/conversation-summary.service.js';
+import { createToolContext, createAgentTools } from './agent/tools/index.js';
+import { buildAgentGraph } from './agent/graph.js';
+import type { AgentRuntime, AgentStreamEvent } from './agent/runtime.js';
+import type { AnswerSource, Citation, ClaimVerification } from './agent/state.js';
+import { agentRunRepository, type AgentRunScope } from './persistence/agent-run.repository.js';
 
 export const CONTEXT_USAGE_LIMIT_TOKENS = 2_000_000;
 

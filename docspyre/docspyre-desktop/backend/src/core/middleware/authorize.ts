@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
-import { db, eq, and, workspaceMembers } from '@docspyre/database';
-import { ApiError } from '../utils/api-error';
-import { asyncHandler } from '../utils/async-handler';
+import { db, eq, and, workspaceMembers } from '../../db/index.js';
+import { ApiError } from '../utils/api-error.js';
+import { asyncHandler } from '../utils/async-handler.js';
 
 type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
 
